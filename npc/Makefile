@@ -16,7 +16,7 @@ sim: $(VSRCS) $(CSRCS) $(BIND_FILE) $(NVBOARD_ARCHIVE)
 	verilator $(VERILATOR_CFLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
 $(BIND_FILE): ./bind.nxdc
-	python3 $(NVBOARD_HOME)/scripts/auto_bind.py $^ $@
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 clean:
 	rm -rf $(BUILD_DIR)
