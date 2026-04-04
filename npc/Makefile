@@ -11,7 +11,7 @@ LDFLAGS += $(NVBOARD_ARCHIVE) -lSDL2 -lSDL2_image -lSDL2_ttf
 VERILATOR_CFLAGS = --build --cc --exe --Mdir $(BUILD_DIR)\
 $(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS))\
 
-sim: $(VSRCS) $(CSRCS) $(BIND_FILE) $(NVBOARD_ARCHIVE)  
+sim: $(VSRCS) $(CSRCS) $(BIND_FILE) $(NVBOARD_ARCHIVE)
 	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_CFLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
