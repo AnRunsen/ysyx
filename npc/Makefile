@@ -1,9 +1,10 @@
 include ../Makefile
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
+TOP = switch
 BUILD_DIR = build
-VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+VSRCS = $(shell find $(abspath ./vsrc) -name "$(TOP).v")
+CSRCS = $(shell find $(abspath ./csrc) -name "$(TOP).cpp")
 BIND_FILE = $(abspath ./auto_bind.cpp)
 CXXFLAGS += -I$(abspath ../nvboard/usr/include)
 LDFLAGS += $(NVBOARD_ARCHIVE) -lSDL2 -lSDL2_image -lSDL2_ttf
@@ -16,7 +17,7 @@ sim: $(VSRCS) $(CSRCS) $(BIND_FILE)
 	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_CFLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
-$(BIND_FILE): ./bind.nxdc
+$(BIND_FILE): ./xdc/bind_$(TOP).nxdc
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 clean:
