@@ -1,7 +1,7 @@
 include ../Makefile
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
-TOP = switch
+TOP = light
 BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "$(TOP).v")
 CSRCS = $(shell find $(abspath ./csrc) -name "$(TOP).cpp")
