@@ -12,6 +12,7 @@ VERILATOR_CFLAGS = --build --cc --exe --Mdir $(BUILD_DIR)\
 $(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS))\
 
 sim: $(VSRCS) $(CSRCS) $(BIND_FILE) $(NVBOARD_ARCHIVE)
+	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_CFLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
