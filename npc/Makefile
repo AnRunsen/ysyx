@@ -19,6 +19,7 @@ sim: $(VSRCS) $(CSRCS) $(BIND_FILE)
 	./$(BUILD_DIR)/V$(TOP)
 
 $(BIND_FILE): ./xdc/bind_$(TOP).nxdc
+	rm -f $@
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 clean:
