@@ -16,6 +16,7 @@ sim: $(VSRCS) $(CSRCS) $(BIND_FILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_CFLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
+	./$(BUILD_DIR)/V$(TOP)
 
 $(BIND_FILE): ./xdc/bind_$(TOP).nxdc
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
