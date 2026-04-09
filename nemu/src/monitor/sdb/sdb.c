@@ -52,7 +52,13 @@ static int cmd_q(char *args) {
   return -1;
 }
 
+static int cmd_si(char *args) {
+  cpu_exec(1);
+  return 0;
+}
+
 static int cmd_help(char *args);
+static int cmd_info(char *args);
 
 static struct {
   const char *name;
@@ -62,6 +68,8 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "Step in one instruction", cmd_si},
+  { "info", "Print the info of reg or the watch point", cmd_info},
 
   /* TODO: Add more commands */
 
@@ -87,6 +95,28 @@ static int cmd_help(char *args) {
         return 0;
       }
     }
+    printf("Unknown command '%s'\n", arg);
+  }
+  return 0;
+}
+
+
+static int cmd_info(char *args) {
+  /* extract the first argument */
+  char *arg = strtok(NULL, " ");
+
+  if (arg == NULL) {
+    printf("Hint: Try <info r> or <info w>");
+  }
+
+  else if(strcmp(arg, "r") == 0) {
+    isa_reg_display();
+  }
+
+  else if(strcmp(arg, "w") == 0) {
+    printf("Impl me in sdb.c:116");
+  }
+  else {
     printf("Unknown command '%s'\n", arg);
   }
   return 0;
