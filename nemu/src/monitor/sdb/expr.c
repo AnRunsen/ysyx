@@ -102,8 +102,6 @@ static bool make_token(char *e) {
 
         switch (rules[i].token_type) {
           case TK_NOTYPE:
-            assert(nr_token < 32);
-            tokens[nr_token++].type = TK_NOTYPE;
             break;
           case TK_NUM:
             assert(nr_token < 32);
@@ -159,6 +157,83 @@ static bool make_token(char *e) {
   return true;
 }
 
+/* Check if tokens[p..q] is surrounded by a matched pair of parentheses. */
+static bool check_parentheses(uint32_t p, uint32_t q) {
+  if (tokens[p].type != '(' || tokens[q].type != ')') {
+    return false;
+  }
+  int level = 0;
+  for (uint32_t i = p; i <= q; i++) {
+    if (tokens[i].type == '(') level++;
+    else if (tokens[i].type == ')') {
+      level--;
+      /* The '(' at p matched before reaching q, so they are not a wrapping pair. */
+      if (level == 0 && i < q) return false;
+    }
+  }
+  return true;
+}
+
+/* Return operator precedence (lower value = weaker binding = evaluated last). */
+static int op_prec(int type) {
+  switch (type) {
+    case TK_EQ:          return 1;
+    case '+': case '-':  return 2;
+    case '*': case '/':  return 3;
+    default:             return -1;  /* not an operator */
+  }
+}
+
+uint32_t eval(uint32_t p, uint32_t q) {
+  if (p > q) {
+    assert(0);
+  }
+  else if (p == q) {
+    /* Single token: must be a number. */
+    assert(tokens[p].type == TK_NUM);
+    return (uint32_t)atoi(tokens[p].str);
+  }
+  else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    return eval(p + 1, q - 1);
+  }
+  else {
+    /* Find the main operator: the operator with the lowest precedence
+     * that is not inside any parentheses. Among ties, pick the rightmost
+     * one to ensure left-associativity. */
+    int main_op = -1;
+    int min_prec = 100;
+    int level = 0;
+    for (uint32_t i = p; i <= q; i++) {
+      if (tokens[i].type == '(') { level++; continue; }
+      if (tokens[i].type == ')') { level--; continue; }
+      if (level != 0) continue;
+      int prec = op_prec(tokens[i].type);
+      if (prec < 0) continue;
+      if (prec <= min_prec) {
+        main_op = (int)i;
+        min_prec = prec;
+      }
+    }
+    assert(main_op != -1);
+
+    uint32_t val1 = eval(p, (uint32_t)main_op - 1);
+    uint32_t val2 = eval((uint32_t)main_op + 1, q);
+
+    switch (tokens[main_op].type) {
+      case '+': return val1 + val2;
+      case '-': return val1 - val2;
+      case '*': return val1 * val2;
+      case '/': assert(val2 != 0); return val1 / val2;
+      case TK_EQ: return (uint32_t)(val1 == val2);
+      default: assert(0);
+    }
+  }
+  return 0;  /* unreachable */
+}
+
 
 word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
@@ -167,8 +242,8 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
-  make_token("19+7+(3*4)-2/1");
-  TODO();
+  uint32_t result = eval(0, nr_token - 1);
+  *success = true;
 
-  return 0;
+  return result;
 }

@@ -58,6 +58,23 @@ static int cmd_si(char *args) {
   return 0;
 }
 
+static int cmd_p(char *args) {
+  if (args == NULL) {
+    printf("Hint: Try p <expression>\n");
+  }
+  else {
+    bool success = false;
+    uint32_t result = expr(args, &success);
+    if(success) {
+      printf("0x%08x\n", result);
+    }
+    else {
+      printf("Invalid expression.\n");
+    }
+  }
+  return 0;
+}
+
 static int cmd_x(char *args);
 
 static int cmd_help(char *args);
@@ -73,7 +90,8 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   { "si", "Step in one instruction", cmd_si},
   { "info", "Print the info of reg or the watch point", cmd_info},
-  { "x", "Scan the memory", cmd_x}
+  { "x", "Scan the memory", cmd_x},
+  { "p", "Print the value of an expression", cmd_p},
 
   /* TODO: Add more commands */
 
@@ -127,7 +145,6 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_x(char *args) {
-  expr("18", NULL);
   /* extract the first argument */
   char *arg = strtok(NULL, " ");
 
