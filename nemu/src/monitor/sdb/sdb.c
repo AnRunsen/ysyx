@@ -203,6 +203,7 @@ void sdb_mainloop() {
           assert(0);
           fail++;
         } else if ((uint32_t)result == golden) {
+          printf("PASS: golden=%u got=%u expr=%s\n", golden, (uint32_t)result, expression);
           pass++;
         } else {
           printf("FAIL: golden=%u got=%u expr=%s\n", golden, (uint32_t)result, expression);
