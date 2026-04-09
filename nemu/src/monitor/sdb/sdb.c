@@ -142,7 +142,7 @@ static int cmd_x(char *args) {
       printf("Hint: Try x <num> <addr>");
     }
     else {
-      int startaddr = atoi(arg);
+      int startaddr = (int)strtol(arg, NULL, 0);
       for(int i=0; i<scannum; i++)
       {
         printf("0x%08x: 0x%08x\n", startaddr + i*4, paddr_read(startaddr + i*4, 4));
