@@ -70,10 +70,10 @@ void init_regex() {
 
 typedef struct token {
   int type;
-  char str[32];
+  char str[1024];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+static Token tokens[1024] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -104,40 +104,40 @@ static bool make_token(char *e) {
           case TK_NOTYPE:
             break;
           case TK_NUM:
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token].type = TK_NUM;
 
-            assert(substr_len < 32);
+            assert(substr_len < 1024);
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
             nr_token++;
             break;
           case '+':
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = '+';
             break;
           case '-':
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = '-';
             break;
           case '*':
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = '*';
             break;
           case '/':
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = '/';
             break;
           case '(':
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = '(';
             break;
           case ')':
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = ')';
             break;
           case TK_EQ:
-            assert(nr_token < 32);
+            assert(nr_token < 1024);
             tokens[nr_token++].type = TK_EQ;
             break;
 
