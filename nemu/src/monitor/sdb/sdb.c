@@ -182,43 +182,6 @@ void sdb_mainloop() {
   }
 
 
-  /*For the AI agent here */
-  {
-    FILE *fp = fopen("/home/anderson/ysyx/ysyx-workbench/nemu/tools/gen-expr/expr", "r");
-    if (fp != NULL) {
-      char line[65536];
-      int pass = 0, fail = 0;
-      while (fgets(line, sizeof(line), fp) != NULL) {
-        /* strip trailing newline */
-        line[strcspn(line, "\n")] = '\0';
-        /* parse golden result (first token) */
-        char *endptr;
-        uint32_t golden = (uint32_t)strtoul(line, &endptr, 10);
-        if (endptr == line || *endptr != ' ') continue;
-        char *expression = endptr + 1;
-        bool success = false;
-        word_t result = expr(expression, &success);
-        if (!success) {
-          printf("FAIL (parse error): golden=%u expr=%s\n", golden, expression);
-          assert(0);
-          fail++;
-        } else if ((uint32_t)result == golden) {
-          printf("PASS: golden=%u got=%u expr=%s\n", golden, (uint32_t)result, expression);
-          pass++;
-        } else {
-          printf("FAIL: golden=%u got=%u expr=%s\n", golden, (uint32_t)result, expression);
-          assert(0);
-          fail++;
-        }
-      }
-      fclose(fp);
-      printf("Expression test: %d passed, %d failed\n", pass, fail);
-    } else {
-      printf("Cannot open expr file\n");
-    }
-  }
-  /*For the AI agent end */
-
   for (char *str; (str = rl_gets()) != NULL; ) {
     char *str_end = str + strlen(str);
 
