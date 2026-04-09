@@ -24,8 +24,12 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
-  for (int i = 0; i < ARRLEN(regs); i++) {
-    printf("%3s: 0x%08x\n", regs[i], gpr(i));
+  for (int i = 0; i < ARRLEN(regs) / 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      int idx = i * 4 + j;
+      printf("%3s: 0x%08x ", regs[idx], gpr(idx));
+    }
+    printf("\n");
   }
 }
 
