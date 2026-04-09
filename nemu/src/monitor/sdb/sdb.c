@@ -110,7 +110,7 @@ static int cmd_info(char *args) {
   char *arg = strtok(NULL, " ");
 
   if (arg == NULL) {
-    printf("Hint: Try <info r> or <info w>");
+    printf("Hint: Try <info r> or <info w>\n");
   }
 
   else if(strcmp(arg, "r") == 0) {
@@ -118,7 +118,7 @@ static int cmd_info(char *args) {
   }
 
   else if(strcmp(arg, "w") == 0) {
-    printf("Impl me in sdb.c:116");
+    printf("Impl me in sdb.c:116\n");
   }
   else {
     printf("Unknown command '%s'\n", arg);
@@ -131,7 +131,7 @@ static int cmd_x(char *args) {
   char *arg = strtok(NULL, " ");
 
   if (arg == NULL) {
-    printf("Hint: Try x <num> <addr>");
+    printf("Hint: Try x <num> <addr>\n");
   }
 
   else{
@@ -139,7 +139,7 @@ static int cmd_x(char *args) {
 
     arg = strtok(NULL, " ");
     if(arg == NULL) {
-      printf("Hint: Try x <num> <addr>");
+      printf("Hint: Try x <num> <addr>\n");
     }
     else {
       int startaddr = (int)strtol(arg, NULL, 0);
