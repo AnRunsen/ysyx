@@ -200,11 +200,13 @@ void sdb_mainloop() {
         word_t result = expr(expression, &success);
         if (!success) {
           printf("FAIL (parse error): golden=%u expr=%s\n", golden, expression);
+          assert(0);
           fail++;
         } else if ((uint32_t)result == golden) {
           pass++;
         } else {
           printf("FAIL: golden=%u got=%u expr=%s\n", golden, (uint32_t)result, expression);
+          assert(0);
           fail++;
         }
       }
