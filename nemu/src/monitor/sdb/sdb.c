@@ -127,6 +127,7 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_x(char *args) {
+  expr("18", NULL);
   /* extract the first argument */
   char *arg = strtok(NULL, " ");
 

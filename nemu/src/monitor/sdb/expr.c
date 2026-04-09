@@ -21,7 +21,7 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,
+  TK_NOTYPE = 256, TK_EQ, TK_NUM
 
   /* TODO: Add more token types */
 
@@ -37,7 +37,13 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
+  {"[0-9]+", TK_NUM},         // decimal number
   {"\\+", '+'},         // plus
+  {"\\-", '-'},         // minus
+  {"\\*", '*'},         // multiply
+  {"\\/", '/'},         // divide
+  {"\\(", '('},         // left parenthesis
+  {"\\)", ')'},         // right parenthesis
   {"==", TK_EQ},        // equal
 };
 
@@ -95,6 +101,48 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
+          case TK_NOTYPE:
+            assert(nr_token < 32);
+            tokens[nr_token++].type = TK_NOTYPE;
+            break;
+          case TK_NUM:
+            assert(nr_token < 32);
+            tokens[nr_token].type = TK_NUM;
+
+            assert(substr_len < 32);
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+            nr_token++;
+            break;
+          case '+':
+            assert(nr_token < 32);
+            tokens[nr_token++].type = '+';
+            break;
+          case '-':
+            assert(nr_token < 32);
+            tokens[nr_token++].type = '-';
+            break;
+          case '*':
+            assert(nr_token < 32);
+            tokens[nr_token++].type = '*';
+            break;
+          case '/':
+            assert(nr_token < 32);
+            tokens[nr_token++].type = '/';
+            break;
+          case '(':
+            assert(nr_token < 32);
+            tokens[nr_token++].type = '(';
+            break;
+          case ')':
+            assert(nr_token < 32);
+            tokens[nr_token++].type = ')';
+            break;
+          case TK_EQ:
+            assert(nr_token < 32);
+            tokens[nr_token++].type = TK_EQ;
+            break;
+
           default: TODO();
         }
 
@@ -119,6 +167,7 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
+  make_token("19+7+(3*4)-2/1");
   TODO();
 
   return 0;
