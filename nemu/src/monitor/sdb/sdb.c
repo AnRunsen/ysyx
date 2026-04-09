@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/paddr.h>
 
 static int is_batch_mode = false;
 
@@ -57,6 +58,8 @@ static int cmd_si(char *args) {
   return 0;
 }
 
+static int cmd_x(char *args);
+
 static int cmd_help(char *args);
 static int cmd_info(char *args);
 
@@ -70,6 +73,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   { "si", "Step in one instruction", cmd_si},
   { "info", "Print the info of reg or the watch point", cmd_info},
+  { "x", "Scan the memory", cmd_x}
 
   /* TODO: Add more commands */
 
@@ -118,6 +122,33 @@ static int cmd_info(char *args) {
   }
   else {
     printf("Unknown command '%s'\n", arg);
+  }
+  return 0;
+}
+
+static int cmd_x(char *args) {
+  /* extract the first argument */
+  char *arg = strtok(NULL, " ");
+
+  if (arg == NULL) {
+    printf("Hint: Try x <num> <addr>");
+  }
+
+  else{
+    int scannum = atoi(arg);
+
+    arg = strtok(NULL, " ");
+    if(arg == NULL) {
+      printf("Hint: Try x <num> <addr>");
+    }
+    else {
+      int startaddr = atoi(arg);
+      for(int i=0; i<scannum; i++)
+      {
+        printf("0x%08x: 0x%08x\n", startaddr + i*4, paddr_read(startaddr + i*4, 4));
+      }
+    }
+    
   }
   return 0;
 }
