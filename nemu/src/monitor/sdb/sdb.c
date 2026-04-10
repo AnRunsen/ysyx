@@ -213,7 +213,7 @@ static int cmd_info(char *args) {
     else {
       while(wp != NULL) {
         printf("Watchpoint %d: %s = %d\n", wp->NO, wp->expr, wp->value);
-        wp = wp->next;
+        wp = wp->next;  
       }
     }
 
