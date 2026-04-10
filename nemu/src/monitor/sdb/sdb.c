@@ -20,10 +20,24 @@
 #include "sdb.h"
 #include <memory/paddr.h>
 
+typedef struct watchpoint {
+  int NO;
+  struct watchpoint *next;
+
+  /* TODO: Add more members if necessary */
+  char expr[256];
+  uint32_t value;
+
+} WP;
+
 static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
+
+WP* new_wp();
+void free_wp(WP *wp);
+
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -76,7 +90,8 @@ static int cmd_p(char *args) {
 }
 
 static int cmd_x(char *args);
-
+static int cmd_w(char *args);
+static int cmd_d(char *args);
 static int cmd_help(char *args);
 static int cmd_info(char *args);
 
@@ -92,12 +107,64 @@ static struct {
   { "info", "Print the info of reg or the watch point", cmd_info},
   { "x", "Scan the memory", cmd_x},
   { "p", "Print the value of an expression", cmd_p},
+  { "w", "Set a watchpoint", cmd_w},
+  { "d", "Delete a watchpoint", cmd_d},
 
   /* TODO: Add more commands */
 
 };
 
 #define NR_CMD ARRLEN(cmd_table)
+
+
+static int cmd_d(char *args)
+{
+  if (args == NULL) {
+    printf("Hint: Try d <watchpoint NO.>\n");
+  }
+  else {
+    int wp_no = atoi(args);
+    extern WP* head;
+
+    WP* wp = head;
+    while(wp != NULL && wp->NO != wp_no)
+    {
+      wp = wp->next;
+    }
+    if(wp != NULL)
+    {
+      free_wp(wp);
+      printf("Watchpoint %d deleted.\n", wp_no);
+    }
+    else
+    {
+      printf("No watchpoint number %d.\n", wp_no);
+    }
+  }
+  return 0;
+}
+
+static int cmd_w(char *args)
+{
+  if (args == NULL) {
+    printf("Hint: Try w <expression>\n");
+  }
+  else {
+    WP* wp = new_wp();
+    strcpy(wp->expr, args);
+    bool success = false;
+    wp->value = expr(args, &success);
+    if(success) {
+      printf("Watchpoint %d: %s = %d\n", wp->NO, wp->expr, wp->value);
+    }
+    else {
+      printf("Invalid expression.\n");
+      free_wp(wp);
+    }
+  }
+  return 0;
+}
+
 
 static int cmd_help(char *args) {
   /* extract the first argument */
