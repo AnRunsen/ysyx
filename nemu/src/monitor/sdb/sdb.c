@@ -203,7 +203,20 @@ static int cmd_info(char *args) {
   }
 
   else if(strcmp(arg, "w") == 0) {
-    printf("Impl me in sdb.c:116\n");
+    extern WP *head;
+
+    WP *wp = head;
+    if(wp == NULL)
+    {
+      printf("No watchpoint.\n");
+    }
+    else {
+      while(wp != NULL) {
+        printf("Watchpoint %d: %s = %d\n", wp->NO, wp->expr, wp->value);
+        wp = wp->next;
+      }
+    }
+
   }
   else {
     printf("Unknown command '%s'\n", arg);
