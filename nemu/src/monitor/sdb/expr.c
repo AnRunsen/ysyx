@@ -45,10 +45,9 @@ static struct rule
     /* TODO: Add more rules.
      * Pay attention to the precedence level of different rules.
      */
-
+    {"0x[0-9a-fA-F]+", TK_HEX}, // hexadecimal number
     {" +", TK_NOTYPE},          // spaces
     {"[0-9]+", TK_NUM},         // decimal number
-    {"0x[0-9a-fA-F]+", TK_HEX}, // hexadecimal number
     {"\\+", '+'},               // plus
     {"\\-", '-'},               // minus
     {"\\*", '*'},               // multiply
