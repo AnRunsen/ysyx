@@ -270,12 +270,19 @@ uint32_t eval(uint32_t p, uint32_t q)
   }
   else if (p == q)
   {
-    /* Single token: must be a number. */
-    assert(tokens[p].type == TK_NUM || tokens[p].type == TK_HEX);
+    /* Single token: must be a number or a register. */
+    assert(tokens[p].type == TK_NUM || tokens[p].type == TK_HEX || tokens[p].type == TK_REG);
     if (tokens[p].type == TK_NUM)
       return (uint32_t)atoi(tokens[p].str);
-    else
+    else if (tokens[p].type == TK_HEX)
       return (uint32_t)strtoul(tokens[p].str, NULL, 16);
+    else
+    {
+      bool success = false;
+      uint32_t val = isa_reg_str2val(tokens[p].str, &success);
+      assert(success);
+      return val;
+    }
   }
   else if (check_parentheses(p, q) == true)
   {
@@ -321,13 +328,6 @@ uint32_t eval(uint32_t p, uint32_t q)
     if (tokens[main_op].type == TK_DEREF) {
       uint32_t addr = eval((uint32_t)main_op + 1, q);
       return (uint32_t)vaddr_read(addr, sizeof(word_t));
-    }
-
-    else if(tokens[main_op].type == TK_REG) {
-      bool success;
-      uint32_t reg_val = isa_reg_str2val(tokens[main_op].str, &success);
-      assert(success);
-      return reg_val;
     }
 
     uint32_t val1 = eval(p, (uint32_t)main_op - 1);
