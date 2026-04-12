@@ -69,7 +69,18 @@ static int cmd_q(char *args) {
 }
 
 static int cmd_si(char *args) {
-  cpu_exec(1);
+  if(args == NULL) {
+    cpu_exec(1);
+  }
+  else {
+    int num = atoi(args);
+    if(num <= 0) {
+      printf("Invalid number of instructions: %d\n", num);
+    }
+    else {
+      cpu_exec(num);
+    }
+  }
   return 0;
 }
 
