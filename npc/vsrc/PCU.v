@@ -9,6 +9,10 @@ module PCU(
     input [1:0] behavior
 );
 
+    initial begin
+        PC = 32'h8000_0000;
+    end
+
     reg [31:0] PC_next;
     always @(*) begin
         case(behavior)
@@ -19,14 +23,14 @@ module PCU(
         endcase
     end
 
-
     always @(posedge clk or negedge arstn) begin
         if(!arstn) begin
-            PC <= 32'h0000_0000;
+            PC <= 32'h8000_0000;
         end
 
         else begin
             PC <= PC_next;
         end
     end
+
 endmodule

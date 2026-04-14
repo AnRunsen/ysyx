@@ -33,17 +33,19 @@ BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.cpp")
 
-VERILATOR_FLAGS = --build --cc --exe --Mdir $(BUILD_DIR) --top $(TOP) -I$(abspath ./vsrc)
-PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --top $(TOP) -I$(abspath ./vsrc)
+VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP) -I$(abspath ./vsrc)
+PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP) -I$(abspath ./vsrc)
 
-sim: $(VSRCS) $(CSRCS)
+./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
-	./$(BUILD_DIR)/V$(TOP)
 
 prebuild: $(VSRCS)
 	verilator $(PREBUILD_FLAGS) $(VSRCS)
+
+run: ./$(BUILD_DIR)/V$(TOP)
+	echo $(IMG)
+	$^ $(IMG)
 
 clean:
 	rm -rf $(BUILD_DIR)

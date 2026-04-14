@@ -18,7 +18,6 @@
 `define OP_WIDTH_BYTE 2'b00
 `define OP_WIDTH_HALF 2'b01
 `define OP_WIDTH_WORD 2'b10
-`define OP_WIDTH_NONE 2'b11
 
 `define ALU_SEL_RS2 0
 `define ALU_SEL_IMM 1
