@@ -40,7 +40,6 @@ PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP) -I$(abspath ./vsr
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
-	./$(BUILD_DIR)/V$(TOP) 
 
 prebuild: $(VSRCS)
 	verilator $(PREBUILD_FLAGS) $(VSRCS)
