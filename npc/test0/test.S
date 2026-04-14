@@ -12,8 +12,4 @@ _start:
 func:
     addi x5, x0, 5      # x5 = 5
     addi x5, x5, 3      # x5 = 8
-
-    jalr x0, x1, 0      # return（跳回去，不写 rd）
-
-# ===== 返回后执行 =====
-    addi x6, x0, 66     # 应该执行到这里
+    ebreak              

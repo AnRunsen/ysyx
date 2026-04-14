@@ -72,7 +72,7 @@ int main()
         if(cpu->contextp()->time() >= 5){
             cpu->arstn = 1;
         }
-        if(cpu->contextp()->time() > 10000) break;
+        // if(cpu->contextp()->time() > 10000) break;
     }
 
     tfp->close();
