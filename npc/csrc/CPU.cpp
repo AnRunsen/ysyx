@@ -3,6 +3,14 @@
 #include <stdio.h>
 #include <assert.h>
 
+#define CHECK_ADDR(addr) \
+    do { \
+        if ((addr) < 0x80000000 || (addr) >= 0x88000000) { \
+            printf("invalid address 0x%08x\n", (addr)); \
+            exit_flag = true; \
+        } \
+    } while(0)
+
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
 
@@ -14,7 +22,9 @@ extern "C" void sim_exit() {
 extern "C" int pmem_read(int raddr)
 {
     printf("read from addr 0x%08x\n", raddr);
+    CHECK_ADDR(raddr);
     raddr = raddr - 0x80000000; // 内存映射地址转换
+    
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t*)(mem + (raddr & ~0x3u));
 }
@@ -24,6 +34,7 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
     // `wmask`中每比特表示`wdata`中1个字节的掩码,
     // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
     printf("write to addr 0x%08x, data 0x%08x, wmask 0x%02x\n", waddr, wdata, wmask);
+    CHECK_ADDR(waddr);
     waddr = waddr - 0x80000000; // 内存映射地址转换
 
     for(int i = 0; i < 4; i++){
