@@ -12,6 +12,7 @@ module IDU(
     output reg [3:0] alu_op,
     output reg wb_en,
     
+    output reg mem_en,
     output reg mem_write_en,
     output [1:0] op_width,
 
@@ -73,6 +74,7 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0; // PC+4
                         mem_signext = 0;
+                        mem_en = 0;
 
                         if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit();
                     end
@@ -87,6 +89,7 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0; // PC+4
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                 endcase
             end
@@ -103,6 +106,7 @@ module IDU(
                         alu_sel = `ALU_SEL_RS2; // reg
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
+                        mem_en = 0;
                     end
 
                     default: begin
@@ -115,11 +119,12 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0; // PC+4
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                 endcase
             end
 
-            7'b0110111: begin
+            7'b0110111: begin //lui
                 imm = immU;
                 alu_op = 0; // not care
                 wb_en = 1;
@@ -129,6 +134,7 @@ module IDU(
                 alu_sel = 0; // not care
                 brju = `PC_NORMAL; // PC+4
                 mem_signext = 0;
+                mem_en = 0;
             end
 
             7'b0000011: begin
@@ -143,6 +149,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 1;
+                        mem_en = 1;
                     end
 
                     3'b001: begin //lh
@@ -155,6 +162,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 1;
+                        mem_en = 1;
                     end
 
                     3'b010: begin //lw
@@ -167,6 +175,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 1;
+                        mem_en = 1;
                     end
 
                     3'b100: begin //lbu
@@ -179,6 +188,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
+                        mem_en = 1;
                     end
 
                     default: begin
@@ -191,6 +201,7 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0; // PC+4
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                 endcase
             end
@@ -207,6 +218,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL;
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                     default: begin
                         imm = 0;
@@ -218,6 +230,7 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0;
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                 endcase
             end
@@ -234,6 +247,8 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_FAR; // PC=ALU_RES
                         mem_signext = 0;
+                        mem_en = 0;
+
                     end
 
                     default: begin
@@ -246,6 +261,7 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0;
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                 endcase
             end
@@ -262,6 +278,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
+                        mem_en = 1;
                     end
 
                     3'b001: begin //sh
@@ -274,6 +291,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
+                        mem_en = 1;
                     end
 
                     3'b010: begin //sw
@@ -286,6 +304,7 @@ module IDU(
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
+                        mem_en = 1;
                     end
 
                     default: begin
@@ -298,6 +317,7 @@ module IDU(
                         alu_sel = 0; // imm
                         brju = 0; // PC+4
                         mem_signext = 0;
+                        mem_en = 0;
                     end
                 endcase
             end
@@ -312,6 +332,7 @@ module IDU(
                 alu_sel = 0; // imm
                 brju = 0;
                 mem_signext = 0;
+                mem_en = 0;
             end
         endcase
     end

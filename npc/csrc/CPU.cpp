@@ -69,6 +69,7 @@ int main()
         cpu->eval();
         tfp->dump(cpu->contextp()->time());
 
+
         if(cpu->contextp()->time() >= 5){
             cpu->arstn = 1;
         }
