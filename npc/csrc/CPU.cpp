@@ -39,7 +39,7 @@ void mem_op(VCPU* cpu) {
 
 int main()
 {
-    load_bin("test.bin");
+    load_bin("./test0/test.bin");
 
     Verilated::traceEverOn(true);
     VCPU* cpu = new VCPU;
