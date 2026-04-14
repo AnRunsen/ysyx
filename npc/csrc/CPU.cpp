@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
     cpu->contextp()->time(0);
     cpu->arstn = 0;
-    cpu->clk = 0;
+    cpu->clk = 1;
     cpu->eval();
     tfp->dump(cpu->contextp()->time());
     while(!exit_flag) {
