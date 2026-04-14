@@ -1,5 +1,5 @@
 `include "MACRO.v"
-import "DPI-C" function void sim_exit(input int code);
+import "DPI-C" function void sim_exit();
 
 module IDU(
     /* explict ports*/
@@ -75,7 +75,7 @@ module IDU(
                         brju = 0; // PC+4
                         mem_signext = 0;
 
-                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(0);
+                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit();
                     end
 
                     default: begin
