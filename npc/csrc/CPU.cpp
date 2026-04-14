@@ -43,8 +43,8 @@ void load_bin(const char *path) {
 
 int main()
 {
-    load_bin("./test0/test.bin");
-    // load_bin("./logisim-bin/sum.bin");
+    load_bin("./logisim-bin/sum.bin");
+    printf("load bin success\n");
     // *(uint32_t*)(mem+0x224) = 0x00100073;
 
     Verilated::traceEverOn(true);
