@@ -46,6 +46,7 @@ prebuild: $(VSRCS)
 	verilator $(PREBUILD_FLAGS) $(VSRCS)
 
 run: ./$(BUILD_DIR)/V$(TOP)
+	echo "TODO: add command here to run simulation" --- IGNORE ---
 	echo $(IMG)
 	$^ $(IMG)
 
