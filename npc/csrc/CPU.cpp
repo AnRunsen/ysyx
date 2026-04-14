@@ -4,6 +4,13 @@
 #include <assert.h>
 
 uint8_t mem[0x8000000]; // 128MB memory
+bool exit_flag = false;
+
+
+extern "C" void sim_exit() {
+    exit_flag = true;
+}
+
 
 void load_bin(const char *path) {
     FILE *fp = fopen(path, "rb");
@@ -50,7 +57,7 @@ int main()
     cpu->contextp()->time(0);
     cpu->arstn = 0;
     cpu->clk = 0;
-    while(1){
+    while(!exit_flag) {
         cpu->contextp()->timeInc(1);
         cpu->clk = 0;
         cpu->eval();

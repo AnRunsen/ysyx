@@ -1,4 +1,5 @@
 `include "MACRO.v"
+import "DPI-C" function void sim_exit(input int code);
 
 module IDU(
     /* explict ports*/
@@ -61,6 +62,36 @@ module IDU(
 
     always @(*) begin
         case(opcode)
+            7'b1110011: begin
+                case(funct3)
+                    3'b000: begin //ecall, ebreak
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0; // alu
+                        alu_sel = 0; // imm
+                        brju = 0; // PC+4
+                        mem_signext = 0;
+
+                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(0);
+                    end
+
+                    default: begin
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0; // alu
+                        alu_sel = 0; // imm
+                        brju = 0; // PC+4
+                        mem_signext = 0;
+                    end
+                endcase
+            end
+
             7'b0010011: begin
                 case(funct3)
                     3'b000: begin //addi
