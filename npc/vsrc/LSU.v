@@ -1,10 +1,5 @@
 `include "MACRO.v"
 
-import "DPI-C" function int pmem_read(input int raddr);
-import "DPI-C" function void pmem_write(
-  input int waddr, input int wdata, input byte wmask
-);
-
 module LSU(
     input mem_write_en,
     input [1:0] op_width,

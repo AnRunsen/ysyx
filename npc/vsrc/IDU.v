@@ -1,5 +1,5 @@
 `include "MACRO.v"
-import "DPI-C" function void sim_exit();
+
 
 module IDU(
     /* explict ports*/
