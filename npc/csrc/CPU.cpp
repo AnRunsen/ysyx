@@ -1,5 +1,6 @@
 #include "VCPU.h"
 #include "verilated_vcd_c.h"
+#include <stdio.h>
 
 uint8_t mem[0x8000000]; // 128MB memory
 
@@ -46,7 +47,10 @@ int main()
         mem_op(cpu);
         tfp->dump(cpu->contextp()->time());
 
-        if(cpu->contextp()->time() == 5) cpu->arstn = 1;
+        if(cpu->contextp()->time() == 5){
+            printf("Releasing reset at time %lu\n", cpu->contextp()->time());
+            cpu->arstn = 1;
+        }
         if(cpu->contextp()->time() > 10000) break;
     }
 
