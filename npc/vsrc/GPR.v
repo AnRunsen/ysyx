@@ -21,6 +21,6 @@ module GPR #(ADDR_WIDTH = 5, DATA_WIDTH = 32) (
         else if(wen) gpr[waddr] <= wdata;
     end
 
-    assign rdata1 = gpr[raddr1];
-    assign rdata2 = gpr[raddr2];
+    assign rdata1 = raddr1==5'b0 ? {DATA_WIDTH{1'b0}} : gpr[raddr1];
+    assign rdata2 = raddr2==5'b0 ? {DATA_WIDTH{1'b0}} : gpr[raddr2];
 endmodule
