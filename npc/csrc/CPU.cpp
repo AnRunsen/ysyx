@@ -41,12 +41,10 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-
-
-
 int main()
 {
-    load_bin("./test0/test.bin");
+    load_bin("./logisim/sum.bin");
+    *(uint32_t*)(mem+0x224) = 0x00100073;
 
     Verilated::traceEverOn(true);
     VCPU* cpu = new VCPU;
@@ -71,7 +69,7 @@ int main()
         if(cpu->contextp()->time() >= 5){
             cpu->arstn = 1;
         }
-        // if(cpu->contextp()->time() > 10000) break;
+        if(cpu->contextp()->time() > 100000) break;
     }
 
     tfp->close();

@@ -1,6 +1,5 @@
 `include "MACRO.v"
-
-
+import PKG::sim_exit;
 module IDU(
     /* explict ports*/
     input [31:0] Inst,
@@ -64,7 +63,7 @@ module IDU(
         case(opcode)
             7'b1110011: begin
                 case(funct3)
-                    3'b000: begin //ecall, ebreak
+                    3'b000: begin //ebreak
                         imm = 0;
                         alu_op = 0;
                         wb_en = 0;
@@ -92,6 +91,110 @@ module IDU(
                 endcase
             end
 
+            7'b0110011: begin
+                case(funct3)
+                    3'b000: begin //add, sub
+                        imm = 0;
+                        alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SUB : `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                    end
+
+                    default: begin
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0; // alu
+                        alu_sel = 0; // imm
+                        brju = 0; // PC+4
+                        mem_signext = 0;
+                    end
+                endcase
+            end
+
+            7'b0110111: begin
+                imm = immU;
+                alu_op = 0; // not care
+                wb_en = 1;
+                mem_write_en = 0;
+                op_width = 0;
+                wb_sel = `WB_SEL_IMM; // alu
+                alu_sel = 0; // not care
+                brju = `PC_NORMAL; // PC+4
+                mem_signext = 0;
+            end
+
+            7'b0000011: begin
+                case(funct3)
+                    3'b000: begin //lb
+                        imm = immI;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = `OP_WIDTH_BYTE;
+                        wb_sel = `WB_SEL_MEM; // mem
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 1;
+                    end
+
+                    3'b001: begin //lh
+                        imm = immI;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = `OP_WIDTH_HALF;
+                        wb_sel = `WB_SEL_MEM; // mem
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 1;
+                    end
+
+                    3'b010: begin //lw
+                        imm = immI;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = `OP_WIDTH_WORD;
+                        wb_sel = `WB_SEL_MEM; // mem
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 1;
+                    end
+
+                    3'b100: begin //lbu
+                        imm = immI;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = `OP_WIDTH_BYTE;
+                        wb_sel = `WB_SEL_MEM; // mem
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                    end
+
+                    default: begin
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0; // alu
+                        alu_sel = 0; // imm
+                        brju = 0; // PC+4
+                        mem_signext = 0;
+                    end
+                endcase
+            end
+
             7'b0010011: begin
                 case(funct3)
                     3'b000: begin //addi
@@ -99,7 +202,7 @@ module IDU(
                         alu_op = `ALU_OP_ADD;
                         wb_en = 1;
                         mem_write_en = 0;
-                        op_width = `OP_WIDTH_NONE;
+                        op_width = 0;
                         wb_sel = `WB_SEL_ALU; // alu
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL;
@@ -126,7 +229,7 @@ module IDU(
                         alu_op = `ALU_OP_ADD;
                         wb_en = 1;
                         mem_write_en = 0;
-                        op_width = `OP_WIDTH_NONE;
+                        op_width = 0;
                         wb_sel = `WB_SEL_PC4; // PC+4
                         alu_sel = `ALU_SEL_IMM; // imm
                         brju = `PC_FAR; // PC=ALU_RES
@@ -142,6 +245,58 @@ module IDU(
                         wb_sel = 0; // alu
                         alu_sel = 0; // imm
                         brju = 0;
+                        mem_signext = 0;
+                    end
+                endcase
+            end
+
+            7'b0100011: begin
+                case(funct3)
+                    3'b000: begin //sb
+                        imm = immS;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 0;
+                        mem_write_en = 1;
+                        op_width = `OP_WIDTH_BYTE;
+                        wb_sel = 0; // not care
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                    end
+
+                    3'b001: begin //sh
+                        imm = immS;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 0;
+                        mem_write_en = 1;
+                        op_width = `OP_WIDTH_HALF;
+                        wb_sel = 0; // not care
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                    end
+
+                    3'b010: begin //sw
+                        imm = immS;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 0;
+                        mem_write_en = 1;
+                        op_width = `OP_WIDTH_WORD;
+                        wb_sel = 0; // not care
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                    end
+
+                    default: begin
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0; // alu
+                        alu_sel = 0; // imm
+                        brju = 0; // PC+4
                         mem_signext = 0;
                     end
                 endcase

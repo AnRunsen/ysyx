@@ -1,3 +1,4 @@
+import PKG::pmem_read;
 module IFU(
     input [31:0] PC,
     output reg [31:0] Inst

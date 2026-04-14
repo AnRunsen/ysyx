@@ -1,5 +1,6 @@
 `include "MACRO.v"
-
+import PKG::pmem_read;
+import PKG::pmem_write;
 module LSU(
     input mem_write_en,
     input [1:0] op_width,
