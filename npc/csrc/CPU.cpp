@@ -1,5 +1,5 @@
 #include "VCPU.h"
-#include "verilated_fst_c.h"
+#include "verilated_vcd_c.h"
 
 uint8_t mem[0x8000000]; // 128MB memory
 
@@ -27,22 +27,27 @@ int main()
 {
     Verilated::traceEverOn(true);
     VCPU* cpu = new VCPU;
-    VerilatedFstC* tfp = new VerilatedFstC;
+    VerilatedVcdC* tfp = new VerilatedVcdC;
     cpu->trace(tfp, 99);
-    tfp->open("cpu.fst");
+    tfp->open("cpu.vcd");
 
     cpu->contextp()->time(0);
     cpu->arstn = 0;
     cpu->clk = 0;
     while(1){
+        cpu->contextp()->timeInc(1);
         cpu->clk = 0;
+        cpu->eval();
+        tfp->dump(cpu->contextp()->time());
+
+        cpu->contextp()->timeInc(1);
         cpu->clk = 1;
         cpu->eval();
         mem_op(cpu);
         tfp->dump(cpu->contextp()->time());
-        cpu->contextp()->timeInc(1);
+
         if(cpu->contextp()->time() == 5) cpu->arstn = 1;
-        if(cpu->contextp()->time() > 1000) break;
+        if(cpu->contextp()->time() > 10000) break;
     }
 
     tfp->close();

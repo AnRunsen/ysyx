@@ -33,8 +33,8 @@ BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.cpp")
 
-VERILATOR_FLAGS = --build --trace-fst --cc --exe --Mdir $(BUILD_DIR) --top $(TOP) -I$(abspath ./vsrc)
-PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace-fst --top $(TOP) -I$(abspath ./vsrc)
+VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP) -I$(abspath ./vsrc)
+PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP) -I$(abspath ./vsrc)
 
 sim: $(VSRCS) $(CSRCS)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
