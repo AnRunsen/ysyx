@@ -45,7 +45,7 @@ module IDU(
     assign srcR1 = srcR1_in;
     assign srcR2 = srcR2_in;
 
-    assign rs1 = Inst[19:15];
+    assign rs1 = (opcode == 7'b1110011) ? 5'd10 : Inst[19:15];
     assign rs2 = Inst[24:20];
     assign rd = Inst[11:7];
     assign opcode = Inst[6:0];
@@ -76,7 +76,7 @@ module IDU(
                         mem_signext = 0;
                         mem_en = 0;
 
-                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit();
+                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(srcR1);
                     end
 
                     default: begin

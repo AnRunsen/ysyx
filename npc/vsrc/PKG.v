@@ -4,6 +4,6 @@ package PKG;
     import "DPI-C" function void pmem_write(
         input int waddr, input int wdata, input byte wmask
     );
-    import "DPI-C" function void sim_exit();
+    import "DPI-C" function void sim_exit(input int code);
 
 endpackage

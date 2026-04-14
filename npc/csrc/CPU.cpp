@@ -8,7 +8,12 @@ uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
 
 
-extern "C" void sim_exit() {
+extern "C" void sim_exit(int code) {
+    if(code == 0){
+        printf("\033[32mHit Good Trap\033[0m\n");
+    } else {
+        printf("\033[31mHit Bad Trap\033[0m\n");
+    }
     exit_flag = true;
 }
 
