@@ -58,8 +58,8 @@ int main()
 
         cpu->contextp()->timeInc(1);
         cpu->clk = 1;
-        cpu->eval();
         mem_op(cpu);
+        cpu->eval();
         tfp->dump(cpu->contextp()->time());
 
         if(cpu->contextp()->time() >= 5){
