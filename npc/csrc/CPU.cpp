@@ -8,6 +8,7 @@
         if ((addr) < 0x80000000 || (addr) >= 0x88000000) { \
             printf("invalid address 0x%08x\n", (addr)); \
             exit_flag = true; \
+            return; \
         } \
     } while(0)
 
