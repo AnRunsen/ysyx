@@ -1,5 +1,5 @@
 #include "VCPU.h"
-#include "VCPU__Dpi.h"
+// #include "VCPU__Dpi.h"
 #include "verilated_vcd_c.h"
 #include <stdio.h>
 #include <assert.h>
