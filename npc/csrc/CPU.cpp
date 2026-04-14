@@ -13,6 +13,7 @@ extern "C" void sim_exit() {
 
 extern "C" int pmem_read(int raddr)
 {
+    printf("pmem_read: raddr = 0x%08x\n", raddr);
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t*)(mem + (raddr & ~0x3u));
 }
