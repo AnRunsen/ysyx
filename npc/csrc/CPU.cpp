@@ -1,5 +1,4 @@
 #include "VCPU.h"
-// #include "VCPU__Dpi.h"
 #include "verilated_vcd_c.h"
 #include <stdio.h>
 #include <assert.h>
@@ -66,8 +65,8 @@ int main()
 
         cpu->contextp()->timeInc(1);
         cpu->clk = 1;
-        mem_op(cpu);
         cpu->eval();
+        mem_op(cpu);
         tfp->dump(cpu->contextp()->time());
 
         if(cpu->contextp()->time() >= 5){
