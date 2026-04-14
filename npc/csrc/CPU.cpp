@@ -1,8 +1,21 @@
 #include "VCPU.h"
 #include "verilated_vcd_c.h"
 #include <stdio.h>
+#include <assert.h>
 
 uint8_t mem[0x8000000]; // 128MB memory
+
+void load_bin(const char *path) {
+    FILE *fp = fopen(path, "rb");
+    assert(fp != NULL);
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    rewind(fp);
+    assert(size <= (long)sizeof(mem));
+    size_t ret = fread(mem, 1, size, fp);
+    assert(ret == (size_t)size);
+    fclose(fp);
+}
 
 void mem_op(VCPU* cpu) {
     if(cpu->wen) {
@@ -26,6 +39,8 @@ void mem_op(VCPU* cpu) {
 
 int main()
 {
+    load_bin("test.bin");
+
     Verilated::traceEverOn(true);
     VCPU* cpu = new VCPU;
     VerilatedVcdC* tfp = new VerilatedVcdC;

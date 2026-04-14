@@ -88,6 +88,34 @@ module IDU(
                 endcase
             end
 
+            7'b1100111: begin
+                case(funct3)
+                    3'b000: begin //jalr
+                        imm = immI;
+                        alu_op = `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = `OP_WIDTH_NONE;
+                        wb_sel = `WB_SEL_PC4; // PC+4
+                        alu_sel = `ALU_SEL_IMM; // imm
+                        brju = `PC_FAR; // PC=ALU_RES
+                        mem_signext = 0;
+                    end
+
+                    default: begin
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0; // alu
+                        alu_sel = 0; // imm
+                        brju = 0;
+                        mem_signext = 0;
+                    end
+                endcase
+            end
+
             default: begin
                 imm = 0;
                 alu_op = 0;
