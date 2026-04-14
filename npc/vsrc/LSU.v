@@ -1,27 +1,27 @@
 `include "MACRO.v"
 
+import "DPI-C" function int pmem_read(input int raddr);
+import "DPI-C" function void pmem_write(
+  input int waddr, input int wdata, input byte wmask
+);
+
 module LSU(
-    /*explict ports*/
     input mem_write_en,
     input [1:0] op_width,
     input sign_ext_en,
     input [31:0] addr,
     input [31:0] wdata,
-    output [31:0] rdata,
-
-    /*implict ports for RAM*/
-    output [31:0] addr_,
-    output [31:0] wdata_,
-    input [31:0] rdata_,
-    output [1:0] op_width_,
-    output mem_write_en_
+    output [31:0] rdata
 );
 
+    reg [31:0] rdata_;
+    wire [31:0] wdata_ = wdata << (addr[1:0]<<3);
 
-    assign addr_ = addr;
-    assign wdata_ = wdata;
-    assign op_width_ = op_width;
-    assign mem_write_en_ = mem_write_en;
+    always @(*) begin
+        rdata_ = pmem_read(addr);
+        if(mem_write_en) pmem_write(addr, wdata_, (op_width == `OP_WIDTH_BYTE) ? 8'b0000_0001 << addr[1:0] :
+                                    (op_width == `OP_WIDTH_HALF) ? 8'b0000_0011 << addr[1:0] : 8'b0000_1111);
+    end
 
     reg [7:0] data8;
     reg [15:0] data16;

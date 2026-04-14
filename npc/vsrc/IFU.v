@@ -1,13 +1,12 @@
+import "DPI-C" function int pmem_read(input int raddr);
+
 module IFU(
     input [31:0] PC,
-    output [31:0] Inst,
-
-    /*We sim the RAM with c++. Below is the c++ port*/
-    output [31:0] RAM_raddr0,
-    input [31:0] RAM_rdata0
+    output reg [31:0] Inst
 );
 
-    assign RAM_raddr0 = PC;
-    assign Inst = RAM_rdata0;
+    always @(*) begin
+        Inst = pmem_read(PC);
+    end
 
 endmodule

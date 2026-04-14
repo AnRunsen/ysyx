@@ -1,16 +1,6 @@
 module CPU(
         input clk,
-        input arstn,
-
-        /*interact with RAM*/
-        output [31:0] raddr0, //0 is used by IFU
-        input [31:0] rdata0,
-        output [31:0] raddr1, //1 is used by LSU
-        input [31:0] rdata1,
-        output [31:0] waddr,
-        output [31:0] wdata,
-        output wen,
-        output [1:0] op_width
+        input arstn
     );
 
     wire [31:0] 	PCU_PC;
@@ -90,16 +80,10 @@ module CPU(
 
     IFU u_IFU(
             .PC         	( PCU_PC          ),
-            .Inst       	( IFU_Inst        ),
-            .RAM_raddr0 	( IFU_RAM_raddr0  ),
-            .RAM_rdata0 	( rdata0  )
+            .Inst       	( IFU_Inst        )
         );
 
     wire [31:0] 	LSU_rdata;
-    wire [31:0] 	LSU_addr_;
-    wire [31:0] 	LSU_wdata_;
-    wire [1:0]  	LSU_op_width_;
-    wire        	LSU_mem_write_en_;
 
     LSU u_LSU(
             .mem_write_en  	( IDU_mem_write_en   ),
@@ -107,12 +91,7 @@ module CPU(
             .sign_ext_en   	( IDU_mem_signext    ),
             .addr          	( EXU_result           ),
             .wdata         	( IDU_srcR2          ),
-            .rdata         	( LSU_rdata          ),
-            .addr_         	( LSU_addr_          ),
-            .wdata_        	( LSU_wdata_         ),
-            .rdata_        	( rdata1         ),
-            .op_width_     	( LSU_op_width_      ),
-            .mem_write_en_ 	( LSU_mem_write_en_  )
+            .rdata         	( LSU_rdata          )
         );
 
     wire        	WBU_wen;
@@ -131,14 +110,6 @@ module CPU(
             .wdata   	( WBU_wdata    ),
             .waddr   	( WBU_waddr    )
         );
-
-
-    assign raddr0 = IFU_RAM_raddr0;
-    assign raddr1 = LSU_addr_;
-    assign waddr = LSU_addr_;
-    assign wdata = LSU_wdata_;
-    assign wen = LSU_mem_write_en_;
-    assign op_width = LSU_op_width_;
 
 
 endmodule

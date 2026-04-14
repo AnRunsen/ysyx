@@ -11,6 +11,23 @@ extern "C" void sim_exit() {
     exit_flag = true;
 }
 
+extern "C" int pmem_read(int raddr)
+{
+    // 总是读取地址为`raddr & ~0x3u`的4字节返回
+    return *(uint32_t*)(mem + (raddr & ~0x3u));
+}
+extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
+{
+    // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
+    // `wmask`中每比特表示`wdata`中1个字节的掩码,
+    // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
+    for(int i = 0; i < 4; i++){
+        if(wmask & (1 << i)){
+            mem[(waddr & ~0x3u) + i] = (wdata >> (i << 3)) & 0xFF;
+        }
+    }
+}
+
 
 void load_bin(const char *path) {
     FILE *fp = fopen(path, "rb");
@@ -24,24 +41,7 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-void mem_op(VCPU* cpu) {
-    if(cpu->wen) {
-        switch(cpu->op_width) {
-            case 0: // byte
-                *(uint8_t*)(mem + (cpu->waddr & ~0x0)) = (uint8_t)(cpu->wdata & 0xFF);
-                break;
-            case 1: // half-word
-                *(uint16_t*)(mem + (cpu->waddr & ~0x1)) = (uint16_t)(cpu->wdata & 0xFFFF);
-                break;
-            case 2: // word
-                *(uint32_t*)(mem + (cpu->waddr & ~0x3)) = (uint32_t)cpu->wdata;
-                break;
-        }
-    }
 
-    cpu->rdata0 = *(uint32_t*)(mem + (cpu->raddr0 & ~0x3));
-    cpu->rdata1 = *(uint32_t*)(mem + (cpu->raddr1 & ~0x3));
-}
 
 
 int main()
@@ -66,7 +66,6 @@ int main()
         cpu->contextp()->timeInc(1);
         cpu->clk = 1;
         cpu->eval();
-        mem_op(cpu);
         tfp->dump(cpu->contextp()->time());
 
         if(cpu->contextp()->time() >= 5){
