@@ -22,7 +22,7 @@ module PCU(
 
     always @(posedge clk or negedge arstn) begin
         if(!arstn) begin
-            PC <= 32'h0000_0000;
+            PC <= 32'h8000_0000;
         end
 
         else begin

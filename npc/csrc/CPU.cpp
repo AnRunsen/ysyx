@@ -13,7 +13,6 @@ extern "C" void sim_exit() {
 
 extern "C" int pmem_read(int raddr)
 {
-    printf("pmem_read: raddr = 0x%08x\n", raddr);
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t*)(mem + (raddr & ~0x3u));
 }
@@ -42,9 +41,14 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    load_bin("./logisim-bin/mem.bin");
+    if(argc > 1){
+        load_bin(argv[1]);
+    } else {
+        printf("please provide a binary file to load into memory\n");
+        assert(0);
+    }
     //*(uint32_t*)(mem+0x224) = 0x00100073;
 
     Verilated::traceEverOn(true);

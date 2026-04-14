@@ -40,10 +40,13 @@ sim: $(VSRCS) $(CSRCS)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	rm -rf $(BUILD_DIR)
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
-	./$(BUILD_DIR)/V$(TOP)
+	./$(BUILD_DIR)/V$(TOP) 
 
 prebuild: $(VSRCS)
 	verilator $(PREBUILD_FLAGS) $(VSRCS)
+
+run: sim
+	echo "TODO: add command here to run simulation"
 
 clean:
 	rm -rf $(BUILD_DIR)
