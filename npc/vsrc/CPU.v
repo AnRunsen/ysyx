@@ -54,6 +54,7 @@ module CPU(
     wire [4:0]  	IDU_rs1;
     wire [4:0]  	IDU_rs2;
     wire            IDU_mem_signext;
+    wire            IDU_mem_en;
 
     IDU u_IDU(
             .Inst         	( IFU_Inst          ),
@@ -72,11 +73,11 @@ module CPU(
             .rs2          	( IDU_rs2           ),
             .srcR1_in     	( GPR_rdata1      ),
             .srcR2_in     	( GPR_rdata2      ),
-            .mem_signext    ( IDU_mem_signext )
+            .mem_signext    ( IDU_mem_signext ),
+            .mem_en         ( IDU_mem_en      )
         );
 
     wire [31:0] 	IFU_Inst;
-    wire [31:0] 	IFU_RAM_raddr0;
 
     IFU u_IFU(
             .PC         	( PCU_PC          ),
@@ -91,6 +92,7 @@ module CPU(
             .sign_ext_en   	( IDU_mem_signext    ),
             .addr          	( EXU_result           ),
             .wdata         	( IDU_srcR2          ),
+            .mem_en        	( IDU_mem_en         ),
             .rdata         	( LSU_rdata          )
         );
 

@@ -2,6 +2,7 @@
 import PKG::pmem_read;
 import PKG::pmem_write;
 module LSU(
+    input mem_en,
     input mem_write_en,
     input [1:0] op_width,
     input sign_ext_en,
@@ -14,9 +15,13 @@ module LSU(
     wire [31:0] wdata_ = wdata << (addr[1:0]<<3);
 
     always @(*) begin
-        rdata_ = pmem_read(addr);
-        if(mem_write_en) pmem_write(addr, wdata_, (op_width == `OP_WIDTH_BYTE) ? 8'b0000_0001 << addr[1:0] :
+        if(mem_en) begin
+            rdata_ = pmem_read(addr);
+            if(mem_write_en) pmem_write(addr, wdata_, (op_width == `OP_WIDTH_BYTE) ? 8'b0000_0001 << addr[1:0] :
                                     (op_width == `OP_WIDTH_HALF) ? 8'b0000_0011 << addr[1:0] : 8'b0000_1111);
+        end
+
+        else rdata_ = 32'b0;
     end
 
     reg [7:0] data8;
