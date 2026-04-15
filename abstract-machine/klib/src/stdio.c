@@ -88,7 +88,6 @@ int printf(const char *fmt, ...) {
     }
     else {
       panic("unsupported format");
-      putch(*fmt);
     }
   }
 
