@@ -117,7 +117,6 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 
 #ifdef CONFIG_WATCHPOINT
   /*Watch all of the watchpoint*/
-  extern WP *head;
   WP *wp = head;
   uint32_t new_value;
   bool success;

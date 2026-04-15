@@ -128,7 +128,6 @@ static int cmd_d(char *args)
   }
   else {
     int wp_no = atoi(args);
-    extern WP* head;
 
     WP* wp = head;
     while(wp != NULL && wp->NO != wp_no)
@@ -207,7 +206,6 @@ static int cmd_info(char *args) {
   }
 
   else if(strcmp(arg, "w") == 0) {
-    extern WP *head;
 
     WP *wp = head;
     if(wp == NULL)
