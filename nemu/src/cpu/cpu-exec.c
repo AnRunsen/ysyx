@@ -35,9 +35,11 @@ static bool g_print_step = false;
 
 ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
 
-#ifdef CONFIG_ISA_riscv
+#ifdef CONFIG_FTRACE
 /* ftrace 调用深度（缩进水平） */
 static int ftrace_depth = 0;
+
+
 
 /*
  * 检测当前指令是否为函数调用或返回。
@@ -93,7 +95,7 @@ static void ftrace_detect(Decode *s)
     }
   }
 }
-#endif /* CONFIG_ISA_riscv */
+#endif
 
 void device_update();
 
