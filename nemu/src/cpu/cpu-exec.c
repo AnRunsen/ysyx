@@ -40,6 +40,17 @@ typedef struct watchpoint {
 
 } WP;
 
+
+typedef struct {
+    //字符串数组，字符串长度128，数组长度16
+    char buf[16][128];
+    int head;  // 写指针
+    int tail;  // 读指针
+    int size;  // 写入的指令数量
+} ring_buffer_t;
+
+ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
+
 void device_update();
 
 word_t expr(char *e, bool *success);
@@ -109,6 +120,16 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst, ilen);
+
+  //将s->logbuf字符串写入循环缓冲区
+  strncpy(ring_buffer.buf[ring_buffer.head], s->logbuf, sizeof(s->logbuf));
+  ring_buffer.head = (ring_buffer.head + 1) % 16;
+  if (ring_buffer.size < 16) {
+    ring_buffer.size++;
+  } else {
+    ring_buffer.tail = (ring_buffer.tail + 1) % 16; // 覆盖最旧的指令
+  }
+
 #endif
 }
 
