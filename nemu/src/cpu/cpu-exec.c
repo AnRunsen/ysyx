@@ -197,6 +197,8 @@ static void execute(uint64_t n)
   {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst++;
+
+    //现在S->inst是上一条指令，S->Dnpc是下一条指令的地址
     IFDEF(CONFIG_FTRACE, ftrace_detect(&s));
     trace_and_difftest(&s, cpu.pc);
     if (nemu_state.state != NEMU_RUNNING)
