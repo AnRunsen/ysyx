@@ -18,6 +18,7 @@
 #include <cpu/difftest.h>
 #include <locale.h>
 #include <ftrace.h>
+#include <ringbuf.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -41,15 +42,6 @@ typedef struct watchpoint
   uint32_t value;
 
 } WP;
-
-typedef struct
-{
-  // 字符串数组，字符串长度128，数组长度16
-  char buf[16][128];
-  int head; // 写指针
-  int tail; // 读指针
-  int size; // 写入的指令数量
-} ring_buffer_t;
 
 ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
 

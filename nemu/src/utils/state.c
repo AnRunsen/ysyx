@@ -14,22 +14,16 @@
 ***************************************************************************************/
 
 #include <utils.h>
+#include <ftrace.h>
+#include <ringbuf.h>
 
 NEMUState nemu_state = { .state = NEMU_STOP };
-
-typedef struct {
-    char buf[16][128];
-    int head;  // 写指针
-    int tail;  // 读指针
-    int size;  // 写入的指令数量
-} ring_buffer_t;
 
 int is_exit_status_bad() {
   int good = (nemu_state.state == NEMU_END && nemu_state.halt_ret == 0) ||
     (nemu_state.state == NEMU_QUIT);
 
 #ifdef CONFIG_ITRACE
-  extern ring_buffer_t ring_buffer;
   if(!good && ring_buffer.size > 0)
   {
     //将环形缓冲区中的内容输出到屏幕
@@ -39,6 +33,9 @@ int is_exit_status_bad() {
     }while(ring_buffer.tail != ring_buffer.head);
   }
 #endif
+
+  free(ftrace_info.symtab);
+  free(ftrace_info.strtab);
   return !good;
 
 }
