@@ -84,7 +84,7 @@ int printf(const char *fmt, ...) {
 
       if (x < 0) {
         neg = 1;
-        ux = -(unsigned int)x;  // ⭐ 防止 INT_MIN 溢出
+        ux = -(unsigned int)x;
       } else {
         ux = x;
       }
