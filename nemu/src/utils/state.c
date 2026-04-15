@@ -30,7 +30,7 @@ int is_exit_status_bad() {
     (nemu_state.state == NEMU_QUIT);
 
 #ifdef CONFIG_ITRACE
-  if(good && ring_buffer.size > 0)
+  if(!good && ring_buffer.size > 0)
   {
     //将环形缓冲区中的内容输出到屏幕
     do{
