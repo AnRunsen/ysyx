@@ -19,16 +19,8 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include <memory/paddr.h>
+#include <watchpoint.h>
 
-typedef struct watchpoint {
-  int NO;
-  struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
-  char expr[256];
-  uint32_t value;
-
-} WP;
 
 static int is_batch_mode = false;
 

@@ -19,6 +19,7 @@
 #include <locale.h>
 #include <ftrace.h>
 #include <ringbuf.h>
+#include <watchpoint.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -31,17 +32,6 @@ CPU_state cpu = {};
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
-
-typedef struct watchpoint
-{
-  int NO;
-  struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
-  char expr[256];
-  uint32_t value;
-
-} WP;
 
 ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
 
