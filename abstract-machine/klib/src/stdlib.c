@@ -36,7 +36,18 @@ void *malloc(size_t size) {
 #if !(defined(__ISA_NATIVE__) && defined(__NATIVE_USE_KLIB__))
   panic("Not implemented");
 #endif
-  return NULL;
+  //The return addr should aligned to 8
+
+  if(size == 0) return NULL;
+  extern Area heap;
+  heap.start = (void *)ROUNDUP(heap.start, 8);
+  size  = (size_t)ROUNDUP(size, 8);
+  void *old = heap.start;
+  heap.start += size;
+  if(heap.start > heap.end) {
+    panic("Out of memory");
+  }
+  return old;
 }
 
 void free(void *ptr) {
