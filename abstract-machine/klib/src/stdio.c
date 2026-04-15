@@ -5,89 +5,140 @@
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
+static int print_num(unsigned int x, int base, int width, int pad_zero, int is_signed, int neg) {
+  char buf[32];
+  char *p = buf + sizeof(buf);
+  int cnt = 0;
+
+  // 转换数字（倒序）
+  do {
+    int d = x % base;
+    *--p = (d < 10) ? ('0' + d) : ('a' + d - 10);
+    x /= base;
+  } while (x);
+
+  int len = buf + sizeof(buf) - p;
+
+  // 负号算长度
+  if (neg) len++;
+
+  // 填充
+  char pad = pad_zero ? '0' : ' ';
+  while (len < width) {
+    putch(pad);
+    cnt++;
+    width--;
+  }
+
+  // 输出负号
+  if (neg) {
+    putch('-');
+    cnt++;
+  }
+
+  // 输出数字
+  while (p < buf + sizeof(buf)) {
+    putch(*p++);
+    cnt++;
+  }
+
+  return cnt;
+}
+
 int printf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
 
   int count = 0;
-  for (; *fmt != '\0'; fmt++) {
+
+  for (; *fmt; fmt++) {
     if (*fmt != '%') {
       putch(*fmt);
       count++;
       continue;
     }
-    fmt++;
 
-    /* 解析填充字符（默认空格，'0' 表示零填充） */
-    char pad_char = ' ';
+    fmt++;  // skip '%'
+
+    // ---------- 解析格式 ----------
+    int pad_zero = 0;
+    int width = 0;
+
+    // 处理 0 填充
     if (*fmt == '0') {
-      pad_char = '0';
+      pad_zero = 1;
       fmt++;
     }
 
-    /* 解析宽度 */
-    int width = 0;
+    // 处理宽度
     while (*fmt >= '0' && *fmt <= '9') {
       width = width * 10 + (*fmt - '0');
       fmt++;
     }
 
+    // ---------- 处理类型 ----------
     if (*fmt == 'd') {
       int x = va_arg(ap, int);
-      char buf[16];
-      char *q = buf + sizeof(buf);
-      int negative = (x < 0);
-      /* 使用无符号运算避免 INT_MIN 溢出 */
-      unsigned int ux = negative ? (unsigned int)(-(unsigned int)x) : (unsigned int)x;
-      do {
-        *--q = '0' + ux % 10;
-        ux /= 10;
-      } while (ux > 0);
-      int digits = (int)(buf + sizeof(buf) - q);
-      int total = digits + negative;
-      /* 空格填充在符号前，零填充在符号后 */
-      if (pad_char == ' ') {
-        for (int i = total; i < width; i++) { putch(' '); count++; }
+      unsigned int ux;
+      int neg = 0;
+
+      if (x < 0) {
+        neg = 1;
+        ux = -(unsigned int)x;  // ⭐ 防止 INT_MIN 溢出
+      } else {
+        ux = x;
       }
-      if (negative) { putch('-'); count++; }
-      if (pad_char == '0') {
-        for (int i = total; i < width; i++) { putch('0'); count++; }
-      }
-      while (q < buf + sizeof(buf)) {
-        putch(*q++);
-        count++;
-      }
+
+      count += print_num(ux, 10, width, pad_zero, 1, neg);
     }
+
     else if (*fmt == 'u') {
       unsigned int x = va_arg(ap, unsigned int);
-      char buf[16];
-      char *q = buf + sizeof(buf);
-      do {
-        *--q = '0' + x % 10;
-        x /= 10;
-      } while (x > 0);
-      int digits = (int)(buf + sizeof(buf) - q);
-      for (int i = digits; i < width; i++) { putch(pad_char); count++; }
-      while (q < buf + sizeof(buf)) {
-        putch(*q++);
-        count++;
-      }
+      count += print_num(x, 10, width, pad_zero, 0, 0);
     }
+
+    else if (*fmt == 'x') {
+      unsigned int x = va_arg(ap, unsigned int);
+      count += print_num(x, 16, width, pad_zero, 0, 0);
+    }
+
     else if (*fmt == 's') {
       const char *s = va_arg(ap, const char *);
-      while (*s != '\0') {
+      if (!s) s = "(null)";
+
+      int len = 0;
+      const char *t = s;
+      while (*t++) len++;
+
+      // padding
+      while (len < width) {
+        putch(' ');
+        count++;
+        width--;
+      }
+
+      while (*s) {
         putch(*s++);
         count++;
       }
     }
 
-    else if(*fmt == 'c') {
-      char c = (char)va_arg(ap, int); // char 会被提升为 int
+    else if (*fmt == 'c') {
+      char c = (char)va_arg(ap, int);
       putch(c);
       count++;
     }
+
+    else if (*fmt == '%') {
+      putch('%');
+      count++;
+    }
+
     else {
-      panic("unsupported format");
+      // 不支持的格式
+      putch('?');
+      assert(0);
+      count++;
     }
   }
 
