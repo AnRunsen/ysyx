@@ -259,6 +259,17 @@ void cpu_exec(uint64_t n)
     Log("nemu: %s at pc = " FMT_WORD,
         (nemu_state.state == NEMU_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) : (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) : ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED))),
         nemu_state.halt_pc);
+
+#ifdef CONFIG_ITRACE
+    if(nemu_state.halt_ret && ring_buffer.size > 0)
+    {
+      //将环形缓冲区中的内容输出到屏幕
+      do{
+        printf("%s\n", ring_buffer.buf[ring_buffer.tail]);
+        ring_buffer.tail = (ring_buffer.tail + 1) % 16;
+      }while(ring_buffer.tail != ring_buffer.head);
+    }
+#endif
     // fall through
   case NEMU_QUIT:
     statistic();
