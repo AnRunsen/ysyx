@@ -67,8 +67,6 @@ static int ftrace_depth = 0;
  */
 static void ftrace_detect(Decode *s)
 {
-
-  printf("111\n");
   if (ftrace_info.symtab == NULL)
     return;
 
