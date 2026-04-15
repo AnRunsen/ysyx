@@ -80,6 +80,12 @@ int printf(const char *fmt, ...) {
         count++;
       }
     }
+
+    else if(*fmt == 'c') {
+      char c = (char)va_arg(ap, int); // char 会被提升为 int
+      putch(c);
+      count++;
+    }
     else {
       panic("unsupported format");
       putch(*fmt);
