@@ -6,7 +6,46 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 int printf(const char *fmt, ...) {
-  panic("Not implemented");
+  va_list ap;
+  va_start(ap, fmt);
+
+
+  uint32_t count = 0;
+  for( ; *fmt != '\0'; fmt++) {
+    count++;
+    if (*fmt != '%') {
+      putch(*fmt);
+      continue;
+    }
+    fmt++;
+    if (*fmt == 'd') {
+      int x = va_arg(ap, int);
+      if (x < 0) {
+        putch('-');
+        x = -x;
+      }
+      char buf[16];
+      char *q = buf + sizeof(buf);
+      do {
+        *--q = '0' + x % 10;
+        x /= 10;
+      } while (x > 0);
+      while (q < buf + sizeof(buf)) {
+        putch(*q++);
+      }
+    }
+    else if (*fmt == 's') {
+      const char *s = va_arg(ap, const char *);
+      while (*s != '\0') {
+        putch(*s++);
+      }
+    }
+    else {
+      panic("unsupported format");
+    }
+  }
+
+  return count+1;
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
