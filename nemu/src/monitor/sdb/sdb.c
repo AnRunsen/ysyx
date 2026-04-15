@@ -19,6 +19,7 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include <memory/paddr.h>
+#include <utils.h>
 
 typedef struct watchpoint {
   int NO;
