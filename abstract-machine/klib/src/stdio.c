@@ -8,7 +8,7 @@
 int printf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-
+  putstr("i am arsenal\n");
 
   uint32_t count = 0;
   for( ; *fmt != '\0'; fmt++) {
