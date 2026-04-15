@@ -155,6 +155,10 @@ config MTRACE
   bool "Print the mem access when enable"
   default "false"
 
+config FTRACE
+  bool "Trace the func call when enable"
+  default "false"
+
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF
