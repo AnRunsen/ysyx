@@ -4,8 +4,8 @@ void __am_timer_init() {
 }
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-  uint64_t bef32_t = inl(0x10000004 + 4);
-  uint64_t aft32_t = inl(0x10000004);
+  uint64_t bef32_t = *(volatile uint32_t *)(0x10000004 + 4);
+  uint64_t aft32_t = *(volatile uint32_t *)(0x10000004);
   uptime->us = (bef32_t << 32) | aft32_t;
 }
 

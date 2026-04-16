@@ -113,12 +113,6 @@ int main(int argc, char **argv)
         cpu->clk = 1;
         cpu->eval();
         tfp->dump(cpu->contextp()->time());
-
-        if(cpu->contextp()->time() > 100000)
-        {
-            printf("\033[31;1mTime limit exceeded\033[0m\n");
-            break;
-        }
     }
 
     tfp->close();
