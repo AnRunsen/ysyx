@@ -11,8 +11,13 @@ bool exit_flag = false;
 extern "C" void sim_exit(int code) {
     if(code == 0){
         printf("\033[32;1mHit Good Trap\033[0m\n");
-    } else {
+    }
+    else if(code == 1){
         printf("\033[31;1mHit Bad Trap\033[0m\n");
+    }
+
+    else {
+        printf("\033[31;1mUnknown Opcode\033[0m\n");
     }
     exit_flag = true;
 }

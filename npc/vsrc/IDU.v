@@ -90,6 +90,8 @@ module IDU(
                         brju = 0; // PC+4
                         mem_signext = 0;
                         mem_en = 0;
+
+                        sim_exit(2);
                     end
                 endcase
             end
@@ -120,6 +122,7 @@ module IDU(
                         brju = 0; // PC+4
                         mem_signext = 0;
                         mem_en = 0;
+                        sim_exit(2);
                     end
                 endcase
             end
@@ -202,6 +205,7 @@ module IDU(
                         brju = 0; // PC+4
                         mem_signext = 0;
                         mem_en = 0;
+                        sim_exit(2);
                     end
                 endcase
             end
@@ -231,6 +235,7 @@ module IDU(
                         brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
+                        sim_exit(2);
                     end
                 endcase
             end
@@ -262,6 +267,7 @@ module IDU(
                         brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
+                        sim_exit(2);
                     end
                 endcase
             end
@@ -318,6 +324,7 @@ module IDU(
                         brju = 0; // PC+4
                         mem_signext = 0;
                         mem_en = 0;
+                        sim_exit(2);
                     end
                 endcase
             end
@@ -333,6 +340,7 @@ module IDU(
                 brju = 0;
                 mem_signext = 0;
                 mem_en = 0;
+                sim_exit(2);
             end
         endcase
     end
