@@ -7,7 +7,10 @@
 #define KEYDOWN_MASK 0x8000
 
 void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
-  printf("enter the keyboard input handler\n");
+  uint32_t key = inl(KBD_ADDR);
+  if(key != 0) {
+    printf("Got key event: %s %d\n", (key & KEYDOWN_MASK) ? "DOWN" : "UP", key & ~KEYDOWN_MASK);
+  }
   kbd->keydown = inl(KBD_ADDR) & KEYDOWN_MASK;
-  kbd->keycode = inl(KBD_ADDR) & 0xFF;
+  kbd->keycode = inl(KBD_ADDR) & ~KEYDOWN_MASK;
 }
