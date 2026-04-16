@@ -11,6 +11,6 @@ void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
   if(key != 0) {
     printf("Got key event: %s %d\n", (key & KEYDOWN_MASK) ? "DOWN" : "UP", key & ~KEYDOWN_MASK);
   }
-  kbd->keydown = inl(KBD_ADDR) & KEYDOWN_MASK;
-  kbd->keycode = inl(KBD_ADDR) & ~KEYDOWN_MASK;
+  kbd->keydown = key & KEYDOWN_MASK;
+  kbd->keycode = key & ~KEYDOWN_MASK;
 }
