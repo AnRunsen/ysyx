@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     tfp->open("cpu.vcd");
 
     cpu->contextp()->time(0);
-    cpu->arstn = 0;
+    cpu->arstn = 1;
     cpu->clk = 0;
     tfp->dump(cpu->contextp()->time());
     while(!exit_flag) {
@@ -92,11 +92,7 @@ int main(int argc, char **argv)
         cpu->clk = 1;
         cpu->eval();
         tfp->dump(cpu->contextp()->time());
-
-
-        if(cpu->contextp()->time() >= 5){
-            cpu->arstn = 1;
-        }
+        
         if(cpu->contextp()->time() > 100000) break;
     }
 
