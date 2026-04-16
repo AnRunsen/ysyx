@@ -32,11 +32,11 @@ module CPU(
             .clk    	( clk     ),
             .arstn  	( arstn   ),
             .wdata  	( WBU_wdata   ),
-            .waddr  	( WBU_waddr   ),
+            .waddr  	( WBU_waddr[3:0]   ),
             .wen    	( WBU_wen     ),
-            .raddr1 	( IDU_rs1  ),
+            .raddr1 	( IDU_rs1[3:0]  ),
             .rdata1 	( GPR_rdata1  ),
-            .raddr2 	( IDU_rs2  ),
+            .raddr2 	( IDU_rs2[3:0]  ),
             .rdata2 	( GPR_rdata2  )
         );
 

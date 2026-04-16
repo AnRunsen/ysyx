@@ -18,6 +18,8 @@
 #include <cpu/difftest.h>
 #include <locale.h>
 #include <ftrace.h>
+#include <ringbuf.h>
+#include <watchpoint.h>
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -31,31 +33,13 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
-typedef struct watchpoint
-{
-  int NO;
-  struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
-  char expr[256];
-  uint32_t value;
-
-} WP;
-
-typedef struct
-{
-  // 字符串数组，字符串长度128，数组长度16
-  char buf[16][128];
-  int head; // 写指针
-  int tail; // 读指针
-  int size; // 写入的指令数量
-} ring_buffer_t;
-
 ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
 
-#ifdef CONFIG_ISA_riscv
+#ifdef CONFIG_FTRACE
 /* ftrace 调用深度（缩进水平） */
 static int ftrace_depth = 0;
+
+
 
 /*
  * 检测当前指令是否为函数调用或返回。
@@ -111,7 +95,7 @@ static void ftrace_detect(Decode *s)
     }
   }
 }
-#endif /* CONFIG_ISA_riscv */
+#endif
 
 void device_update();
 
@@ -135,7 +119,6 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 
 #ifdef CONFIG_WATCHPOINT
   /*Watch all of the watchpoint*/
-  extern WP *head;
   WP *wp = head;
   uint32_t new_value;
   bool success;
@@ -216,6 +199,7 @@ static void execute(uint64_t n)
   {
     exec_once(&s, cpu.pc);
     g_nr_guest_inst++;
+    //现在S->inst是上一条指令，S->Dnpc是下一条指令的地址
     IFDEF(CONFIG_FTRACE, ftrace_detect(&s));
     trace_and_difftest(&s, cpu.pc);
     if (nemu_state.state != NEMU_RUNNING)
@@ -275,6 +259,17 @@ void cpu_exec(uint64_t n)
     Log("nemu: %s at pc = " FMT_WORD,
         (nemu_state.state == NEMU_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) : (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) : ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED))),
         nemu_state.halt_pc);
+
+#ifdef CONFIG_ITRACE
+    if(nemu_state.halt_ret && ring_buffer.size > 0)
+    {
+      //将环形缓冲区中的内容输出到屏幕
+      do{
+        printf("%s\n", ring_buffer.buf[ring_buffer.tail]);
+        ring_buffer.tail = (ring_buffer.tail + 1) % 16;
+      }while(ring_buffer.tail != ring_buffer.head);
+    }
+#endif
     // fall through
   case NEMU_QUIT:
     statistic();

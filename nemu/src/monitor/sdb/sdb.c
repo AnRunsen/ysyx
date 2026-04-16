@@ -19,16 +19,8 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include <memory/paddr.h>
+#include <watchpoint.h>
 
-typedef struct watchpoint {
-  int NO;
-  struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
-  char expr[256];
-  uint32_t value;
-
-} WP;
 
 static int is_batch_mode = false;
 
@@ -136,7 +128,6 @@ static int cmd_d(char *args)
   }
   else {
     int wp_no = atoi(args);
-    extern WP* head;
 
     WP* wp = head;
     while(wp != NULL && wp->NO != wp_no)
@@ -215,7 +206,6 @@ static int cmd_info(char *args) {
   }
 
   else if(strcmp(arg, "w") == 0) {
-    extern WP *head;
 
     WP *wp = head;
     if(wp == NULL)

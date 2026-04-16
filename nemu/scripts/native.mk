@@ -25,7 +25,12 @@ $(BINARY):: compile_git
 # Some convenient rules
 
 override ARGS ?= --log=$(BUILD_DIR)/nemu-log.txt
-override ARGS += $(ARGS_DIFF) --batch --elf $(IMG:.bin=.elf)
+override ARGS += $(ARGS_DIFF) $(BATCH)
+
+# 如何IMG非空，那么加入--elf参数
+ifneq ($(strip $(IMG)),)
+  override ARGS += --elf=$(IMG:.bin=.elf)
+endif
 
 # Command to execute NEMU
 NEMU_EXEC := $(BINARY) $(ARGS) $(IMG)

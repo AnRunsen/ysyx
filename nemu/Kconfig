@@ -159,6 +159,10 @@ config FTRACE
   bool "Trace the func call when enable"
   default "false"
 
+config DTRACE
+  bool "Trace the device access when enable"
+  default "false"
+
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF

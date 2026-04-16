@@ -14,18 +14,8 @@
 ***************************************************************************************/
 
 #include "sdb.h"
+#include <watchpoint.h>
 
-#define NR_WP 32
-
-typedef struct watchpoint {
-  int NO;
-  struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
-  char expr[256];
-  uint32_t value;
-
-} WP;
 
 static WP wp_pool[NR_WP] = {};
 WP *head = NULL, *free_ = NULL;

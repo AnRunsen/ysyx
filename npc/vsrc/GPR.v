@@ -1,4 +1,4 @@
-module GPR #(ADDR_WIDTH = 5, DATA_WIDTH = 32) (
+module GPR #(ADDR_WIDTH = 4, DATA_WIDTH = 32) (
     input clk,
     input arstn,
     input [DATA_WIDTH-1:0] wdata,
@@ -18,7 +18,7 @@ module GPR #(ADDR_WIDTH = 5, DATA_WIDTH = 32) (
                 gpr[i] <= {DATA_WIDTH{1'b0}};
             end
         end
-        else if(wen) gpr[waddr] <= (waddr == 5'b0) ? {DATA_WIDTH{1'b0}} : wdata;
+        else if(wen) gpr[waddr] <= (waddr == 4'b0) ? {DATA_WIDTH{1'b0}} : wdata;
     end
 
     assign rdata1 = gpr[raddr1];
