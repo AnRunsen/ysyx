@@ -17,7 +17,7 @@ extern "C" void sim_exit(int code) {
     }
 
     else {
-        printf("\033[31;1mUnknown Opcode\033[0m\n");
+        printf("\033[31;1mUnknown Opcode:%08x\033[0m\n", code);
     }
     exit_flag = true;
 }

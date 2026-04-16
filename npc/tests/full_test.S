@@ -1,6 +1,7 @@
-# full_test.S - NPC CPU 指令测试
+# full_test.S - NPC CPU 指令测试（ilp32e ABI，仅使用 x0-x15）
 # 测试指令：add, addi, lui, lw, lbu, sw, sb, jalr
 # 终止方式：全部通过时 a0=0 执行 ebreak，任意失败时 a0=1 执行 ebreak
+# 寄存器分配：t0=x5 t1=x6 t2=x7 s0=x8 a0=x10 a1=x11 a2=x12 a3=x13
 
 .section entry, "ax"
 .globl _start
@@ -41,15 +42,15 @@ _start:
     addi t0, zero, 30
     addi t1, zero, 70
     add  t2, t0, t1
-    addi t3, zero, 100
-    bne  t2, t3, fail
+    addi a1, zero, 100
+    bne  t2, a1, fail
 
     # 负数加法：(-20) + 5 = -15
     addi t0, zero, -20
     addi t1, zero, 5
     add  t2, t0, t1
-    addi t3, zero, -15
-    bne  t2, t3, fail
+    addi a1, zero, -15
+    bne  t2, a1, fail
 
     # x + 0 = x（加零恒等）
     addi t0, zero, 0x7FF
@@ -71,8 +72,8 @@ _start:
     lbu  t1, 0(s0)           # byte[0] = bits[7:0]  = 0x00
     bne  t1, zero, fail
     lbu  t1, 1(s0)           # byte[1] = bits[15:8] = 0x10
-    addi t2, zero, 0x10
-    bne  t1, t2, fail
+    addi a1, zero, 0x10
+    bne  t1, a1, fail
     lbu  t1, 2(s0)           # byte[2] = bits[23:16] = 0x00
     bne  t1, zero, fail
     lbu  t1, 3(s0)           # byte[3] = bits[31:24] = 0x00
@@ -116,47 +117,47 @@ _start:
     addi t0, zero, 0xAB      # 0xAB = 171
     sb   t0, 0(s0)
     lbu  t1, 0(s0)
-    addi t2, zero, 0xAB
-    bne  t1, t2, fail
+    addi a1, zero, 0xAB
+    bne  t1, a1, fail
 
     # 不同偏移：offset=1，值 = 0x7F
     addi t0, zero, 0x7F
     sb   t0, 1(s0)
     lbu  t1, 1(s0)
-    addi t2, zero, 0x7F
-    bne  t1, t2, fail
+    addi a1, zero, 0x7F
+    bne  t1, a1, fail
 
     # sb 只写 1 字节：offset=0 的值仍应为 0xAB
     lbu  t1, 0(s0)
-    addi t2, zero, 0xAB
-    bne  t1, t2, fail
+    addi a1, zero, 0xAB
+    bne  t1, a1, fail
 
     # lbu 零扩展验证：存 0xFF，读回应为 0x000000FF（非符号扩展）
     addi t0, zero, -1        # t0 = 0xFFFFFFFF（低位字节 = 0xFF）
     sb   t0, 2(s0)           # 仅写最低字节 0xFF
     lbu  t1, 2(s0)           # 读回：高 24 位应全 0
-    addi t2, zero, 0xFF      # 0xFF = 255，12 位立即数范围内
-    bne  t1, t2, fail
+    addi a1, zero, 0xFF      # 0xFF = 255，12 位立即数范围内
+    bne  t1, a1, fail
 
     #------------------------------------------------------------------
     # 6. jalr：跳转到 rs1+imm，返回地址写入 rd
     #------------------------------------------------------------------
 
     # 子程序调用（偏移 = 0）
-    addi t4, zero, 0         # t4 = 0（未访问标志）
+    addi a2, zero, 0         # a2 = 0（未访问标志）
     la   t0, jalr_sub1
     jalr ra, 0(t0)           # rd=ra 保存返回地址，跳到 jalr_sub1
     # ——返回点——
-    addi t3, zero, 99
-    bne  t4, t3, fail        # 子程序应将 t4 设为 99
+    addi a1, zero, 99
+    bne  a2, a1, fail        # 子程序应将 a2 设为 99
 
     # jalr 非零偏移测试：jalr ra, 4(t0) 跳到 (t0+4) = jalr_sub2
-    addi t5, zero, 0         # t5 = 0
+    addi a3, zero, 0         # a3 = 0
     la   t0, jalr_sub2_pad   # t0 = jalr_sub2_pad 地址（jalr_sub2 前 4 字节）
     jalr ra, 4(t0)           # 跳到 jalr_sub2_pad + 4 = jalr_sub2
     # ——返回点——
-    addi t3, zero, 77
-    bne  t5, t3, fail        # 子程序应将 t5 设为 77
+    addi a1, zero, 77
+    bne  a3, a1, fail        # 子程序应将 a3 设为 77
 
     #------------------------------------------------------------------
     # 全部测试通过
@@ -173,14 +174,14 @@ fail:
     #------------------------------------------------------------------
 
 jalr_sub1:
-    addi t4, zero, 99        # 设置访问标志 = 99
+    addi a2, zero, 99        # 设置访问标志 = 99
     jalr zero, 0(ra)         # 返回调用者（rd=zero 丢弃返回地址）
 
 jalr_sub2_pad:
     addi zero, zero, 0       # nop：4 字节占位，使 jalr_sub2 正好在偏移 4 处
 
 jalr_sub2:
-    addi t5, zero, 77        # 设置访问标志 = 77
+    addi a3, zero, 77        # 设置访问标志 = 77
     jalr zero, 0(ra)         # 返回调用者
 
     #------------------------------------------------------------------
