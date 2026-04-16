@@ -89,6 +89,9 @@ static void i8042_data_io_handler(uint32_t offset, int len, bool is_write) {
   assert(!is_write);
   assert(offset == 0);
   i8042_data_port_base[0] = key_dequeue();
+  if(i8042_data_port_base[0] != NEMU_KEY_NONE) {
+    Log("key: %s %d\n", (i8042_data_port_base[0] & KEYDOWN_MASK) ? "DOWN" : "UP", i8042_data_port_base[0] & ~KEYDOWN_MASK);
+  }
 }
 
 void init_i8042() {
