@@ -10,10 +10,10 @@ bool exit_flag = false;
 
 extern "C" void sim_exit(int code) {
     if(code == 0){
-        printf("\033[32;1mHit Good Trap\033[0m\n");
+        printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);
     }
     else if(code == 1){
-        printf("\033[31;1mHit Bad Trap\033[0m\n");
+        printf("Code:%d \033[31;1mHit Bad Trap\033[0m\n", code);
     }
 
     else {
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
         cpu->clk = 1;
         cpu->eval();
         tfp->dump(cpu->contextp()->time());
-        
+
         if(cpu->contextp()->time() > 100000) break;
     }
 
