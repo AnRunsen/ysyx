@@ -24,9 +24,7 @@ extern "C" void sim_exit(int code) {
 
 extern "C" int pmem_read(int raddr)
 {
-    printf("pmem_read: addr=0x%08x ", raddr);
     raddr = raddr - 0x80000000; // 内存映射地址转换
-    printf("data=0x%08x\n", *(uint32_t*)(mem + (raddr & ~0x3u)));
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t*)(mem + (raddr & ~0x3u));
 }
@@ -35,7 +33,6 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
     // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
     // `wmask`中每比特表示`wdata`中1个字节的掩码,
     // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
-    printf("pmem_write: addr=0x%08x, data=0x%08x, wmask=0x%02x\n", waddr, wdata, wmask);
     if(waddr == 0x10000000){
         // 0x10000000是一个特殊的地址, 往这里写入数据会打印到控制台
         putchar(wdata & 0xFF);
