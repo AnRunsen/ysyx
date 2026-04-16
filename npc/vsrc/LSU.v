@@ -12,7 +12,7 @@ module LSU(
 );
 
     reg [31:0] rdata_;
-    wire [31:0] wdata_ = wdata << (addr[1:0]<<3);
+    wire [31:0] wdata_ = wdata << (addr[1:0]*8);
 
     always @(*) begin
         if(mem_en) begin
