@@ -60,10 +60,9 @@ static uint32_t key_dequeue() {
   uint32_t key = NEMU_KEY_NONE;
   if (key_f != key_r) {
     key = key_queue[key_f];
+    Log("Dequeue key: %s %d\n", (key & KEYDOWN_MASK) ? "DOWN" : "UP", key & ~KEYDOWN_MASK);
     key_f = (key_f + 1) % KEY_QUEUE_LEN;
   }
-
-  Log("Dequeue key: %s %d\n", (key & KEYDOWN_MASK) ? "DOWN" : "UP", key & ~KEYDOWN_MASK);
   return key;
 }
 
