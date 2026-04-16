@@ -50,6 +50,7 @@ static int key_queue[KEY_QUEUE_LEN] = {};
 static int key_f = 0, key_r = 0;
 
 static void key_enqueue(uint32_t am_scancode) {
+  Log("Enqueue key: %s %d\n", (am_scancode & KEYDOWN_MASK) ? "DOWN" : "UP", am_scancode & ~KEYDOWN_MASK);
   key_queue[key_r] = am_scancode;
   key_r = (key_r + 1) % KEY_QUEUE_LEN;
   Assert(key_r != key_f, "key queue overflow!");
@@ -65,6 +66,7 @@ static uint32_t key_dequeue() {
 }
 
 void send_key(uint8_t scancode, bool is_keydown) {
+  Log("Got SDL event: %s %d\n", is_keydown ? "KEYDOWN" : "KEYUP", scancode);
   if (nemu_state.state == NEMU_RUNNING && keymap[scancode] != NEMU_KEY_NONE) {
     uint32_t am_scancode = keymap[scancode] | (is_keydown ? KEYDOWN_MASK : 0);
     key_enqueue(am_scancode);
