@@ -2,6 +2,7 @@
 #include "verilated_vcd_c.h"
 #include <stdio.h>
 #include <assert.h>
+#include <time.h>
 
 // #define DEBUG
 
@@ -28,11 +29,23 @@ extern "C" int pmem_read(int raddr)
 #ifdef DEBUG
     printf("Read: addr=0x%08x\n", raddr);
 #endif
+    //串口相关
     if(raddr == 0x10000000){
         return 0;
     }
+
+    //RTC相关
+    else if(raddr == 0x10000004 || raddr == 0x10000008){
+        if(raddr == 0x10000004){
+            // 0x10000004是一个特殊的地址, 读取这里会返回当前时间的低32位
+            return (uint32_t)(clock());
+        } else {
+            // 0x10000008是一个特殊的地址, 读取这里会返回当前时间的高32位
+            return (uint32_t)(clock() >> 32);
+        }
+    }
+
     raddr = raddr - 0x80000000; // 内存映射地址转换
-    
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t*)(mem + (raddr & ~0x3u));
 }
