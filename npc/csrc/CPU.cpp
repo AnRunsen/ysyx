@@ -24,6 +24,7 @@ extern "C" void sim_exit(int code) {
 
 extern "C" int pmem_read(int raddr)
 {
+    printf("Read: addr=0x%08x\n", raddr);
     raddr = raddr - 0x80000000; // 内存映射地址转换
     
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
