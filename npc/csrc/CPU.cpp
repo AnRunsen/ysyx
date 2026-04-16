@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <time.h>
 
-// #define DEBUG
+#define WAVEON
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
@@ -30,32 +30,42 @@ int main(int argc, char **argv)
         printf("please provide a binary file to load into memory\n");
         assert(0);
     }
-
+#ifdef WAVEON
     Verilated::traceEverOn(true);
+#endif
     VCPU* cpu = new VCPU;
+
+#ifdef WAVEON
     VerilatedVcdC* tfp = new VerilatedVcdC;
     cpu->trace(tfp, 99);
     tfp->open("cpu.vcd");
+#endif
 
     cpu->contextp()->time(0);
     cpu->arstn = 1;
     cpu->clk = 0;
+#ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
+#endif
     while(!exit_flag) {
         cpu->contextp()->timeInc(1);
         cpu->clk = 0;
         cpu->eval();
+#ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
-
+#endif
         cpu->contextp()->timeInc(1);
         cpu->clk = 1;
         cpu->eval();
+#ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
+#endif
     }
 
+#ifdef WAVEON
     tfp->close();
-    delete cpu;
     delete tfp;
-
+#endif
+    delete cpu;
     return 0;
 }

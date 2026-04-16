@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <time.h>
 
+// #define DEBUG
+
 extern bool exit_flag;
 extern uint8_t mem[];
 
