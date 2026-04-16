@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <time.h>
 
-#define WAVEON
+// #define WAVEON
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
