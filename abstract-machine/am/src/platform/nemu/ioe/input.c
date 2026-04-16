@@ -8,9 +8,6 @@
 
 void __am_input_keybrd(AM_INPUT_KEYBRD_T *kbd) {
   uint32_t key = inl(KBD_ADDR);
-  if(key != 0) {
-    printf("Got key event: %s %d\n", (key & KEYDOWN_MASK) ? "DOWN" : "UP", key & ~KEYDOWN_MASK);
-  }
   kbd->keydown = key & KEYDOWN_MASK;
   kbd->keycode = key & ~KEYDOWN_MASK;
 }

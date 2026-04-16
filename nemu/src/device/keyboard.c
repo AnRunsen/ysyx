@@ -50,7 +50,6 @@ static int key_queue[KEY_QUEUE_LEN] = {};
 static int key_f = 0, key_r = 0;
 
 static void key_enqueue(uint32_t am_scancode) {
-  Log("Enqueue key: %s %d\n", (am_scancode & KEYDOWN_MASK) ? "DOWN" : "UP", am_scancode & ~KEYDOWN_MASK);
   key_queue[key_r] = am_scancode;
   key_r = (key_r + 1) % KEY_QUEUE_LEN;
   Assert(key_r != key_f, "key queue overflow!");
@@ -60,14 +59,12 @@ static uint32_t key_dequeue() {
   uint32_t key = NEMU_KEY_NONE;
   if (key_f != key_r) {
     key = key_queue[key_f];
-    Log("Dequeue key: %s %d\n", (key & KEYDOWN_MASK) ? "DOWN" : "UP", key & ~KEYDOWN_MASK);
     key_f = (key_f + 1) % KEY_QUEUE_LEN;
   }
   return key;
 }
 
 void send_key(uint8_t scancode, bool is_keydown) {
-  Log("Got SDL event: %s %d\n", is_keydown ? "KEYDOWN" : "KEYUP", scancode);
   if (nemu_state.state == NEMU_RUNNING && keymap[scancode] != NEMU_KEY_NONE) {
     uint32_t am_scancode = keymap[scancode] | (is_keydown ? KEYDOWN_MASK : 0);
     key_enqueue(am_scancode);
@@ -89,9 +86,6 @@ static void i8042_data_io_handler(uint32_t offset, int len, bool is_write) {
   assert(!is_write);
   assert(offset == 0);
   i8042_data_port_base[0] = key_dequeue();
-  if(i8042_data_port_base[0] != NEMU_KEY_NONE) {
-    Log("key: %s %d\n", (i8042_data_port_base[0] & KEYDOWN_MASK) ? "DOWN" : "UP", i8042_data_port_base[0] & ~KEYDOWN_MASK);
-  }
 }
 
 void init_i8042() {
