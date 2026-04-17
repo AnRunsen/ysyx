@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <time.h>
-
-// #define WAVEON
+#include "config.hpp"
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
@@ -47,20 +46,6 @@ int main(int argc, char **argv)
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
-    while(!exit_flag) {
-        cpu->contextp()->timeInc(1);
-        cpu->clk = 0;
-        cpu->eval();
-#ifdef WAVEON
-        tfp->dump(cpu->contextp()->time());
-#endif
-        cpu->contextp()->timeInc(1);
-        cpu->clk = 1;
-        cpu->eval();
-#ifdef WAVEON
-        tfp->dump(cpu->contextp()->time());
-#endif
-    }
 
 #ifdef WAVEON
     tfp->close();

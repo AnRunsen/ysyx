@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
-
-// #define DEBUG
+#include "config.hpp"
 
 extern bool exit_flag;
 extern uint8_t mem[];
@@ -23,7 +22,7 @@ extern "C" void sim_exit(int code) {
 
 extern "C" int pmem_read(int raddr)
 {
-#ifdef DEBUG
+#ifdef ITRACE
     printf("Read: addr=0x%08x\n", raddr);
 #endif
     //串口相关
@@ -48,7 +47,7 @@ extern "C" int pmem_read(int raddr)
 }
 extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
 {
-#ifdef DEBUG
+#ifdef ITRACE
     printf("Write: addr=0x%08x, data=0x%08x, wmask=0x%02x\n", waddr, wdata, wmask);
 #endif
     // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
