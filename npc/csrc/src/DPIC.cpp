@@ -6,6 +6,11 @@
 extern bool exit_flag;
 extern uint8_t mem[];
 
+
+extern "C" void inst_port(int inst) {
+    printf("Inst: 0x%08x\n", inst);
+}
+
 extern "C" void sim_exit(int code) {
     if(code == 0){
         printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);

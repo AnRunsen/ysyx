@@ -5,5 +5,6 @@ package PKG;
         input int waddr, input int wdata, input byte wmask
     );
     import "DPI-C" function void sim_exit(input int code);
+    import "DPI-C" function void inst_port(input int inst);
 
 endpackage

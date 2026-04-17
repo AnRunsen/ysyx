@@ -13,7 +13,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 #include "VCPU.h"
-// #include "VCPU___024root.h"
+#include "VCPU___024root.h"
 
 #define ARRLEN(arr) (sizeof(arr) / sizeof((arr)[0]))  
 
