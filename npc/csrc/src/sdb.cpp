@@ -85,6 +85,7 @@ static struct {
   { "q", "Exit NPC", cmd_q },
   { "si", "Step in one instruction", cmd_si},
   { "x", "Scan the memory", cmd_x},
+  { "info", "Print the info of reg", cmd_info},
   /* TODO: Add more commands */
 };
 
