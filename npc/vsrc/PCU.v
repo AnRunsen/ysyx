@@ -1,4 +1,5 @@
 `include "MACRO.v"
+import PKG::ftrace;
 
 module PCU(
     input clk,
@@ -30,6 +31,7 @@ module PCU(
 
         else begin
             PC <= PC_next;
+            ftrace(PC, PC_next);
         end
     end
 

@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <assert.h>
 #include <time.h>
-
-// #define WAVEON
+#include "config.hpp"
+#include "sdb.hpp"
+#include "ftrace.hpp"
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
-
 
 void load_bin(const char *path) {
     FILE *fp = fopen(path, "rb");
@@ -22,45 +22,41 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-int main(int argc, char **argv)
+VCPU* cpu = new VCPU;
+VerilatedVcdC* tfp = new VerilatedVcdC;
+void init_disasm();
+char *elf_file = NULL;
+
+int main(int argc, char *argv[])
 {
-    if(argc > 1){
+    if(argc > 2){
         load_bin(argv[1]);
+        elf_file = argv[2];
     } else {
-        printf("please provide a binary file to load into memory\n");
+        printf("Usage: %s <binary> <elf_file>\n", argv[0]);
         assert(0);
     }
 #ifdef WAVEON
     Verilated::traceEverOn(true);
 #endif
-    VCPU* cpu = new VCPU;
 
 #ifdef WAVEON
-    VerilatedVcdC* tfp = new VerilatedVcdC;
     cpu->trace(tfp, 99);
     tfp->open("cpu.vcd");
 #endif
 
+    init_elf();
+    init_disasm();
+
     cpu->contextp()->time(0);
     cpu->arstn = 1;
     cpu->clk = 0;
+    cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
-    while(!exit_flag) {
-        cpu->contextp()->timeInc(1);
-        cpu->clk = 0;
-        cpu->eval();
-#ifdef WAVEON
-        tfp->dump(cpu->contextp()->time());
-#endif
-        cpu->contextp()->timeInc(1);
-        cpu->clk = 1;
-        cpu->eval();
-#ifdef WAVEON
-        tfp->dump(cpu->contextp()->time());
-#endif
-    }
+
+    sdb_mainloop();
 
 #ifdef WAVEON
     tfp->close();
