@@ -25,7 +25,7 @@ void load_bin(const char *path) {
 VCPU* cpu = new VCPU;
 VerilatedVcdC* tfp = new VerilatedVcdC;
 void init_disasm();
-static char *elf_file = NULL;
+char *elf_file = NULL;
 
 int main(int argc, char *argv[])
 {
