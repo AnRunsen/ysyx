@@ -5,6 +5,7 @@ package PKG;
         input int waddr, input int wdata, input byte wmask
     );
     import "DPI-C" function void sim_exit(input int code);
-    import "DPI-C" function void inst_port(input int inst, input int pc);
+    import "DPI-C" function void itrace(input int inst, input int pc);
+    import "DPI-C" function void ftrace(input int pc, input int npc);
 
 endpackage

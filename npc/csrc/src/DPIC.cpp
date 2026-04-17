@@ -2,13 +2,14 @@
 #include <stdint.h>
 #include <time.h>
 #include "config.hpp"
+#include "ftrace.hpp"
 
 extern bool exit_flag;
 extern uint8_t mem[];
 
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
-extern "C" void inst_port(int inst, int pc)
+extern "C" void itrace(int inst, int pc)
 {
 #ifdef ITRACE
     char buf[128];
@@ -21,9 +22,19 @@ extern "C" void inst_port(int inst, int pc)
         p += snprintf(p, 4, " %02x", instp[i]);
     }
 
+    *(p++) = ' ';
+
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
-    printf("%s\n", buf);
+    printf("Inst to be exe:%s\n", buf);
+#endif
+}
+
+extern "C" void ftrace(int pc, int npc)
+{
+#ifdef FTRACE
+    int inst = pmem_read(pc);
+    ftrace_detect(inst, pc, npc);
 #endif
 }
 
