@@ -6,10 +6,10 @@
 #include "config.hpp"
 #include "sdb.hpp"
 #include "ftrace.hpp"
-#include "difftest-def.h"
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
+enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
 void load_bin(const char *path) {
     FILE *fp = fopen(path, "rb");

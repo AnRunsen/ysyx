@@ -1,13 +1,15 @@
 #include "VCPU.h"
 #include "verilated_vcd_c.h"
+#include "VCPU___024root.h"
 #include <stdint.h>
 #include "config.hpp"
-#include "difftest-def.h"
 
 extern VCPU* cpu;
 extern VerilatedVcdC* tfp;
 extern bool exit_flag;
 void difftest_exec(uint64_t n);
+void difftest_regcpy(void *dut, bool direction);
+enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
 typedef struct {
   uint32_t gpr[16];
