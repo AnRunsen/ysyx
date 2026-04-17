@@ -23,6 +23,7 @@ void load_bin(const char *path) {
 
 VCPU* cpu = new VCPU;
 VerilatedVcdC* tfp = new VerilatedVcdC;
+void init_disasm();
 
 int main(int argc, char **argv)
 {
@@ -40,6 +41,7 @@ int main(int argc, char **argv)
     cpu->trace(tfp, 99);
     tfp->open("cpu.vcd");
 #endif
+    init_disasm();
 
     cpu->contextp()->time(0);
     cpu->arstn = 1;

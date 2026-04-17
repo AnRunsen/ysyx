@@ -8,7 +8,6 @@
 #include "reg.hpp"
 
 static int is_batch_mode = false;
-void init_disasm();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -154,7 +153,6 @@ void sdb_set_batch_mode() {
 }
 
 void sdb_mainloop() {
-  init_disasm();
 
   if (is_batch_mode) {
     cmd_c(NULL);
