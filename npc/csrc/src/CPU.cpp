@@ -27,9 +27,11 @@ VCPU* cpu = new VCPU;
 VerilatedVcdC* tfp = new VerilatedVcdC;
 void init_disasm();
 char *elf_file = NULL;
+extern "C" {
 void difftest_init(int port);
 void difftest_memcpy(uint32_t addr, void *buf, size_t n, bool direction);
 void difftest_regcpy(void *dut, bool direction);
+}
 typedef struct {
   uint32_t gpr[16];
   uint32_t pc;

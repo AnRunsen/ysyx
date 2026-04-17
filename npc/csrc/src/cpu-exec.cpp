@@ -7,8 +7,10 @@
 extern VCPU* cpu;
 extern VerilatedVcdC* tfp;
 extern bool exit_flag;
+extern "C" {
 void difftest_exec(uint64_t n);
 void difftest_regcpy(void *dut, bool direction);
+}
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
 typedef struct {
