@@ -4,7 +4,7 @@ TOP = CPU
 BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
-CRSCS += $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
+CSRCS += $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
