@@ -30,14 +30,6 @@ extern "C" void itrace(int inst, int pc)
 #endif
 }
 
-extern "C" void ftrace(int pc, int npc)
-{
-#ifdef FTRACE
-    int inst = pmem_read(pc);
-    ftrace_detect(inst, pc, npc);
-#endif
-}
-
 extern "C" void sim_exit(int code)
 {
     if (code == 0)
@@ -109,4 +101,13 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
             mem[(waddr & ~0x3u) + i] = (wdata >> (i << 3)) & 0xFF;
         }
     }
+}
+
+
+extern "C" void ftrace(int pc, int npc)
+{
+#ifdef FTRACE
+    int inst = pmem_read(pc);
+    ftrace_detect(inst, pc, npc);
+#endif
 }
