@@ -94,7 +94,7 @@ void init_elf() {
   }
 
   if (symtab_idx < 0) {
-    printf("ftrace: no symbol table found in '%s'", elf_file);
+    printf("ftrace: no symbol table found in %s\n", elf_file);
     free(shdrs);
     fclose(fp);
     return;
@@ -120,7 +120,7 @@ void init_elf() {
   free(shdrs);
   fclose(fp);
 
-  printf("ftrace: loaded %zu symbols from '%s'", ftrace_info.symtab_size, elf_file);
+  printf("ftrace: loaded %zu symbols from %s\n", ftrace_info.symtab_size, elf_file);
 }
 
 const char *ftrace_find_func(uint32_t addr, uint32_t *func_start) {

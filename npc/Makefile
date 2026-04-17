@@ -26,8 +26,7 @@ prebuild: $(VSRCS)
 	verilator $(PREBUILD_FLAGS) $(VSRCS)
 
 run: ./$(BUILD_DIR)/V$(TOP)
-	echo $(IMG)
-	$^ $(IMG)
+	$^ $(IMG) $(ELF)
 
 clean:
 	rm -rf $(BUILD_DIR)
