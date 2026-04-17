@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "cpu-exe.hpp"
 #include "DPIC.hpp"
+#include "reg.hpp"
 
 static int is_batch_mode = false;
 
@@ -48,6 +49,24 @@ static int cmd_si(char *args) {
     else {
       cpu_exec(num);
     }
+  }
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  /* extract the first argument */
+  char *arg = strtok(NULL, " ");
+
+  if (arg == NULL) {
+    printf("Hint: Try <info r>\n");
+  }
+
+  else if(strcmp(arg, "r") == 0) {
+    isa_reg_display();
+  }
+
+  else {
+    printf("Unknown command '%s'\n", arg);
   }
   return 0;
 }
