@@ -3,7 +3,7 @@ include ../Makefile
 TOP = CPU
 BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp" -o -name "*.c")
+CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
@@ -17,7 +17,7 @@ $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
 
-./csrc/src/disasm.c: $(LIBCAPSTONE)
+./csrc/src/disasm.cpp: $(LIBCAPSTONE)
 
 $(LIBCAPSTONE):
 	$(MAKE) -C ./csrc/capstone
