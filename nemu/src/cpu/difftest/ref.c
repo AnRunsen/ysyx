@@ -18,22 +18,47 @@
 #include <difftest-def.h>
 #include <memory/paddr.h>
 
-__EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  assert(0);
+// 在DUT host memory的`buf`和REF guest memory的`addr`之间拷贝`n`字节,
+// `direction`指定拷贝的方向, `DIFFTEST_TO_DUT`表示往DUT拷贝, `DIFFTEST_TO_REF`表示往REF拷贝
+__EXPORT void difftest_memcpy(uint32_t addr, void *buf, size_t n, bool direction) {
+  if(direction == DIFFTEST_TO_REF) {
+    for(uint32_t i = 0; i < n; i++) {
+      paddr_write(addr + i, 1, ((uint8_t*)buf)[i]);
+    }
+  }
+  else {
+    for(uint32_t i = 0; i < n; i++) {
+      ((uint8_t*)buf)[i] = paddr_read(addr + i, 1);
+    }
+  }
 }
-
+// `direction`为`DIFFTEST_TO_DUT`时, 获取REF的寄存器状态到`dut`;
+// `direction`为`DIFFTEST_TO_REF`时, 设置REF的寄存器状态为`dut`;
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
-  assert(0);
+  if(direction == DIFFTEST_TO_DUT) {
+    CPU_state *dut_ = (CPU_state*)dut;
+    for(int i = 0; i < sizeof(cpu->gpr)/sizeof(cpu->gpr[0]); i++) {
+      dut_->gpr[i] = cpu->gpr[i];
+    }
+    dut_->pc = cpu->pc;
+  }
+  else {
+    CPU_state *dut_ = (CPU_state*)dut;
+    for(int i = 0; i < sizeof(cpu->gpr)/sizeof(cpu->gpr[0]); i++) {
+      cpu->gpr[i] = dut_->gpr[i];
+    }
+    cpu->pc = dut_->pc;
+  }
 }
-
+// 让REF执行`n`条指令
 __EXPORT void difftest_exec(uint64_t n) {
-  assert(0);
+  cpu_exec(n);
 }
 
 __EXPORT void difftest_raise_intr(word_t NO) {
   assert(0);
 }
-
+// 初始化REF的DiffTest功能
 __EXPORT void difftest_init(int port) {
   void init_mem();
   init_mem();

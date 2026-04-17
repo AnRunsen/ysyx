@@ -6,6 +6,7 @@
 #include "config.hpp"
 #include "sdb.hpp"
 #include "ftrace.hpp"
+#include "difftest-def.h"
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
@@ -26,6 +27,13 @@ VCPU* cpu = new VCPU;
 VerilatedVcdC* tfp = new VerilatedVcdC;
 void init_disasm();
 char *elf_file = NULL;
+void difftest_init(int port);
+void difftest_memcpy(uint32_t addr, void *buf, size_t n, bool direction);
+void difftest_regcpy(void *dut, bool direction);
+typedef struct {
+  uint32_t gpr[16];
+  uint32_t pc;
+} CPU_state;
 
 int main(int argc, char *argv[])
 {
@@ -45,8 +53,15 @@ int main(int argc, char *argv[])
     tfp->open("cpu.vcd");
 #endif
 
+#ifdef FTRACE
     init_elf();
     init_disasm();
+#endif
+
+#ifdef DIFFTEST
+    difftest_init(1234);
+    difftest_memcpy(0x80000000, mem, sizeof(mem), DIFFTEST_TO_REF);
+#endif
 
     cpu->contextp()->time(0);
     cpu->arstn = 1;
@@ -61,6 +76,18 @@ int main(int argc, char *argv[])
 #ifdef WAVEON
     tfp->close();
     delete tfp;
+#endif
+
+#ifdef FTRACE
+    extern ftrace_t ftrace_info;
+    if (ftrace_info.symtab) {
+        free(ftrace_info.symtab);
+        ftrace_info.symtab = NULL;
+    }
+    if (ftrace_info.strtab) {
+        free(ftrace_info.strtab);
+        ftrace_info.strtab = NULL;
+    }
 #endif
     delete cpu;
     return 0;
