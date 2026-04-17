@@ -7,7 +7,7 @@ module IFU(
 
     always @(*) begin
         Inst = pmem_read(PC);
-        inst_port(Inst);
+        inst_port(Inst, PC);
     end
 
 endmodule

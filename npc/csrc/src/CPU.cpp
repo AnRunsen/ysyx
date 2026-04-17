@@ -9,7 +9,6 @@
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
 
-
 void load_bin(const char *path) {
     FILE *fp = fopen(path, "rb");
     assert(fp != NULL);
