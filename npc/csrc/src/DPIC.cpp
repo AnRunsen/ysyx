@@ -6,6 +6,8 @@
 extern bool exit_flag;
 extern uint8_t mem[];
 
+void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+
 extern "C" void inst_port(int inst, int pc)
 {
 #ifdef ITRACE
@@ -19,7 +21,6 @@ extern "C" void inst_port(int inst, int pc)
         p += snprintf(p, 4, " %02x", instp[i]);
     }
 
-    void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
     printf("%s\n", buf);
