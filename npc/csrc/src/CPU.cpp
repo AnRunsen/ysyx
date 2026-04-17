@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <time.h>
 #include "config.hpp"
+#include "sdb.hpp"
 
 uint8_t mem[0x8000000]; // 128MB memory
 bool exit_flag = false;
@@ -21,6 +22,9 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
+VCPU* cpu = new VCPU;
+VerilatedVcdC* tfp = new VerilatedVcdC;
+
 int main(int argc, char **argv)
 {
     if(argc > 1){
@@ -32,20 +36,20 @@ int main(int argc, char **argv)
 #ifdef WAVEON
     Verilated::traceEverOn(true);
 #endif
-    VCPU* cpu = new VCPU;
 
 #ifdef WAVEON
-    VerilatedVcdC* tfp = new VerilatedVcdC;
     cpu->trace(tfp, 99);
     tfp->open("cpu.vcd");
 #endif
 
     cpu->contextp()->time(0);
     cpu->arstn = 1;
-    cpu->clk = 0;
+    cpu->clk = 1;
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
+
+    sdb_mainloop();
 
 #ifdef WAVEON
     tfp->close();
