@@ -3,7 +3,7 @@ include ../Makefile
 TOP = CPU
 BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
+CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp" -o -name "*.c")
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
