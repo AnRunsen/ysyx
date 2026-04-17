@@ -45,6 +45,7 @@ int main(int argc, char **argv)
     cpu->contextp()->time(0);
     cpu->arstn = 1;
     cpu->clk = 1;
+    cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
