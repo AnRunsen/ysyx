@@ -37,17 +37,17 @@ __EXPORT void difftest_memcpy(uint32_t addr, void *buf, size_t n, bool direction
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
   if(direction == DIFFTEST_TO_DUT) {
     CPU_state *dut_ = (CPU_state*)dut;
-    for(int i = 0; i < sizeof(cpu->gpr)/sizeof(cpu->gpr[0]); i++) {
-      dut_->gpr[i] = cpu->gpr[i];
+    for(int i = 0; i < sizeof(cpu.gpr)/sizeof(cpu.gpr[0]); i++) {
+      dut_->gpr[i] = cpu.gpr[i];
     }
-    dut_->pc = cpu->pc;
+    dut_->pc = cpu.pc;
   }
   else {
     CPU_state *dut_ = (CPU_state*)dut;
-    for(int i = 0; i < sizeof(cpu->gpr)/sizeof(cpu->gpr[0]); i++) {
-      cpu->gpr[i] = dut_->gpr[i];
+    for(int i = 0; i < sizeof(cpu.gpr)/sizeof(cpu.gpr[0]); i++) {
+      cpu.gpr[i] = dut_->gpr[i];
     }
-    cpu->pc = dut_->pc;
+    cpu.pc = dut_->pc;
   }
 }
 // 让REF执行`n`条指令
