@@ -63,6 +63,20 @@ module IDU(
 
     always @(*) begin
         case(opcode)
+            7'b1101111: begin //jal
+                imm = immJ;
+                alu_op = 0; // not care
+                wb_en = 1;
+                mem_write_en = 0;
+                op_width = 0;
+                wb_sel = `WB_SEL_PC4; // PC+4
+                alu_sel0 = 0;
+                alu_sel1 = 0;
+                brju = `PC_NEAR; // PC=PC+imm
+                mem_signext = 0;
+                mem_en = 0;
+            end
+
             7'b0010111: begin //auipc
                 imm = immU;
                 alu_op = `ALU_OP_ADD;
