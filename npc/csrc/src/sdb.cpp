@@ -8,7 +8,7 @@
 #include "reg.hpp"
 
 static int is_batch_mode = false;
-bool itrace_enable = false;
+bool itrace_enable = true;
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
