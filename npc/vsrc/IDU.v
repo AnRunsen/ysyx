@@ -63,11 +63,81 @@ module IDU(
 
     always @(*) begin
         case(opcode)
-            7'b1100011: begin
+            7'b1100011: begin //branch
                 case(funct3)
                     3'b000: begin //beq
                         imm = immB;
                         alu_op = `ALU_OP_EQ;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_BRANCH; // PC=PC+imm
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b001: begin //bne
+                        imm = immB;
+                        alu_op = `ALU_OP_NE;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_BRANCH; // PC=PC+imm
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b100: begin //blt
+                        imm = immB;
+                        alu_op = `ALU_OP_LT;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_BRANCH; // PC=PC+imm
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b101: begin //bge
+                        imm = immB;
+                        alu_op = `ALU_OP_GE;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_BRANCH; // PC=PC+imm
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b110: begin //bltu
+                        imm = immB;
+                        alu_op = `ALU_OP_LTU;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_BRANCH; // PC=PC+imm
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b111: begin //bgeu
+                        imm = immB;
+                        alu_op = `ALU_OP_GEU;
                         wb_en = 0;
                         mem_write_en = 0;
                         op_width = 0;

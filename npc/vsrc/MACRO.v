@@ -11,6 +11,7 @@
 `define ALU_OP_SRA 4'b1010
 `define ALU_OP_LTU 4'b1011
 `define ALU_OP_GEU 4'b1100
+`define ALU_OP_NE 4'b1101
 
 `define WB_SEL_IMM 2'b00
 `define WB_SEL_ALU 2'b01

@@ -17,6 +17,7 @@ module ALU(
     wire [31:0] ltu_res;
     wire [31:0] geu_res;
     wire [31:0] eq_res;
+    wire [31:0] ne_res;
     wire [31:0] sll_res;
     wire [31:0] srl_res;
     wire [31:0] sra_res;
@@ -29,6 +30,7 @@ module ALU(
     assign lt_res = (A < B) ? 32'h0000_0001 : 32'h0000_0000;
     assign ge_res = (A >= B) ? 32'h0000_0001 : 32'h0000_0000;
     assign eq_res = (A == B) ? 32'h0000_0001 : 32'h0000_0000;
+    assign ne_res = (A != B) ? 32'h0000_0001 : 32'h0000_0000;
     assign sll_res = A << B[4:0];
     assign srl_res = A >> B[4:0];
     assign sra_res = A >>> B[4:0];
@@ -63,6 +65,8 @@ module ALU(
                 Result = srl_res;
             `ALU_OP_SRA:
                 Result = sra_res;
+            `ALU_OP_NE:
+                Result = ne_res;
             default:
                 Result = 32'h0000_0000;
         endcase
