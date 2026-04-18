@@ -20,7 +20,9 @@ module CPU(
             .srcR1    	( IDU_srcR1     ),
             .srcR2    	( IDU_srcR2     ),
             .imm      	( IDU_imm       ),
-            .alu_sel 	( IDU_alu_sel  ),
+            .alu_sel0 	( IDU_alu_sel0  ),
+            .alu_sel1 	( IDU_alu_sel1  ),
+            .PC       	( PCU_PC        ),
             .alu_op   	( IDU_alu_op    ),
             .result   	( EXU_result    )
         );
@@ -49,7 +51,8 @@ module CPU(
     wire        	IDU_mem_write_en;
     wire [1:0]  	IDU_op_width;
     wire [1:0]  	IDU_wb_sel;
-    wire        	IDU_alu_sel;
+    wire        	IDU_alu_sel0;
+    wire        	IDU_alu_sel1;
     wire [1:0]  	IDU_brju;
     wire [4:0]  	IDU_rs1;
     wire [4:0]  	IDU_rs2;
@@ -67,7 +70,8 @@ module CPU(
             .mem_write_en 	( IDU_mem_write_en  ),
             .op_width     	( IDU_op_width      ),
             .wb_sel       	( IDU_wb_sel        ),
-            .alu_sel     	( IDU_alu_sel      ),
+            .alu_sel0     	( IDU_alu_sel0      ),
+            .alu_sel1     	( IDU_alu_sel1      ),
             .brju         	( IDU_brju          ),
             .rs1          	( IDU_rs1           ),
             .rs2          	( IDU_rs2           ),
