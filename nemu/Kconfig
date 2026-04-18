@@ -152,15 +152,23 @@ config ITRACE_COND
   default "true"
 
 config MTRACE
+  depends on TRACE
   bool "Print the mem access when enable"
   default "false"
 
 config FTRACE
+  depends on TRACE
   bool "Trace the func call when enable"
   default "false"
 
 config DTRACE
+  depends on TRACE
   bool "Trace the device access when enable"
+  default "false"
+
+config ETRACE
+  depends on TRACE
+  bool "Trace the exception when enable"
   default "false"
 
 

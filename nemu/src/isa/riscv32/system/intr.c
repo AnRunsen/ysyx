@@ -15,12 +15,21 @@
 
 #include <isa.h>
 
+uint32_t csr[4096];
+
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   /* TODO: Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
 
-  return 0;
+#ifdef CONFIG_ETRACE
+  printf("intr NO = %d, epc = 0x%08x, mtvec = 0x%08x\n", NO, epc, csr[0x305]);
+#endif
+
+  csr[0x341] = epc; // mepc
+  csr[0x342] = NO;  // mcause
+
+  return csr[0x305]; // mtvec
 }
 
 word_t isa_query_intr() {
