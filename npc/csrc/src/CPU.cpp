@@ -57,6 +57,9 @@ int main(int argc, char *argv[])
 
 #ifdef FTRACE
     init_elf();
+#endif
+
+#ifdef ITRACE
     init_disasm();
 #endif
 
