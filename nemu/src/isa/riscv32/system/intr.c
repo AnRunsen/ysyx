@@ -15,12 +15,19 @@
 
 #include <isa.h>
 
+uint32_t mepc;
+uint32_t mcause;
+uint32_t mstatus;
+uint32_t mtvec;
+
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   /* TODO: Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
+  mepc = epc;
+  mcause = NO;
 
-  return 0;
+  return mtvec;
 }
 
 word_t isa_query_intr() {
