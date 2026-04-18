@@ -194,7 +194,7 @@ module IDU(
                 mem_en = 0;
             end
 
-            7'b1110011: begin
+            7'b1110011: begin //System
                 case(funct3)
                     3'b000: begin //ebreak
                         imm = 0;
@@ -230,11 +230,109 @@ module IDU(
                 endcase
             end
 
-            7'b0110011: begin
+            7'b0110011: begin //OP
                 case(funct3)
                     3'b000: begin //add, sub
                         imm = 0;
                         alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SUB : `ALU_OP_ADD;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b001: begin //sll
+                        imm = 0;
+                        alu_op = `ALU_OP_SLL;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b010: begin //slt
+                        imm = 0;
+                        alu_op = `ALU_OP_LT;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b011: begin //sltu
+                        imm = 0;
+                        alu_op = `ALU_OP_LTU;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b100: begin //xor
+                        imm = 0;
+                        alu_op = `ALU_OP_XOR;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b101: begin //srl, sra
+                        imm = 0;
+                        alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b110: begin //or
+                        imm = 0;
+                        alu_op = `ALU_OP_OR;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_NORMAL; // PC+4
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    3'b111: begin //and
+                        imm = 0;
+                        alu_op = `ALU_OP_AND;
                         wb_en = 1;
                         mem_write_en = 0;
                         op_width = 0;
