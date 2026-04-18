@@ -14,6 +14,8 @@ module ALU(
     wire [31:0] xor_res;
     wire [31:0] lt_res;
     wire [31:0] ge_res;
+    wire [31:0] ltu_res;
+    wire [31:0] geu_res;
     wire [31:0] eq_res;
     wire [31:0] sll_res;
     wire [31:0] srl_res;
@@ -30,6 +32,8 @@ module ALU(
     assign sll_res = A << B[4:0];
     assign srl_res = A >> B[4:0];
     assign sra_res = A >>> B[4:0];
+    assign ltu_res = ($unsigned(A) < $unsigned(B)) ? 32'h0000_0001 : 32'h0000_0000;
+    assign geu_res = ($unsigned(A) >= $unsigned(B)) ? 32'h0000_0001 : 32'h0000_0000;
 
     always @(*) begin
         case (Opcode)
@@ -45,8 +49,12 @@ module ALU(
                 Result = xor_res;
             `ALU_OP_LT:
                 Result = lt_res;
+            `ALU_OP_LTU:
+                Result = ltu_res;
             `ALU_OP_GE:
                 Result = ge_res;
+            `ALU_OP_GEU:
+                Result = geu_res;
             `ALU_OP_EQ:
                 Result = eq_res;
             `ALU_OP_SLL:

@@ -264,6 +264,19 @@ module IDU(
                         mem_signext = 0;
                         mem_en = 0;
                     end
+                    3'b011: begin //sltiu
+                        imm = immI;
+                        alu_op = `ALU_OP_LTU;
+                        wb_en = 1;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = `WB_SEL_ALU; // alu
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
+                        brju = `PC_NORMAL;
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
                     default: begin
                         imm = 0;
                         alu_op = 0;
