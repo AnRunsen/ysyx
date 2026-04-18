@@ -63,6 +63,39 @@ module IDU(
 
     always @(*) begin
         case(opcode)
+            7'b1100011: begin
+                case(funct3)
+                    3'b000: begin //beq
+                        imm = immB;
+                        alu_op = `ALU_OP_EQ;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
+                        brju = `PC_BRANCH; // PC=PC+imm
+                        mem_signext = 0;
+                        mem_en = 0;
+                    end
+
+                    default: begin
+                        imm = 0;
+                        alu_op = 0;
+                        wb_en = 0;
+                        mem_write_en = 0;
+                        op_width = 0;
+                        wb_sel = 0;
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
+                        brju = 0;
+                        mem_signext = 0;
+                        mem_en = 0;
+                        sim_exit(Inst);
+                    end
+                endcase
+            end
+
             7'b1101111: begin //jal
                 imm = immJ;
                 alu_op = 0; // not care

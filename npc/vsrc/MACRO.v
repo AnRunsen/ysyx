@@ -29,4 +29,5 @@
 `define PC_NORMAL 2'b00
 `define PC_NEAR 2'b01
 `define PC_FAR 2'b10
+`define PC_BRANCH 2'b11
 

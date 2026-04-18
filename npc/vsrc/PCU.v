@@ -20,6 +20,7 @@ module PCU(
             `PC_NORMAL: PC_next = PC + 32'd4;
             `PC_NEAR: PC_next = PC + imm;
             `PC_FAR: PC_next = exu_result;
+            `PC_BRANCH: PC_next = (exu_result == 32'b1) ? PC + imm : PC + 32'd4;
             default: PC_next = 32'hFFFF_FFFF;
         endcase
     end
