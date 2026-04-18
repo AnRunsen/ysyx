@@ -9,8 +9,16 @@
 
 struct Context {
   // TODO: fix the order of these members to match trap.S
-  uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
-  void *pdir;
+
+  //讲义说pdir和x0共用地址空间
+  union 
+  {
+    uintptr_t gpr[NR_REGS];
+    void *pdir;
+  };
+  
+  uintptr_t mcause, mstatus, mepc;
+  
 };
 
 #ifdef __riscv_e
