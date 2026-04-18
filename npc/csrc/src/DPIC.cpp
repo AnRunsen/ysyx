@@ -23,10 +23,10 @@ extern "C" void itrace(int inst, int pc)
     }
 
     *(p++) = ' ';
-    printf("111\n");
-    printf("%s\n", buf);
 
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
+    printf("111\n");
+    printf("%s\n", buf);
 
     extern bool itrace_enable;
     if (itrace_enable) {
