@@ -15,14 +15,14 @@ extern "C" void itrace(int inst, int pc)
     char buf[128];
     char *p = buf;
     p += snprintf(p, sizeof(buf), "%08x:", pc);
-
-    printf("111\n");
     int ilen = 4;
     uint8_t *instp = (uint8_t *)&inst;
     for (int i = ilen - 1; i >= 0; i--)
     {
         p += snprintf(p, 4, " %02x", instp[i]);
     }
+
+    printf("111\n");
 
     *(p++) = ' ';
 
