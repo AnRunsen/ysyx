@@ -18,7 +18,8 @@ module IDU(
 
     output [1:0] wb_sel, //imm, alu, mem, PC+4
 
-    output reg alu_sel, //sel the ALU B port is srcR2(0) or imm(1)
+    output reg alu_sel0, //sel the ALU A port is srcR1(0) or PC(1)
+    output reg alu_sel1, //sel the ALU B port is srcR2(0) or imm(1)
     output reg [1:0] brju, //00:PC=PC+4, 01:PC=PC+imm, 10:PC=ALU_RES
     output reg mem_signext,
 
@@ -70,9 +71,10 @@ module IDU(
                         wb_en = 0;
                         mem_write_en = 0;
                         op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel = 0; // imm
-                        brju = 0; // PC+4
+                        wb_sel = 0;
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
+                        brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
 
@@ -85,9 +87,10 @@ module IDU(
                         wb_en = 0;
                         mem_write_en = 0;
                         op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel = 0; // imm
-                        brju = 0; // PC+4
+                        wb_sel = 0;
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
+                        brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
 
@@ -105,7 +108,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = 0;
                         wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel = `ALU_SEL_RS2; // reg
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_RS2; // reg
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
                         mem_en = 0;
@@ -117,9 +121,10 @@ module IDU(
                         wb_en = 0;
                         mem_write_en = 0;
                         op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel = 0; // imm
-                        brju = 0; // PC+4
+                        wb_sel = 0;
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
+                        brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
                         sim_exit(Inst);
@@ -134,7 +139,8 @@ module IDU(
                 mem_write_en = 0;
                 op_width = 0;
                 wb_sel = `WB_SEL_IMM; // alu
-                alu_sel = 0; // not care
+                alu_sel0 = 0;
+                alu_sel1 = 0;
                 brju = `PC_NORMAL; // PC+4
                 mem_signext = 0;
                 mem_en = 0;
@@ -149,7 +155,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = `OP_WIDTH_BYTE;
                         wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 1;
                         mem_en = 1;
@@ -162,7 +169,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = `OP_WIDTH_HALF;
                         wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 1;
                         mem_en = 1;
@@ -175,7 +183,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = `OP_WIDTH_WORD;
                         wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 1;
                         mem_en = 1;
@@ -188,7 +197,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = `OP_WIDTH_BYTE;
                         wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
                         mem_en = 1;
@@ -200,9 +210,10 @@ module IDU(
                         wb_en = 0;
                         mem_write_en = 0;
                         op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel = 0; // imm
-                        brju = 0; // PC+4
+                        wb_sel = 0;
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
+                        brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
                         sim_exit(Inst);
@@ -219,7 +230,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = 0;
                         wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL;
                         mem_signext = 0;
                         mem_en = 0;
@@ -230,8 +242,9 @@ module IDU(
                         wb_en = 0;
                         mem_write_en = 0;
                         op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel = 0; // imm
+                        wb_sel = 0;
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
                         brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
@@ -249,7 +262,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = 0;
                         wb_sel = `WB_SEL_PC4; // PC+4
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_FAR; // PC=ALU_RES
                         mem_signext = 0;
                         mem_en = 0;
@@ -263,7 +277,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = 0;
                         wb_sel = 0; // alu
-                        alu_sel = 0; // imm
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
                         brju = 0;
                         mem_signext = 0;
                         mem_en = 0;
@@ -281,7 +296,8 @@ module IDU(
                         mem_write_en = 1;
                         op_width = `OP_WIDTH_BYTE;
                         wb_sel = 0; // not care
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
                         mem_en = 1;
@@ -294,7 +310,8 @@ module IDU(
                         mem_write_en = 1;
                         op_width = `OP_WIDTH_HALF;
                         wb_sel = 0; // not care
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
                         mem_en = 1;
@@ -307,7 +324,8 @@ module IDU(
                         mem_write_en = 1;
                         op_width = `OP_WIDTH_WORD;
                         wb_sel = 0; // not care
-                        alu_sel = `ALU_SEL_IMM; // imm
+                        alu_sel0 = `ALU_SEL_RS1; // reg
+                        alu_sel1 = `ALU_SEL_IMM; // imm
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
                         mem_en = 1;
@@ -320,7 +338,8 @@ module IDU(
                         mem_write_en = 0;
                         op_width = 0;
                         wb_sel = 0; // alu
-                        alu_sel = 0; // imm
+                        alu_sel0 = 0;
+                        alu_sel1 = 0;
                         brju = 0; // PC+4
                         mem_signext = 0;
                         mem_en = 0;
@@ -335,8 +354,9 @@ module IDU(
                 wb_en = 0;
                 mem_write_en = 0;
                 op_width = 0;
-                wb_sel = 0; // alu
-                alu_sel = 0; // imm
+                wb_sel = 0;
+                alu_sel0 = 0;
+                alu_sel1 = 0;
                 brju = 0;
                 mem_signext = 0;
                 mem_en = 0;
