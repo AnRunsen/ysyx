@@ -63,6 +63,20 @@ module IDU(
 
     always @(*) begin
         case(opcode)
+            7'b0010111: begin //auipc
+                imm = immU;
+                alu_op = `ALU_OP_ADD;
+                wb_en = 1;
+                mem_write_en = 0;
+                op_width = 0;
+                wb_sel = `WB_SEL_ALU; // alu
+                alu_sel0 = `ALU_SEL_PC; // PC
+                alu_sel1 = `ALU_SEL_IMM; // imm
+                brju = `PC_NORMAL; // PC+4
+                mem_signext = 0;
+                mem_en = 0;
+            end
+
             7'b1110011: begin
                 case(funct3)
                     3'b000: begin //ebreak
