@@ -22,9 +22,8 @@ extern "C" void itrace(int inst, int pc)
         p += snprintf(p, 4, " %02x", instp[i]);
     }
 
-    printf("111\n");
-
     *(p++) = ' ';
+    printf("111\n");
 
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
