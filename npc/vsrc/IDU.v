@@ -104,7 +104,7 @@ module IDU(
                         wb_en = 1;
                         mem_write_en = 0;
                         op_width = 0;
-                        wb_sel = `WB_SEL_PC4; // alu
+                        wb_sel = `WB_SEL_ALU; // alu
                         alu_sel = `ALU_SEL_RS2; // reg
                         brju = `PC_NORMAL; // PC+4
                         mem_signext = 0;
