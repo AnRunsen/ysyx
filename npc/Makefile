@@ -7,7 +7,7 @@ CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
-LDFLAGS = $(NEMU_HOME)/build/riscv32-nemu-interpreter-so -lreadline -lcapstone -L$(abspath ./csrc/capstone/repo)
+LDFLAGS = -lreadline -lcapstone -L$(abspath ./csrc/capstone/repo)
 VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP) -I$(abspath ./vsrc)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP) -I$(abspath ./vsrc)\
