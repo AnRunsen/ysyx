@@ -12,24 +12,24 @@ void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 extern "C" void itrace(int inst, int pc)
 {
 #ifdef ITRACE
-    // char buf[128];
-    // char *p = buf;
-    // p += snprintf(p, sizeof(buf), "%08x:", pc);
-    // int ilen = 4;
-    // uint8_t *instp = (uint8_t *)&inst;
-    // for (int i = ilen - 1; i >= 0; i--)
-    // {
-    //     p += snprintf(p, 4, " %02x", instp[i]);
-    // }
+    char buf[128];
+    char *p = buf;
+    p += snprintf(p, sizeof(buf), "%08x:", pc);
+    int ilen = 4;
+    uint8_t *instp = (uint8_t *)&inst;
+    for (int i = ilen - 1; i >= 0; i--)
+    {
+        p += snprintf(p, 4, " %02x", instp[i]);
+    }
 
-    // *(p++) = ' ';
+    *(p++) = ' ';
 
-    // disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
+    disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
-    // extern bool itrace_enable;
-    // // if (itrace_enable) {
-    //     printf("Inst to be exe:%s\n", buf);
-    // // }
+    extern bool itrace_enable;
+    if (itrace_enable) {
+        printf("Inst to be exe:%s\n", buf);
+    }
 #endif
 }
 
