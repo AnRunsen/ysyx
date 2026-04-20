@@ -136,7 +136,8 @@ int printf(const char *fmt, ...) {
 
     else {
       // 不支持的格式
-      putch('?');
+      putstr("Unsupported format: %");
+      putch(*fmt);
       assert(0);
       count++;
     }
