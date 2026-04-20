@@ -5,16 +5,16 @@
 
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
-static int print_num(unsigned int x, int base, int width, int pad_zero, int is_signed, int neg) {
+static int print_num(unsigned long x, int base, int width, int pad_zero, int is_signed, int neg) {
   char buf[32];
   char *p = buf + sizeof(buf);
   int cnt = 0;
 
   // 转换数字（倒序）
   do {
-    int d = x % base;
+    int d = x % (unsigned long)base;
     *--p = (d < 10) ? ('0' + d) : ('a' + d - 10);
-    x /= base;
+    x /= (unsigned long)base;
   } while (x);
 
   int len = buf + sizeof(buf) - p;
@@ -76,29 +76,45 @@ int printf(const char *fmt, ...) {
       fmt++;
     }
 
+    int long_flag = 0;
+    if (*fmt == 'l') {
+      long_flag = 1;
+      fmt++;
+    }
+
     // ---------- 处理类型 ----------
     if (*fmt == 'd') {
-      int x = va_arg(ap, int);
-      unsigned int ux;
+      unsigned long ux;
       int neg = 0;
 
-      if (x < 0) {
-        neg = 1;
-        ux = -(unsigned int)x;
+      if (long_flag) {
+        long x = va_arg(ap, long);
+        if (x < 0) {
+          neg = 1;
+          ux = 0 - (unsigned long)x;
+        } else {
+          ux = (unsigned long)x;
+        }
       } else {
-        ux = x;
+        int x = va_arg(ap, int);
+        if (x < 0) {
+          neg = 1;
+          ux = 0 - (unsigned int)x;
+        } else {
+          ux = (unsigned int)x;
+        }
       }
 
       count += print_num(ux, 10, width, pad_zero, 1, neg);
     }
 
     else if (*fmt == 'u') {
-      unsigned int x = va_arg(ap, unsigned int);
+      unsigned long x = long_flag ? va_arg(ap, unsigned long) : va_arg(ap, unsigned int);
       count += print_num(x, 10, width, pad_zero, 0, 0);
     }
 
     else if (*fmt == 'x') {
-      unsigned int x = va_arg(ap, unsigned int);
+      unsigned long x = long_flag ? va_arg(ap, unsigned long) : va_arg(ap, unsigned int);
       count += print_num(x, 16, width, pad_zero, 0, 0);
     }
 
@@ -162,13 +178,35 @@ int sprintf(char *out, const char *fmt, ...) {
       continue;
     }
     fmt++;
+
+    int long_flag = 0;
+    if (*fmt == 'l') {
+      long_flag = 1;
+      fmt++;
+    }
+
     if (*fmt == 'd') {
-      int x = va_arg(ap, int);
-      if (x < 0) {
-        *p++ = '-';
-        x = -x;
+      unsigned long x;
+
+      if (long_flag) {
+        long v = va_arg(ap, long);
+        if (v < 0) {
+          *p++ = '-';
+          x = 0 - (unsigned long)v;
+        } else {
+          x = (unsigned long)v;
+        }
+      } else {
+        int v = va_arg(ap, int);
+        if (v < 0) {
+          *p++ = '-';
+          x = 0 - (unsigned int)v;
+        } else {
+          x = (unsigned int)v;
+        }
       }
-      char buf[16];
+
+      char buf[32];
       char *q = buf + sizeof(buf);
       do {
         *--q = '0' + x % 10;
