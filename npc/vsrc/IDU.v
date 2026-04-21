@@ -20,12 +20,15 @@ module IDU(
 
     output reg [1:0] alu_sel0, //sel the ALU A port is srcR1(0) or PC(1)
     output reg [1:0] alu_sel1, //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
-    output reg [1:0] brju, //00:PC=PC+4, 01:PC=PC+imm, 10:PC=ALU_RES
+    output reg [1:0] brju,
     output reg mem_signext,
 
     output [11:0] csr_addr,
     output reg csr_wr_sel, //0: write srcR1, 1: write alu_res
     output reg csr_wen,
+
+    output reg ecall,
+    output reg mret,
 
     /*implict ports for read GPRs*/
     output [4:0] rs1,
@@ -50,7 +53,7 @@ module IDU(
     assign srcR1 = srcR1_in;
     assign srcR2 = srcR2_in;
 
-    assign rs1 = (opcode == 7'b1110011) ? 5'd10 : Inst[19:15];
+    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd17) : Inst[19:15];
     assign rs2 = Inst[24:20];
     assign rd = Inst[11:7];
     assign opcode = Inst[6:0];
@@ -80,6 +83,8 @@ module IDU(
         mem_en       = 0;
         csr_wr_sel   = 0;
         csr_wen      = 0;
+        ecall        = 0;
+        mret         = 0;
 
         case(opcode)
             7'b1100011: begin //branch  — all share immB / RS1 vs RS2 / PC_BRANCH
@@ -207,8 +212,16 @@ module IDU(
 
             7'b1110011: begin //SYSTEM
                 case(funct3)
-                    3'b000: begin //ebreak
-                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(srcR1);
+                    3'b000: begin
+                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(srcR1); //ebreak
+                        else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //ecall
+                            ecall = 1;
+                        end
+                        else if(funct7 == 7'b0011000 && rs2 == 5'b00010) begin //mret
+                            mret = 1;
+                        end
+                        else sim_exit(Inst);
+                        
                     end
                     3'b010: begin //csrrs
                         alu_op     = `ALU_OP_OR;
