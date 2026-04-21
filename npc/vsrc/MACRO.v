@@ -13,22 +13,28 @@
 `define ALU_OP_GEU 4'b1100
 `define ALU_OP_NE 4'b1101
 
-`define WB_SEL_IMM 2'b00
-`define WB_SEL_ALU 2'b01
-`define WB_SEL_MEM 2'b10
-`define WB_SEL_PC4 2'b11
+`define WB_SEL_IMM 3'b000
+`define WB_SEL_ALU 3'b001
+`define WB_SEL_MEM 3'b010
+`define WB_SEL_PC4 3'b011
+`define WB_SEL_CSR 3'b100
 
 `define OP_WIDTH_BYTE 2'b00
 `define OP_WIDTH_HALF 2'b01
 `define OP_WIDTH_WORD 2'b10
 
-`define ALU_SEL_RS1 0
-`define ALU_SEL_PC 1
-`define ALU_SEL_RS2 0
-`define ALU_SEL_IMM 1
+`define ALU_SEL_RS1 2'b00
+`define ALU_SEL_PC 2'b01
+
+`define ALU_SEL_RS2 2'b00
+`define ALU_SEL_IMM 2'b01
+`define ALU_SEL_CSR 2'b10
 
 `define PC_NORMAL 2'b00
 `define PC_NEAR 2'b01
 `define PC_FAR 2'b10
 `define PC_BRANCH 2'b11
+
+`define CSR_SEL_RS1 1'b0
+`define CSR_SEL_ALU 1'b1
 
