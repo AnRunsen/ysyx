@@ -66,750 +66,164 @@ module IDU(
 
 
     always @(*) begin
+        // --- safe defaults (all zeros, which map to PC_NORMAL / ALU_SEL_RS1 / ALU_SEL_RS2) ---
+        imm          = 0;
+        alu_op       = 0;
+        wb_en        = 0;
+        mem_write_en = 0;
+        op_width     = 0;
+        wb_sel       = 0;
+        alu_sel0     = 0;
+        alu_sel1     = 0;
+        brju         = `PC_NORMAL;
+        mem_signext  = 0;
+        mem_en       = 0;
+        csr_wr_sel   = 0;
+        csr_wen      = 0;
+
         case(opcode)
-            7'b1100011: begin //branch
+            7'b1100011: begin //branch  — all share immB / RS1 vs RS2 / PC_BRANCH
+                imm      = immB;
+                alu_sel0 = `ALU_SEL_RS1;
+                alu_sel1 = `ALU_SEL_RS2;
+                brju     = `PC_BRANCH;
                 case(funct3)
-                    3'b000: begin //beq
-                        imm = immB;
-                        alu_op = `ALU_OP_EQ;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_BRANCH; // PC=PC+imm
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b001: begin //bne
-                        imm = immB;
-                        alu_op = `ALU_OP_NE;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_BRANCH; // PC=PC+imm
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b100: begin //blt
-                        imm = immB;
-                        alu_op = `ALU_OP_LT;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_BRANCH; // PC=PC+imm
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b101: begin //bge
-                        imm = immB;
-                        alu_op = `ALU_OP_GE;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_BRANCH; // PC=PC+imm
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b110: begin //bltu
-                        imm = immB;
-                        alu_op = `ALU_OP_LTU;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_BRANCH; // PC=PC+imm
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b111: begin //bgeu
-                        imm = immB;
-                        alu_op = `ALU_OP_GEU;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_BRANCH; // PC=PC+imm
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                        sim_exit(Inst);
-                    end
+                    3'b000: alu_op = `ALU_OP_EQ;   //beq
+                    3'b001: alu_op = `ALU_OP_NE;   //bne
+                    3'b100: alu_op = `ALU_OP_LT;   //blt
+                    3'b101: alu_op = `ALU_OP_GE;   //bge
+                    3'b110: alu_op = `ALU_OP_LTU;  //bltu
+                    3'b111: alu_op = `ALU_OP_GEU;  //bgeu
+                    default: sim_exit(Inst);
                 endcase
             end
 
             7'b1101111: begin //jal
-                imm = immJ;
-                alu_op = 0; // not care
-                wb_en = 1;
-                mem_write_en = 0;
-                op_width = 0;
-                wb_sel = `WB_SEL_PC4; // PC+4
-                alu_sel0 = 0;
-                alu_sel1 = 0;
-                brju = `PC_NEAR; // PC=PC+imm
-                mem_signext = 0;
-                mem_en = 0;
-                csr_wr_sel = 0;
-                csr_wen = 0;
+                imm    = immJ;
+                wb_en  = 1;
+                wb_sel = `WB_SEL_PC4;
+                brju   = `PC_NEAR;
             end
 
-            7'b0010111: begin //auipc
-                imm = immU;
-                alu_op = `ALU_OP_ADD;
-                wb_en = 1;
-                mem_write_en = 0;
-                op_width = 0;
-                wb_sel = `WB_SEL_ALU; // alu
-                alu_sel0 = `ALU_SEL_PC; // PC
-                alu_sel1 = `ALU_SEL_IMM; // imm
-                brju = `PC_NORMAL; // PC+4
-                mem_signext = 0;
-                mem_en = 0;
-                csr_wr_sel = 0;
-                csr_wen = 0;
-            end
-
-            7'b1110011: begin //System
+            7'b1100111: begin //jalr
                 case(funct3)
-                    3'b000: begin //ebreak
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-
-                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(srcR1);
-                    end
-
-                    3'b010: begin //csrrs
-                        imm = 0;
-                        alu_op = `ALU_OP_OR;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_CSR; // csr
+                    3'b000: begin
+                        imm      = immI;
+                        alu_op   = `ALU_OP_ADD;
+                        wb_en    = 1;
+                        wb_sel   = `WB_SEL_PC4;
                         alu_sel0 = `ALU_SEL_RS1;
-                        alu_sel1 = `ALU_SEL_CSR;
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = `CSR_SEL_ALU;
-                        csr_wen = 1;
+                        alu_sel1 = `ALU_SEL_IMM;
+                        brju     = `PC_FAR;
                     end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-
-                        sim_exit(Inst);
-                    end
-                endcase
-            end
-
-            7'b0110011: begin //OP
-                case(funct3)
-                    3'b000: begin //add, sub
-                        imm = 0;
-                        alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SUB : `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b001: begin //sll
-                        imm = 0;
-                        alu_op = `ALU_OP_SLL;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b010: begin //slt
-                        imm = 0;
-                        alu_op = `ALU_OP_LT;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b011: begin //sltu
-                        imm = 0;
-                        alu_op = `ALU_OP_LTU;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b100: begin //xor
-                        imm = 0;
-                        alu_op = `ALU_OP_XOR;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b101: begin //srl, sra
-                        imm = 0;
-                        alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b110: begin //or
-                        imm = 0;
-                        alu_op = `ALU_OP_OR;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b111: begin //and
-                        imm = 0;
-                        alu_op = `ALU_OP_AND;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_RS2; // reg
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                        sim_exit(Inst);
-                    end
+                    default: sim_exit(Inst);
                 endcase
             end
 
             7'b0110111: begin //lui
-                imm = immU;
-                alu_op = 0; // not care
-                wb_en = 1;
-                mem_write_en = 0;
-                op_width = 0;
-                wb_sel = `WB_SEL_IMM; // alu
-                alu_sel0 = 0;
-                alu_sel1 = 0;
-                brju = `PC_NORMAL; // PC+4
-                mem_signext = 0;
-                mem_en = 0;
-                csr_wr_sel = 0;
-                csr_wen = 0;
+                imm    = immU;
+                wb_en  = 1;
+                wb_sel = `WB_SEL_IMM;
             end
 
-            7'b0000011: begin //load
+            7'b0010111: begin //auipc
+                imm      = immU;
+                alu_op   = `ALU_OP_ADD;
+                wb_en    = 1;
+                wb_sel   = `WB_SEL_ALU;
+                alu_sel0 = `ALU_SEL_PC;
+                alu_sel1 = `ALU_SEL_IMM;
+            end
+
+            7'b0110011: begin //OP  — all share wb_en=1 / WB_SEL_ALU / RS1 vs RS2
+                wb_en    = 1;
+                wb_sel   = `WB_SEL_ALU;
+                alu_sel0 = `ALU_SEL_RS1;
+                alu_sel1 = `ALU_SEL_RS2;
                 case(funct3)
-                    3'b000: begin //lb
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = `OP_WIDTH_BYTE;
-                        wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 1;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b001: begin //lh
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = `OP_WIDTH_HALF;
-                        wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 1;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b010: begin //lw
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = `OP_WIDTH_WORD;
-                        wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 1;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b100: begin //lbu
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = `OP_WIDTH_BYTE;
-                        wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b101: begin //lhu
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = `OP_WIDTH_HALF;
-                        wb_sel = `WB_SEL_MEM; // mem
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                        sim_exit(Inst);
-                    end
+                    3'b000: alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SUB : `ALU_OP_ADD; //add/sub
+                    3'b001: alu_op = `ALU_OP_SLL;  //sll
+                    3'b010: alu_op = `ALU_OP_LT;   //slt
+                    3'b011: alu_op = `ALU_OP_LTU;  //sltu
+                    3'b100: alu_op = `ALU_OP_XOR;  //xor
+                    3'b101: alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL; //srl/sra
+                    3'b110: alu_op = `ALU_OP_OR;   //or
+                    3'b111: alu_op = `ALU_OP_AND;  //and
+                    default: sim_exit(Inst);
                 endcase
             end
 
-            7'b0010011: begin //OP-IMM
+            7'b0010011: begin //OP-IMM  — all share immI / wb_en=1 / WB_SEL_ALU / RS1 / IMM
+                imm      = immI;
+                wb_en    = 1;
+                wb_sel   = `WB_SEL_ALU;
+                alu_sel0 = `ALU_SEL_RS1;
+                alu_sel1 = `ALU_SEL_IMM;
                 case(funct3)
-                    3'b000: begin //addi
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-                    
-                    3'b010: begin //slti
-                        imm = immI;
-                        alu_op = `ALU_OP_LT;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b011: begin //sltiu
-                        imm = immI;
-                        alu_op = `ALU_OP_LTU;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b100: begin //xori
-                        imm = immI;
-                        alu_op = `ALU_OP_XOR;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b110: begin //ori
-                        imm = immI;
-                        alu_op = `ALU_OP_OR;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b111: begin //andi
-                        imm = immI;
-                        alu_op = `ALU_OP_AND;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b001: begin //slli
-                        imm = immI;
-                        alu_op = `ALU_OP_SLL;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b101: begin //srli, srai
-                        imm = immI;
-                        alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_ALU; // alu
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0;
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                        sim_exit(Inst);
-                    end
+                    3'b000: alu_op = `ALU_OP_ADD;  //addi
+                    3'b001: alu_op = `ALU_OP_SLL;  //slli
+                    3'b010: alu_op = `ALU_OP_LT;   //slti
+                    3'b011: alu_op = `ALU_OP_LTU;  //sltiu
+                    3'b100: alu_op = `ALU_OP_XOR;  //xori
+                    3'b101: alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL; //srli/srai
+                    3'b110: alu_op = `ALU_OP_OR;   //ori
+                    3'b111: alu_op = `ALU_OP_AND;  //andi
+                    default: sim_exit(Inst);
                 endcase
             end
 
-            7'b1100111: begin
+            7'b0000011: begin //LOAD  — all share immI / ADD / wb_en=1 / WB_SEL_MEM / RS1 / IMM / mem_en=1
+                imm      = immI;
+                alu_op   = `ALU_OP_ADD;
+                wb_en    = 1;
+                wb_sel   = `WB_SEL_MEM;
+                alu_sel0 = `ALU_SEL_RS1;
+                alu_sel1 = `ALU_SEL_IMM;
+                mem_en   = 1;
                 case(funct3)
-                    3'b000: begin //jalr
-                        imm = immI;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 1;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = `WB_SEL_PC4; // PC+4
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_FAR; // PC=ALU_RES
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-
-                    end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0;
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                        sim_exit(Inst);
-                    end
+                    3'b000: begin op_width = `OP_WIDTH_BYTE; mem_signext = 1; end //lb
+                    3'b001: begin op_width = `OP_WIDTH_HALF; mem_signext = 1; end //lh
+                    3'b010: begin op_width = `OP_WIDTH_WORD; mem_signext = 1; end //lw
+                    3'b100: begin op_width = `OP_WIDTH_BYTE; mem_signext = 0; end //lbu
+                    3'b101: begin op_width = `OP_WIDTH_HALF; mem_signext = 0; end //lhu
+                    default: sim_exit(Inst);
                 endcase
             end
 
-            7'b0100011: begin //store
+            7'b0100011: begin //STORE  — all share immS / ADD / mem_write_en=1 / RS1 / IMM / mem_en=1
+                imm          = immS;
+                alu_op       = `ALU_OP_ADD;
+                mem_write_en = 1;
+                alu_sel0     = `ALU_SEL_RS1;
+                alu_sel1     = `ALU_SEL_IMM;
+                mem_en       = 1;
                 case(funct3)
-                    3'b000: begin //sb
-                        imm = immS;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 0;
-                        mem_write_en = 1;
-                        op_width = `OP_WIDTH_BYTE;
-                        wb_sel = 0; // not care
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b001: begin //sh
-                        imm = immS;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 0;
-                        mem_write_en = 1;
-                        op_width = `OP_WIDTH_HALF;
-                        wb_sel = 0; // not care
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    3'b010: begin //sw
-                        imm = immS;
-                        alu_op = `ALU_OP_ADD;
-                        wb_en = 0;
-                        mem_write_en = 1;
-                        op_width = `OP_WIDTH_WORD;
-                        wb_sel = 0; // not care
-                        alu_sel0 = `ALU_SEL_RS1; // reg
-                        alu_sel1 = `ALU_SEL_IMM; // imm
-                        brju = `PC_NORMAL; // PC+4
-                        mem_signext = 0;
-                        mem_en = 1;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                    end
-
-                    default: begin
-                        imm = 0;
-                        alu_op = 0;
-                        wb_en = 0;
-                        mem_write_en = 0;
-                        op_width = 0;
-                        wb_sel = 0; // alu
-                        alu_sel0 = 0;
-                        alu_sel1 = 0;
-                        brju = 0; // PC+4
-                        mem_signext = 0;
-                        mem_en = 0;
-                        csr_wr_sel = 0;
-                        csr_wen = 0;
-                        sim_exit(Inst);
-                    end
+                    3'b000: op_width = `OP_WIDTH_BYTE; //sb
+                    3'b001: op_width = `OP_WIDTH_HALF; //sh
+                    3'b010: op_width = `OP_WIDTH_WORD; //sw
+                    default: sim_exit(Inst);
                 endcase
             end
 
-            default: begin
-                imm = 0;
-                alu_op = 0;
-                wb_en = 0;
-                mem_write_en = 0;
-                op_width = 0;
-                wb_sel = 0;
-                alu_sel0 = 0;
-                alu_sel1 = 0;
-                brju = 0;
-                mem_signext = 0;
-                mem_en = 0;
-                csr_wr_sel = 0;
-                csr_wen = 0;
-                sim_exit(Inst);
+            7'b1110011: begin //SYSTEM
+                case(funct3)
+                    3'b000: begin //ebreak
+                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(srcR1);
+                    end
+                    3'b010: begin //csrrs
+                        alu_op     = `ALU_OP_OR;
+                        wb_en      = 1;
+                        wb_sel     = `WB_SEL_CSR;
+                        alu_sel0   = `ALU_SEL_RS1;
+                        alu_sel1   = `ALU_SEL_CSR;
+                        csr_wr_sel = `CSR_SEL_ALU;
+                        csr_wen    = 1;
+                    end
+                    default: sim_exit(Inst);
+                endcase
             end
+
+            default: sim_exit(Inst);
         endcase
     end
 endmodule
