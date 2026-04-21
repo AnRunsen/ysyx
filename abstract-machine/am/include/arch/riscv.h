@@ -8,17 +8,9 @@
 #endif
 
 struct Context {
-  // TODO: fix the order of these members to match trap.S
-
-  //讲义说pdir和x0共用地址空间
-  union 
-  {
-    uintptr_t gpr[NR_REGS];
-    void *pdir;
-  };
-  
+  uintptr_t gpr[NR_REGS];
   uintptr_t mcause, mstatus, mepc;
-  
+  void *pdir;  // must be after mepc so sizeof(Context) == CONTEXT_SIZE in trap.S
 };
 
 #ifdef __riscv_e
