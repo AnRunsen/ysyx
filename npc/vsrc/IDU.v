@@ -223,6 +223,14 @@ module IDU(
                         else sim_exit(Inst);
                         
                     end
+
+                    3'b001: begin //csrrw
+                        wb_en      = 1;
+                        wb_sel     = `WB_SEL_CSR;
+                        csr_wr_sel = `CSR_SEL_RS1;
+                        csr_wen    = 1;
+                    end
+
                     3'b010: begin //csrrs
                         alu_op     = `ALU_OP_OR;
                         wb_en      = 1;
