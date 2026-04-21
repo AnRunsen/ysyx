@@ -11,7 +11,11 @@ module CPU(
             .PC         	( PCU_PC          ),
             .exu_result 	( EXU_result  ),
             .imm        	( IDU_imm         ),
-            .behavior   	( IDU_brju    )
+            .behavior   	( IDU_brju    ),
+            .ecall          ( IDU_ecall    ),
+            .mtvec          ( CSR_mtvec     ),
+            .mret           ( IDU_mret      ),
+            .mepc           ( CSR_mepc    )
         );
 
     wire [31:0] 	EXU_result;
@@ -62,6 +66,8 @@ module CPU(
     wire [11:0]     IDU_csr_addr;
     wire            IDU_csr_wr_sel; //0: write srcR1, 1: write alu_res
     wire            IDU_csr_wen;
+    wire            IDU_ecall;
+    wire            IDU_mret;
 
     IDU u_IDU(
             .Inst         	( IFU_Inst          ),
@@ -85,7 +91,9 @@ module CPU(
             .mem_en         ( IDU_mem_en      ),
             .csr_addr       ( IDU_csr_addr       ),
             .csr_wr_sel     ( IDU_csr_wr_sel     ),
-            .csr_wen        ( IDU_csr_wen        )
+            .csr_wen        ( IDU_csr_wen        ),
+            .ecall          ( IDU_ecall         ),
+            .mret           ( IDU_mret          )
         );
 
     wire [31:0] 	IFU_Inst;
@@ -127,6 +135,8 @@ module CPU(
 
 
     wire [31:0] 	CSR_rdata;
+    wire [31:0]     CSR_mtvec;
+    wire [31:0]     CSR_mepc;
 
     CSR u_CSR(
         .clk     	( clk      ),
@@ -136,7 +146,12 @@ module CPU(
         .alu_res 	( EXU_result  ),
         .wr_sel  	( IDU_csr_wr_sel   ),
         .wen     	( IDU_csr_wen      ),
-        .rdata   	( CSR_rdata    )
+        .rdata   	( CSR_rdata    ),
+        .mtvec    	( CSR_mtvec     ),
+        .ecall      ( IDU_ecall    ),
+        .w_epc      ( PCU_PC    ),
+        .w_cause    ( IDU_srcR1  ),
+        .mepc       ( CSR_mepc    )
     );
 
 

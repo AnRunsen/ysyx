@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
         assert(0);
     }
 
-    sdb_set_batch_mode();
 #ifdef WAVEON
     Verilated::traceEverOn(true);
 #endif

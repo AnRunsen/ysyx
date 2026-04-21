@@ -93,6 +93,7 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
     {
         // 0x10000000是一个特殊的地址, 往这里写入数据会打印到控制台
         putchar(wdata & 0xFF);
+        fflush(stdout);
         return;
     }
 
