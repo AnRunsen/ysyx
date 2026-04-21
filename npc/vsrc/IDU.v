@@ -53,7 +53,7 @@ module IDU(
     assign srcR1 = srcR1_in;
     assign srcR2 = srcR2_in;
 
-    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd17) : Inst[19:15];
+    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd15) : Inst[19:15];
     assign rs2 = Inst[24:20];
     assign rd = Inst[11:7];
     assign opcode = Inst[6:0];
