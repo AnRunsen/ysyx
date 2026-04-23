@@ -111,7 +111,7 @@ module IDU(
                     3'b101: alu_op = `ALU_OP_GE;   //bge
                     3'b110: alu_op = `ALU_OP_LTU;  //bltu
                     3'b111: alu_op = `ALU_OP_GEU;  //bgeu
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
@@ -133,7 +133,7 @@ module IDU(
                         alu_sel1 = `ALU_SEL_IMM;
                         brju     = `PC_FAR;
                     end
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
@@ -166,7 +166,7 @@ module IDU(
                     3'b101: alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL; //srl/sra
                     3'b110: alu_op = `ALU_OP_OR;   //or
                     3'b111: alu_op = `ALU_OP_AND;  //and
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
@@ -185,7 +185,7 @@ module IDU(
                     3'b101: alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SRA : `ALU_OP_SRL; //srli/srai
                     3'b110: alu_op = `ALU_OP_OR;   //ori
                     3'b111: alu_op = `ALU_OP_AND;  //andi
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
@@ -203,7 +203,7 @@ module IDU(
                     3'b010: begin op_width = `OP_WIDTH_WORD; mem_signext = 1; end //lw
                     3'b100: begin op_width = `OP_WIDTH_BYTE; mem_signext = 0; end //lbu
                     3'b101: begin op_width = `OP_WIDTH_HALF; mem_signext = 0; end //lhu
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
@@ -218,21 +218,21 @@ module IDU(
                     3'b000: op_width = `OP_WIDTH_BYTE; //sb
                     3'b001: op_width = `OP_WIDTH_HALF; //sh
                     3'b010: op_width = `OP_WIDTH_WORD; //sw
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
             7'b1110011: begin //SYSTEM
                 case(funct3)
                     3'b000: begin
-                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) sim_exit(srcR1); //ebreak
+                        if(funct7 == 7'b0000000 && rs2 == 5'b00001) if(Inst_valid) sim_exit(srcR1); //ebreak
                         else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //ecall
                             ecall = 1;
                         end
                         else if(funct7 == 7'b0011000 && rs2 == 5'b00010) begin //mret
                             mret = 1;
                         end
-                        else sim_exit(Inst);
+                        else if(Inst_valid) sim_exit(Inst);
                         
                     end
 
@@ -252,11 +252,11 @@ module IDU(
                         csr_wr_sel = `CSR_SEL_ALU;
                         csr_wen    = 1;
                     end
-                    default: sim_exit(Inst);
+                    default: if(Inst_valid) sim_exit(Inst);
                 endcase
             end
 
-            default: sim_exit(Inst);
+            default: if(Inst_valid) sim_exit(Inst);
         endcase
     end
 endmodule

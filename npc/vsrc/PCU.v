@@ -4,6 +4,7 @@ import PKG::ftrace;
 module PCU(
     input clk,
     input arstn,
+    
     output reg [31:0] PC,
     input [31:0] exu_result,
     input [31:0] imm,
