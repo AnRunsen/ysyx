@@ -3,7 +3,6 @@ module IFU(
     input clk,
     input arstn,
 
-
     output [31:0] Inst,
     output Inst_valid,
 

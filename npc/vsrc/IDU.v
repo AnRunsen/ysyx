@@ -15,7 +15,6 @@ module IDU(
     output reg [1:0] alu_sel1, //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
 
     output wb_en,
-    output pc_en,
     output mem_en,
     output mem_write_en,
 
@@ -44,7 +43,6 @@ module IDU(
     reg mem_write_en_reg;
 
     assign wb_en = Inst_valid ? wb_en_reg : 1'b0;
-    assign pc_en = Inst_valid ? 1'b1 : 1'b0;
     assign mem_en = Inst_valid ? mem_en_reg : 1'b0;
     assign mem_write_en = Inst_valid ? mem_write_en_reg : 1'b0;
 

@@ -16,7 +16,7 @@ module CPU(
             .mtvec          ( CSR_mtvec     ),
             .mret           ( IDU_mret      ),
             .mepc           ( CSR_mepc    ),
-            .pc_en          (IDU_pc_en)
+            .pc_en          ( LSU_data_valid)
         );
 
     wire [31:0] 	EXU_result;
@@ -69,7 +69,6 @@ module CPU(
     wire            IDU_csr_wen;
     wire            IDU_ecall;
     wire            IDU_mret;
-    wire            IDU_pc_en;
 
     IDU u_IDU(
             .Inst         	( IFU_Inst          ),
@@ -96,7 +95,6 @@ module CPU(
             .csr_wen        ( IDU_csr_wen        ),
             .ecall          ( IDU_ecall         ),
             .mret           ( IDU_mret          ),
-            .pc_en          ( IDU_pc_en         ),
             .Inst_valid     ( IFU_Inst_valid     )
         );
 
