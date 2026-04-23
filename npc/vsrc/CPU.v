@@ -111,7 +111,8 @@ module CPU(
             .Inst       	( IFU_Inst        ),
             .Inst_valid     ( IFU_Inst_valid  ),
             .ifu_raddr  	( IFU_ifu_raddr   ),
-            .ifu_rdata  	( RAMifu_rdata   )
+            .ifu_rdata  	( RAMifu_rdata   ),
+            .next_inst      ( LSU_data_valid )
         );
 
 
@@ -122,8 +123,11 @@ module CPU(
     wire [31:0]     LSU_lsu_wdata;
     wire [3:0]      LSU_lsu_wmask;
     wire            LSU_lsu_mem_en;
+    wire            LSU_data_valid;
 
     LSU u_LSU(
+            .clk            ( clk            ),
+            .arstn          ( arstn          ),
             .mem_write_en  	( IDU_mem_write_en   ),
             .op_width      	( IDU_op_width       ),
             .sign_ext_en   	( IDU_mem_signext    ),
@@ -137,7 +141,8 @@ module CPU(
             .lsu_wdata      ( LSU_lsu_wdata      ),
             .lsu_wmask      ( LSU_lsu_wmask      ),
             .lsu_mem_en     ( LSU_lsu_mem_en     ),
-            .lsu_rdata      ( RAMlsu_rdata      )
+            .lsu_rdata      ( RAMlsu_rdata      ),
+            .data_valid     ( LSU_data_valid    )
         );
 
     wire        	WBU_wen;

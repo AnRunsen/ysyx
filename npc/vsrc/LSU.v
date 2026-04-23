@@ -1,5 +1,8 @@
 `include "MACRO.v"
 module LSU(
+    input clk,
+    input arstn,
+
     input mem_en,
     input mem_write_en,
     input [1:0] op_width,
@@ -14,8 +17,18 @@ module LSU(
     output [31:0] lsu_wdata,
     output [3:0]  lsu_wmask,
     output        lsu_mem_en,
-    input  [31:0] lsu_rdata
+    input  [31:0] lsu_rdata,
+
+    output reg data_valid
 );
+
+    always @(posedge clk or negedge arstn) begin
+        if(!arstn) data_valid <= 1'b0;
+        else begin
+            if(data_valid) data_valid <= 1'b0;
+            else if(mem_en) data_valid <= 1'b1;
+        end
+    end
 
     wire [31:0] wdata_ = wdata << (addr[1:0]*8);
 

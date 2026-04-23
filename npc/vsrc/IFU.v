@@ -3,12 +3,15 @@ module IFU(
     input clk,
     input arstn,
 
-    input [31:0] PC,
+
     output [31:0] Inst,
     output Inst_valid,
 
+    input [31:0] PC,
     output [31:0] ifu_raddr,
-    input  [31:0] ifu_rdata
+    input  [31:0] ifu_rdata,
+
+    input next_inst
 );
 
     localparam IDLE = 1'b0;
@@ -19,7 +22,7 @@ module IFU(
     always @(*) begin
         case(state)
             IDLE: next_state = WAIT;
-            WAIT: next_state = IDLE;
+            WAIT: next_state = next_inst ? IDLE : WAIT;
         endcase
     end
 
@@ -29,8 +32,8 @@ module IFU(
     end
 
     assign ifu_raddr = PC;
-    assign Inst_valid = (state == WAIT);
     assign Inst = ifu_rdata;
+    assign Inst_valid = state == WAIT;
 
     always @(posedge clk or negedge arstn) begin
         if(state == WAIT) begin
