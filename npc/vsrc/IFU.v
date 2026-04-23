@@ -36,7 +36,7 @@ module IFU(
     assign Inst_valid = state == WAIT;
 
     always @(posedge clk or negedge arstn) begin
-        if(state == IDLE) begin
+        if(state == WAIT && next_inst) begin
             itrace(Inst, PC);
         end
     end
