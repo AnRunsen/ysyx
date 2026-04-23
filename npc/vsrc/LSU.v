@@ -1,6 +1,4 @@
 `include "MACRO.v"
-import PKG::pmem_read;
-import PKG::pmem_write;
 module LSU(
     input mem_en,
     input mem_write_en,
@@ -8,38 +6,43 @@ module LSU(
     input sign_ext_en,
     input [31:0] addr,
     input [31:0] wdata,
-    output [31:0] rdata
+    output [31:0] rdata,
+
+    //bus to interact with RAM
+    output [31:0] lsu_addr,
+    output        lsu_wen,
+    output [31:0] lsu_wdata,
+    output [3:0]  lsu_wmask,
+    output        lsu_mem_en,
+    input  [31:0] lsu_rdata
 );
 
-    reg [31:0] rdata_;
     wire [31:0] wdata_ = wdata << (addr[1:0]*8);
 
-    always @(*) begin
-        if(mem_en) begin
-            rdata_ = pmem_read(addr);
-            if(mem_write_en) pmem_write(addr, wdata_, (op_width == `OP_WIDTH_BYTE) ? 8'b0000_0001 << addr[1:0] :
-                                    (op_width == `OP_WIDTH_HALF) ? 8'b0000_0011 << addr[1:0] : 8'b0000_1111);
-        end
+    assign lsu_addr = addr;
+    assign lsu_wen = mem_write_en;
+    assign lsu_wdata = wdata_;
+    assign lsu_mem_en = mem_en;
+    assign lsu_wmask = (op_width == `OP_WIDTH_BYTE) ? 4'b0001 << addr[1:0] :
+                       (op_width == `OP_WIDTH_HALF) ? 4'b0011 << addr[1:0] : 4'b1111;
 
-        else rdata_ = 32'b0;
-    end
 
     reg [7:0] data8;
     reg [15:0] data16;
 
     always @(*) begin
         case(addr[1:0])
-            2'b00: data8 = rdata_[7:0];
-            2'b01: data8 = rdata_[15:8];
-            2'b10: data8 = rdata_[23:16];
-            2'b11: data8 = rdata_[31:24];
+            2'b00: data8 = lsu_rdata[7:0];
+            2'b01: data8 = lsu_rdata[15:8];
+            2'b10: data8 = lsu_rdata[23:16];
+            2'b11: data8 = lsu_rdata[31:24];
         endcase
     end
 
     always @(*) begin
         case(addr[1])
-            1'b0: data16 = rdata_[15:0];
-            1'b1: data16 = rdata_[31:16];
+            1'b0: data16 = lsu_rdata[15:0];
+            1'b1: data16 = lsu_rdata[31:16];
         endcase
     end
 
@@ -61,7 +64,7 @@ module LSU(
     wire [31:0] rdata_ext;
     assign rdata_ext = (op_width == `OP_WIDTH_BYTE) ? rdata_ext8 :
                        (op_width == `OP_WIDTH_HALF) ? rdata_ext16 :
-                       (op_width == `OP_WIDTH_WORD) ? rdata_ :
+                       (op_width == `OP_WIDTH_WORD) ? lsu_rdata :
                        32'b0;
 
     assign rdata = rdata_ext;

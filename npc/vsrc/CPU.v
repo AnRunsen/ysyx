@@ -111,12 +111,17 @@ module CPU(
             .Inst       	( IFU_Inst        ),
             .Inst_valid     ( IFU_Inst_valid  ),
             .ifu_raddr  	( IFU_ifu_raddr   ),
-            .ifu_rdata  	( RAM_rdata   )
+            .ifu_rdata  	( RAMifu_rdata   )
         );
 
 
 
     wire [31:0] 	LSU_rdata;
+    wire [31:0]     LSU_lsu_addr;
+    wire            LSU_lsu_wen;
+    wire [31:0]     LSU_lsu_wdata;
+    wire [3:0]      LSU_lsu_wmask;
+    wire            LSU_lsu_mem_en;
 
     LSU u_LSU(
             .mem_write_en  	( IDU_mem_write_en   ),
@@ -125,7 +130,14 @@ module CPU(
             .addr          	( EXU_result           ),
             .wdata         	( IDU_srcR2          ),
             .mem_en        	( IDU_mem_en         ),
-            .rdata         	( LSU_rdata          )
+            .rdata         	( LSU_rdata          ),
+
+            .lsu_addr       ( LSU_lsu_addr       ),
+            .lsu_wen        ( LSU_lsu_wen        ),
+            .lsu_wdata      ( LSU_lsu_wdata      ),
+            .lsu_wmask      ( LSU_lsu_wmask      ),
+            .lsu_mem_en     ( LSU_lsu_mem_en     ),
+            .lsu_rdata      ( RAMlsu_rdata      )
         );
 
     wire        	WBU_wen;
@@ -168,14 +180,31 @@ module CPU(
         );
 
 
-    // outports wire
-    wire [31:0] 	RAM_rdata;
+    wire [31:0] 	RAMifu_rdata;
 
-    RAM u_RAM(
+    RAM u_RAM_ifu(
             .clk   	( clk    ),
             .arstn 	( arstn  ),
-            .raddr 	( IFU_ifu_raddr  ),
-            .rdata 	( RAM_rdata  )
+            .addr 	( IFU_ifu_raddr  ),
+            .mem_en ( 1'b1  ),
+            .rdata 	( RAMifu_rdata  ),
+            .wen    ( 1'b0    ),
+            .wdata 	( 32'b0  ),
+            .wmask  ( 4'b0  )
+        );
+
+
+    wire [31:0] 	RAMlsu_rdata;
+
+    RAM u_RAM_lsu(
+            .clk   	( clk    ),
+            .arstn 	( arstn  ),
+            .addr 	( LSU_lsu_addr  ),
+            .mem_en ( LSU_lsu_mem_en  ),
+            .rdata 	( RAMlsu_rdata  ),
+            .wen    ( LSU_lsu_wen    ),
+            .wdata 	( LSU_lsu_wdata  ),
+            .wmask  ( LSU_lsu_wmask  )
         );
 
 
