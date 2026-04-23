@@ -11,7 +11,8 @@ module PCU(
     input mret,
     input [31:0] mtvec,
     input [31:0] mepc,
-    input [1:0] behavior
+    input [1:0] behavior,
+    input pc_en
 );
 
     initial begin
@@ -40,8 +41,11 @@ module PCU(
         end
 
         else begin
-            PC <= PC_next;
-            ftrace(PC, PC_next);
+            if(pc_en) begin
+                PC <= PC_next;
+                ftrace(PC, PC_next);
+            end
+
         end
     end
 

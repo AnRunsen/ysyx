@@ -15,7 +15,8 @@ module CPU(
             .ecall          ( IDU_ecall    ),
             .mtvec          ( CSR_mtvec     ),
             .mret           ( IDU_mret      ),
-            .mepc           ( CSR_mepc    )
+            .mepc           ( CSR_mepc    ),
+            .pc_en          (IDU_pc_en)
         );
 
     wire [31:0] 	EXU_result;
@@ -68,6 +69,7 @@ module CPU(
     wire            IDU_csr_wen;
     wire            IDU_ecall;
     wire            IDU_mret;
+    wire            IDU_pc_en;
 
     IDU u_IDU(
             .Inst         	( IFU_Inst          ),
@@ -93,15 +95,26 @@ module CPU(
             .csr_wr_sel     ( IDU_csr_wr_sel     ),
             .csr_wen        ( IDU_csr_wen        ),
             .ecall          ( IDU_ecall         ),
-            .mret           ( IDU_mret          )
+            .mret           ( IDU_mret          ),
+            .pc_en          ( IDU_pc_en         ),
+            .Inst_valid     ( IFU_Inst_valid     )
         );
 
     wire [31:0] 	IFU_Inst;
+    wire            IFU_Inst_valid;
+    wire [31:0]     IFU_ifu_raddr;
 
     IFU u_IFU(
+            .clk            (clk              ),
+            .arstn          (arstn            ),
             .PC         	( PCU_PC          ),
-            .Inst       	( IFU_Inst        )
+            .Inst       	( IFU_Inst        ),
+            .Inst_valid     ( IFU_Inst_valid  ),
+            .ifu_raddr  	( IFU_ifu_raddr   ),
+            .ifu_rdata  	( RAM_rdata   )
         );
+
+
 
     wire [31:0] 	LSU_rdata;
 
@@ -139,20 +152,32 @@ module CPU(
     wire [31:0]     CSR_mepc;
 
     CSR u_CSR(
-        .clk     	( clk      ),
-        .arstn   	( arstn    ),
-        .addr    	( IDU_csr_addr     ),
-        .srcR1   	( IDU_srcR1    ),
-        .alu_res 	( EXU_result  ),
-        .wr_sel  	( IDU_csr_wr_sel   ),
-        .wen     	( IDU_csr_wen      ),
-        .rdata   	( CSR_rdata    ),
-        .mtvec    	( CSR_mtvec     ),
-        .ecall      ( IDU_ecall    ),
-        .w_epc      ( PCU_PC    ),
-        .w_cause    ( IDU_srcR1  ),
-        .mepc       ( CSR_mepc    )
-    );
+            .clk     	( clk      ),
+            .arstn   	( arstn    ),
+            .addr    	( IDU_csr_addr     ),
+            .srcR1   	( IDU_srcR1    ),
+            .alu_res 	( EXU_result  ),
+            .wr_sel  	( IDU_csr_wr_sel   ),
+            .wen     	( IDU_csr_wen      ),
+            .rdata   	( CSR_rdata    ),
+            .mtvec    	( CSR_mtvec     ),
+            .ecall      ( IDU_ecall    ),
+            .w_epc      ( PCU_PC    ),
+            .w_cause    ( IDU_srcR1  ),
+            .mepc       ( CSR_mepc    )
+        );
+
+
+    // outports wire
+    wire [31:0] 	RAM_rdata;
+
+    RAM u_RAM(
+            .clk   	( clk    ),
+            .arstn 	( arstn  ),
+            .raddr 	( IFU_ifu_raddr  ),
+            .rdata 	( RAM_rdata  )
+        );
+
 
 
 
