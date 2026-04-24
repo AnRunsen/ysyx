@@ -4,14 +4,15 @@ import PKG::ftrace;
 module PCU(
     input clk,
     input arstn,
-    output reg [31:0] PC,
     input [31:0] exu_result,
     input [31:0] imm,
     input ecall,
     input mret,
     input [31:0] mtvec,
     input [31:0] mepc,
-    input [1:0] behavior
+    input [1:0] behavior,
+    input pc_en,
+    output reg [31:0] PC
 );
 
     initial begin
@@ -40,8 +41,11 @@ module PCU(
         end
 
         else begin
-            PC <= PC_next;
-            ftrace(PC, PC_next);
+            if(pc_en) begin
+                PC <= PC_next;
+                ftrace(PC, PC_next);
+            end
+
         end
     end
 

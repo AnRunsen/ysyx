@@ -93,17 +93,32 @@ module CPU(
             .csr_wr_sel     ( IDU_csr_wr_sel     ),
             .csr_wen        ( IDU_csr_wen        ),
             .ecall          ( IDU_ecall         ),
-            .mret           ( IDU_mret          )
+            .mret           ( IDU_mret          ),
+            .Inst_valid     ( IFU_Inst_valid     )
         );
 
     wire [31:0] 	IFU_Inst;
+    wire            IFU_Inst_valid;
+    wire [31:0]     IFU_ifu_raddr;
 
     IFU u_IFU(
+            .clk            (clk              ),
+            .arstn          (arstn            ),
             .PC         	( PCU_PC          ),
-            .Inst       	( IFU_Inst        )
+            .Inst       	( IFU_Inst        ),
+            .Inst_valid     ( IFU_Inst_valid  ),
+            .ifu_raddr  	( IFU_ifu_raddr   ),
+            .ifu_rdata  	( RAMifu_rdata   )
         );
 
+
+
     wire [31:0] 	LSU_rdata;
+    wire [31:0]     LSU_lsu_addr;
+    wire            LSU_lsu_wen;
+    wire [31:0]     LSU_lsu_wdata;
+    wire [3:0]      LSU_lsu_wmask;
+    wire            LSU_lsu_mem_en;
 
     LSU u_LSU(
             .mem_write_en  	( IDU_mem_write_en   ),
@@ -112,7 +127,14 @@ module CPU(
             .addr          	( EXU_result           ),
             .wdata         	( IDU_srcR2          ),
             .mem_en        	( IDU_mem_en         ),
-            .rdata         	( LSU_rdata          )
+            .rdata         	( LSU_rdata          ),
+
+            .lsu_addr       ( LSU_lsu_addr       ),
+            .lsu_wen        ( LSU_lsu_wen        ),
+            .lsu_wdata      ( LSU_lsu_wdata      ),
+            .lsu_wmask      ( LSU_lsu_wmask      ),
+            .lsu_mem_en     ( LSU_lsu_mem_en     ),
+            .lsu_rdata      ( RAMlsu_rdata      )
         );
 
     wire        	WBU_wen;
@@ -139,20 +161,49 @@ module CPU(
     wire [31:0]     CSR_mepc;
 
     CSR u_CSR(
-        .clk     	( clk      ),
-        .arstn   	( arstn    ),
-        .addr    	( IDU_csr_addr     ),
-        .srcR1   	( IDU_srcR1    ),
-        .alu_res 	( EXU_result  ),
-        .wr_sel  	( IDU_csr_wr_sel   ),
-        .wen     	( IDU_csr_wen      ),
-        .rdata   	( CSR_rdata    ),
-        .mtvec    	( CSR_mtvec     ),
-        .ecall      ( IDU_ecall    ),
-        .w_epc      ( PCU_PC    ),
-        .w_cause    ( IDU_srcR1  ),
-        .mepc       ( CSR_mepc    )
-    );
+            .clk     	( clk      ),
+            .arstn   	( arstn    ),
+            .addr    	( IDU_csr_addr     ),
+            .srcR1   	( IDU_srcR1    ),
+            .alu_res 	( EXU_result  ),
+            .wr_sel  	( IDU_csr_wr_sel   ),
+            .wen     	( IDU_csr_wen      ),
+            .rdata   	( CSR_rdata    ),
+            .mtvec    	( CSR_mtvec     ),
+            .ecall      ( IDU_ecall    ),
+            .w_epc      ( PCU_PC    ),
+            .w_cause    ( IDU_srcR1  ),
+            .mepc       ( CSR_mepc    )
+        );
+
+
+    wire [31:0] 	RAMifu_rdata;
+
+    RAM u_RAM_ifu(
+            .clk   	( clk    ),
+            .arstn 	( arstn  ),
+            .addr 	( IFU_ifu_raddr  ),
+            .mem_en ( 1'b1  ),
+            .rdata 	( RAMifu_rdata  ),
+            .wen    ( 1'b0    ),
+            .wdata 	( 32'b0  ),
+            .wmask  ( 4'b0  )
+        );
+
+
+    wire [31:0] 	RAMlsu_rdata;
+
+    RAM u_RAM_lsu(
+            .clk   	( clk    ),
+            .arstn 	( arstn  ),
+            .addr 	( LSU_lsu_addr  ),
+            .mem_en ( LSU_lsu_mem_en  ),
+            .rdata 	( RAMlsu_rdata  ),
+            .wen    ( LSU_lsu_wen    ),
+            .wdata 	( LSU_lsu_wdata  ),
+            .wmask  ( LSU_lsu_wmask  )
+        );
+
 
 
 
