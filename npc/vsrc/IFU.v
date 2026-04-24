@@ -3,41 +3,96 @@ module IFU(
     input clk,
     input arstn,
 
-    output [31:0] Inst,
-    output Inst_valid,
+    input next_inst,
+
+    output [31:0] m_Inst,
+    output [31:0] m_PC,
+    output m_valid,
+    input m_ready,
 
     input [31:0] PC,
-    output [31:0] ifu_raddr,
-    input  [31:0] ifu_rdata,
 
-    input next_inst
+    //axi lite interface to RAM
+    output [31:0] m_axi_araddr,
+    output m_axi_arvalid,
+    input m_axi_arready,
+
+    input [31:0] m_axi_rdata,
+    input [1:0] m_axi_rresp,
+    input m_axi_rvalid,
+    output m_axi_rready,
+
+
+    output [31:0] m_axi_awaddr,
+    output m_axi_awvalid,
+    input m_axi_awready,
+
+    output [31:0] m_axi_wdata,
+    output [3:0] m_axi_wstrb,
+    output m_axi_wvalid,
+    input m_axi_wready,
+
+    input [1:0] m_axi_bresp,
+    input m_axi_bvalid,
+    output m_axi_bready
 );
 
-    localparam IDLE = 1'b0;
-    localparam WAIT = 1'b1;
-
-    reg state, next_state;
-
+    localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
+    reg [1:0] state, next_state;
     always @(*) begin
         case(state)
-            IDLE: next_state = WAIT;
-            WAIT: next_state = next_inst ? IDLE : WAIT;
+            IDLE: next_state = next_inst ? REQ : state;
+            REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
+            WAIT: next_state = m_axi_rvalid && m_axi_rready ? PASS : state;
+            PASS: next_state = m_valid && m_ready ? IDLE : state;
+            default: next_state = IDLE;
         endcase
     end
 
     always @(posedge clk or negedge arstn) begin
-        if(!arstn) state <= IDLE;
-        else state <= next_state;
-    end
-
-    assign ifu_raddr = PC;
-    assign Inst = ifu_rdata;
-    assign Inst_valid = state == WAIT;
-
-    always @(posedge clk or negedge arstn) begin
-        if(state == WAIT && next_inst) begin
-            itrace(Inst, PC);
+        if(!arstn) begin
+            state <= IDLE;
+        end
+        else begin
+            state <= next_state;
         end
     end
+
+    /*Unused AXI signals*/
+    assign m_axi_awaddr = 32'b0;
+    assign m_axi_awvalid = 1'b0;
+    assign m_axi_wdata = 32'b0;
+    assign m_axi_wstrb = 4'b0;
+    assign m_axi_wvalid = 1'b0;
+    assign m_axi_bready = 1'b0;
+
+
+    /*logic to recv rdata*/
+    reg [31:0] m_axi_rdata_reg;
+    assign m_axi_rready = state == WAIT;
+    always @(posedge clk or negedge arstn) begin
+        if(!arstn) begin
+            m_axi_rdata_reg <= 32'b0;
+        end
+
+        else begin
+            if(m_axi_rready && m_axi_rvalid) begin
+                m_axi_rdata_reg <= m_axi_rdata;
+                itrace(m_axi_rdata, PC);
+            end
+        end
+    end
+
+
+    /*logic to send ardata*/
+    assign m_axi_araddr = PC;
+    assign m_axi_arvalid = state == REQ;
+
+
+    /*logic to send data*/
+    assign m_Inst = m_axi_rdata_reg;
+    assign m_PC = PC;
+    assign m_valid = state == PASS;
+
 
 endmodule

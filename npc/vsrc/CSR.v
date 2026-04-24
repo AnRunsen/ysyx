@@ -12,16 +12,15 @@ module CSR(
     input [31:0] w_epc,
     input [31:0] w_cause,
 
-    output reg [31:0] rdata,
-    output reg [31:0] mtvec,
-    output reg [31:0] mepc
+    output reg [31:0] rdata
 );
 
     reg [31:0] mcycle;
     reg [31:0] mcycleh;
     reg [31:0] mvendorid;
     reg [31:0] marchid;
-
+    reg [31:0] mtvec;
+    reg [31:0] mepc;
     reg [31:0] mcause;
 
     //a combinational logic to read CSR, only take the mycle(h) into account
