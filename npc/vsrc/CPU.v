@@ -3,10 +3,6 @@ module CPU(
     input arstn
 );
 
-    // =========================================================
-    // Wire declarations (named <ModuleName>_<port_name>)
-    // =========================================================
-
     // PCR outputs
     wire [31:0] PCR_PC;
 
@@ -152,9 +148,6 @@ module CPU(
     wire [1:0]  RAM_LSU_s_axi_bresp;
     wire        RAM_LSU_s_axi_bvalid;
 
-    // =========================================================
-    // Module instantiations
-    // =========================================================
 
     PCR u_PCR(
         .clk         (clk),
