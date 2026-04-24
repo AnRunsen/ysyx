@@ -62,6 +62,7 @@ extern "C" int pmem_read(int raddr)
     if(raddr == 0x00000000)
     {
         exit_flag = true;
+        return 0;
     }
     // 串口相关
     if (raddr == 0x10000000)
