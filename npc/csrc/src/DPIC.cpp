@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+#include <assert.h>
+
 #include "config.hpp"
 #include "ftrace.hpp"
 
@@ -56,6 +58,8 @@ extern "C" int pmem_read(int raddr)
 #ifdef MTRACE
     printf("Read: addr=0x%08x\n", raddr);
 #endif
+
+    assert(raddr);
     // 串口相关
     if (raddr == 0x10000000)
     {
