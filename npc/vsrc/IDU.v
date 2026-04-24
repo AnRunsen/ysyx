@@ -301,8 +301,8 @@ module IDU(
                 endcase
             end
 
-            default:  sim_exit(inst_reg);
-        endcase
+            default: if(m_valid) sim_exit(inst_reg);
+        endcase 
     end
 endmodule
 
