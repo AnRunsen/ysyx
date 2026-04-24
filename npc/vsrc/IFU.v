@@ -45,13 +45,13 @@ module IFU(
             REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
             WAIT: next_state = m_axi_rvalid && m_axi_rready ? PASS : state;
             PASS: next_state = m_valid && m_ready ? IDLE : state;
-            default: next_state = IDLE;
+            default: next_state = REQ;
         endcase
     end
 
     always @(posedge clk or negedge arstn) begin
         if(!arstn) begin
-            state <= IDLE;
+            state <= REQ;
         end
         else begin
             state <= next_state;
