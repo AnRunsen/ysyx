@@ -70,7 +70,7 @@ module XBAR(
 );
 
     /*switch to A port if the addr=0x1000_0000*/
-    wire sel_A = (s_axi_araddr[31:28] == 4'h1) || (s_axi_awaddr[31:28] == 4'h1);
+    wire sel_A = (s_axi_araddr == 32'h1000_0000) || (s_axi_awaddr == 32'h1000_0000);
     wire sel_B = !sel_A;
 
     /*the slave port output*/
