@@ -3,14 +3,14 @@ module IFU(
     input clk,
     input arstn,
 
+    input next_inst,
+
     output [31:0] m_Inst,
     output [31:0] m_PC,
-    output m_Inst_valid,
-    input m_Inst_ready,
+    output m_valid,
+    input m_ready,
 
-    input [31:0] s_PC,
-    input s_PC_valid,
-    output s_PC_ready,
+    input [31:0] PC,
 
     //axi lite interface to RAM
     output [31:0] m_axi_araddr,
@@ -37,6 +37,27 @@ module IFU(
     output m_axi_bready
 );
 
+    localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
+    reg [1:0] state, next_state;
+    always @(*) begin
+        case(state)
+            IDLE: next_state = next_inst ? REQ : state;
+            REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
+            WAIT: next_state = m_axi_rvalid && m_axi_rready ? PASS : state;
+            PASS: next_state = m_valid && m_ready ? IDLE : state;
+            default: next_state = REQ;
+        endcase
+    end
+
+    always @(posedge clk or negedge arstn) begin
+        if(!arstn) begin
+            state <= REQ;
+        end
+        else begin
+            state <= next_state;
+        end
+    end
+
     /*Unused AXI signals*/
     assign m_axi_awaddr = 32'b0;
     assign m_axi_awvalid = 1'b0;
@@ -46,24 +67,9 @@ module IFU(
     assign m_axi_bready = 1'b0;
 
 
-    /*logic to recv PC*/
-    reg [31:0] PC_reg;
-    assign s_PC_ready = !m_axi_arvalid || (m_axi_arvalid & m_axi_arready);
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
-            PC_reg <= 32'b0;
-        end
-
-        else begin
-            if(s_PC_ready && s_PC_valid) begin
-                PC_reg <= s_PC;
-            end
-        end
-    end
-
     /*logic to recv rdata*/
     reg [31:0] m_axi_rdata_reg;
-    assign m_axi_rready = !m_Inst_valid || (m_Inst_valid & m_Inst_ready);
+    assign m_axi_rready = state == WAIT;
     always @(posedge clk or negedge arstn) begin
         if(!arstn) begin
             m_axi_rdata_reg <= 32'b0;
@@ -72,54 +78,21 @@ module IFU(
         else begin
             if(m_axi_rready && m_axi_rvalid) begin
                 m_axi_rdata_reg <= m_axi_rdata;
-                itrace(m_axi_rdata, PC_reg);
+                itrace(m_axi_rdata, PC);
             end
         end
     end
 
 
     /*logic to send ardata*/
-    assign m_axi_araddr = PC_reg;
-    reg m_axi_arvalid_reg;
-    assign m_axi_arvalid = m_axi_arvalid_reg;
+    assign m_axi_araddr = PC;
+    assign m_axi_arvalid = state == REQ;
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
-            m_axi_arvalid_reg <= 1'b0;
-        end
-        else begin
-            // upstream shakehand
-            if(s_PC_valid && s_PC_ready) begin
-                m_axi_arvalid_reg <= 1'b1;
-            end
-            else if(m_axi_arvalid && m_axi_arready) begin
-                m_axi_arvalid_reg <= 1'b0;
-            end
-
-        end
-    end
 
     /*logic to send data*/
     assign m_Inst = m_axi_rdata_reg;
-    assign m_PC = PC_reg;
-    reg Inst_valid_reg;
-    assign m_Inst_valid = Inst_valid_reg;
-
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
-            Inst_valid_reg <= 1'b0;
-        end
-
-        else begin
-            if(m_axi_rvalid && m_axi_rready) begin
-                Inst_valid_reg <= 1'b1;
-            end
-
-            else if(m_Inst_valid && m_Inst_ready) begin
-                Inst_valid_reg <= 1'b0;
-            end
-        end
-    end
+    assign m_PC = PC;
+    assign m_valid = state == PASS;
 
 
 endmodule

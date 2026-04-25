@@ -40,7 +40,6 @@ module LSU(
     output m_ecall,
     output m_mret,
     output [31:0] m_srcR1,
-    output [31:0] m_srcR2,
     output [31:0] m_result,
     output [31:0] m_rdata,
     output [31:0] m_PC,
@@ -258,7 +257,6 @@ module LSU(
     assign m_ecall = ecall;
     assign m_mret = mret;
     assign m_srcR1 = srcR1;
-    assign m_srcR2 = srcR2;
     assign m_result = result;
     assign m_PC = PC;
     assign m_imm = imm;

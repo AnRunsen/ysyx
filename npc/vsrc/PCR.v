@@ -1,7 +1,7 @@
 `include "MACRO.v"
 import PKG::ftrace;
 
-module PCU(
+module PCR(
     input clk,
     input arstn,
     input [31:0] exu_result,
