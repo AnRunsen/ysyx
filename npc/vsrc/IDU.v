@@ -45,6 +45,7 @@ module IDU(
     /*implict ports for read GPRs*/
     output [4:0] rs1,
     output [4:0] rs2,
+    output [11:0] csr_addr,
     input [31:0] srcR1_in,
     input [31:0] srcR2_in,
     input [31:0] csr_data
@@ -100,6 +101,7 @@ module IDU(
     wire [31:0] immJ;
 
     assign m_csr_data = csr_data;
+    assign csr_addr = m_csr_addr;
 
     assign m_srcR1 = srcR1_in;
     assign m_srcR2 = srcR2_in;

@@ -41,6 +41,7 @@ module CPU(
     wire [1:0]  IDU_m_brju;
     wire        IDU_m_mem_signext;
     wire [11:0] IDU_m_csr_addr;
+    wire [11:0] IDU_csr_addr;
     wire [31:0] IDU_m_csr_data;
     wire        IDU_m_csr_wr_sel;
     wire        IDU_m_csr_wen;
@@ -237,7 +238,8 @@ module CPU(
         .rs2            (IDU_rs2),
         .srcR1_in       (GPR_rdata1),
         .srcR2_in       (GPR_rdata2),
-        .csr_data       (CSR_rdata)
+        .csr_data       (CSR_rdata),
+        .csr_addr       (IDU_csr_addr)
     );
 
     EXU u_EXU(
@@ -394,7 +396,8 @@ module CPU(
     CSR u_CSR(
         .clk     (clk),
         .arstn   (arstn),
-        .addr    (WBU_csr_addr_),
+        .waddr    (WBU_csr_addr_),
+        .raddr    (IDU_csr_addr),
         .srcR1   (WBU_csr_srcR1_),
         .alu_res (WBU_csr_alu_res_),
         .wr_sel  (WBU_csr_wr_sel_),
