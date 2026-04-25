@@ -162,7 +162,7 @@ module WBU(
     assign pcr_ecall = csr_ecall;
     assign pcr_mret = mret;
     assign pcr_mtvec = csr_data;
-    assign pcr_mepc = PC;
+    assign pcr_mepc = csr_data;
     assign pcr_behavior = brju;
     assign pcr_pc_en = (state == VALID);
 
