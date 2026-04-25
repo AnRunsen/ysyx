@@ -139,6 +139,46 @@ module CPU(
     wire [1:0]  RAM_s_axi_bresp;
     wire        RAM_s_axi_bvalid;
 
+    // XBAR outputs (slave side, responses back to ARB)
+    wire        XBAR_s_axi_arready;
+    wire [31:0] XBAR_s_axi_rdata;
+    wire [1:0]  XBAR_s_axi_rresp;
+    wire        XBAR_s_axi_rvalid;
+    wire        XBAR_s_axi_awready;
+    wire        XBAR_s_axi_wready;
+    wire [1:0]  XBAR_s_axi_bresp;
+    wire        XBAR_s_axi_bvalid;
+    // XBAR outputs (master A, to UART)
+    wire [31:0] XBAR_m_axi_araddr_A;
+    wire        XBAR_m_axi_arvalid_A;
+    wire        XBAR_m_axi_rready_A;
+    wire [31:0] XBAR_m_axi_awaddr_A;
+    wire        XBAR_m_axi_awvalid_A;
+    wire [31:0] XBAR_m_axi_wdata_A;
+    wire [3:0]  XBAR_m_axi_wstrb_A;
+    wire        XBAR_m_axi_wvalid_A;
+    wire        XBAR_m_axi_bready_A;
+    // XBAR outputs (master B, to RAM)
+    wire [31:0] XBAR_m_axi_araddr_B;
+    wire        XBAR_m_axi_arvalid_B;
+    wire        XBAR_m_axi_rready_B;
+    wire [31:0] XBAR_m_axi_awaddr_B;
+    wire        XBAR_m_axi_awvalid_B;
+    wire [31:0] XBAR_m_axi_wdata_B;
+    wire [3:0]  XBAR_m_axi_wstrb_B;
+    wire        XBAR_m_axi_wvalid_B;
+    wire        XBAR_m_axi_bready_B;
+
+    // UART outputs
+    wire        UART_s_axi_arready;
+    wire [31:0] UART_s_axi_rdata;
+    wire [1:0]  UART_s_axi_rresp;
+    wire        UART_s_axi_rvalid;
+    wire        UART_s_axi_awready;
+    wire        UART_s_axi_wready;
+    wire [1:0]  UART_s_axi_bresp;
+    wire        UART_s_axi_bvalid;
+
     // ARB outputs
     wire        	ARB_s_axi_arready_A;
     wire [31:0] 	ARB_s_axi_rdata_A;
@@ -466,43 +506,119 @@ module CPU(
 
             .m_axi_araddr    	( ARB_m_axi_araddr     ),
             .m_axi_arvalid   	( ARB_m_axi_arvalid    ),
-            .m_axi_arready   	( RAM_s_axi_arready    ),
-            .m_axi_rdata     	( RAM_s_axi_rdata      ),
-            .m_axi_rresp     	( RAM_s_axi_rresp      ),
-            .m_axi_rvalid    	( RAM_s_axi_rvalid     ),
+            .m_axi_arready   	( XBAR_s_axi_arready   ),
+            .m_axi_rdata     	( XBAR_s_axi_rdata     ),
+            .m_axi_rresp     	( XBAR_s_axi_rresp     ),
+            .m_axi_rvalid    	( XBAR_s_axi_rvalid    ),
             .m_axi_rready    	( ARB_m_axi_rready     ),
             .m_axi_awaddr    	( ARB_m_axi_awaddr     ),
             .m_axi_awvalid   	( ARB_m_axi_awvalid    ),
-            .m_axi_awready   	( RAM_s_axi_awready    ),
+            .m_axi_awready   	( XBAR_s_axi_awready   ),
             .m_axi_wdata     	( ARB_m_axi_wdata      ),
             .m_axi_wstrb     	( ARB_m_axi_wstrb      ),
             .m_axi_wvalid    	( ARB_m_axi_wvalid     ),
-            .m_axi_wready    	( RAM_s_axi_wready     ),
-            .m_axi_bresp     	( RAM_s_axi_bresp      ),
-            .m_axi_bvalid    	( RAM_s_axi_bvalid     ),
+            .m_axi_wready    	( XBAR_s_axi_wready    ),
+            .m_axi_bresp     	( XBAR_s_axi_bresp     ),
+            .m_axi_bvalid    	( XBAR_s_axi_bvalid    ),
             .m_axi_bready    	( ARB_m_axi_bready     )
+        );
+
+    XBAR u_XBAR(
+            .s_axi_araddr    (ARB_m_axi_araddr),
+            .s_axi_arvalid   (ARB_m_axi_arvalid),
+            .s_axi_arready   (XBAR_s_axi_arready),
+            .s_axi_rdata     (XBAR_s_axi_rdata),
+            .s_axi_rresp     (XBAR_s_axi_rresp),
+            .s_axi_rvalid    (XBAR_s_axi_rvalid),
+            .s_axi_rready    (ARB_m_axi_rready),
+            .s_axi_awaddr    (ARB_m_axi_awaddr),
+            .s_axi_awvalid   (ARB_m_axi_awvalid),
+            .s_axi_awready   (XBAR_s_axi_awready),
+            .s_axi_wdata     (ARB_m_axi_wdata),
+            .s_axi_wstrb     (ARB_m_axi_wstrb),
+            .s_axi_wvalid    (ARB_m_axi_wvalid),
+            .s_axi_wready    (XBAR_s_axi_wready),
+            .s_axi_bresp     (XBAR_s_axi_bresp),
+            .s_axi_bvalid    (XBAR_s_axi_bvalid),
+            .s_axi_bready    (ARB_m_axi_bready),
+            .m_axi_araddr_A  (XBAR_m_axi_araddr_A),
+            .m_axi_arvalid_A (XBAR_m_axi_arvalid_A),
+            .m_axi_arready_A (UART_s_axi_arready),
+            .m_axi_rdata_A   (UART_s_axi_rdata),
+            .m_axi_rresp_A   (UART_s_axi_rresp),
+            .m_axi_rvalid_A  (UART_s_axi_rvalid),
+            .m_axi_rready_A  (XBAR_m_axi_rready_A),
+            .m_axi_awaddr_A  (XBAR_m_axi_awaddr_A),
+            .m_axi_awvalid_A (XBAR_m_axi_awvalid_A),
+            .m_axi_awready_A (UART_s_axi_awready),
+            .m_axi_wdata_A   (XBAR_m_axi_wdata_A),
+            .m_axi_wstrb_A   (XBAR_m_axi_wstrb_A),
+            .m_axi_wvalid_A  (XBAR_m_axi_wvalid_A),
+            .m_axi_wready_A  (UART_s_axi_wready),
+            .m_axi_bresp_A   (UART_s_axi_bresp),
+            .m_axi_bvalid_A  (UART_s_axi_bvalid),
+            .m_axi_bready_A  (XBAR_m_axi_bready_A),
+            .m_axi_araddr_B  (XBAR_m_axi_araddr_B),
+            .m_axi_arvalid_B (XBAR_m_axi_arvalid_B),
+            .m_axi_arready_B (RAM_s_axi_arready),
+            .m_axi_rdata_B   (RAM_s_axi_rdata),
+            .m_axi_rresp_B   (RAM_s_axi_rresp),
+            .m_axi_rvalid_B  (RAM_s_axi_rvalid),
+            .m_axi_rready_B  (XBAR_m_axi_rready_B),
+            .m_axi_awaddr_B  (XBAR_m_axi_awaddr_B),
+            .m_axi_awvalid_B (XBAR_m_axi_awvalid_B),
+            .m_axi_awready_B (RAM_s_axi_awready),
+            .m_axi_wdata_B   (XBAR_m_axi_wdata_B),
+            .m_axi_wstrb_B   (XBAR_m_axi_wstrb_B),
+            .m_axi_wvalid_B  (XBAR_m_axi_wvalid_B),
+            .m_axi_wready_B  (RAM_s_axi_wready),
+            .m_axi_bresp_B   (RAM_s_axi_bresp),
+            .m_axi_bvalid_B  (RAM_s_axi_bvalid),
+            .m_axi_bready_B  (XBAR_m_axi_bready_B)
+        );
+
+    UART u_UART(
+            .clk           (clk),
+            .arstn         (arstn),
+            .s_axi_araddr  (XBAR_m_axi_araddr_A),
+            .s_axi_arvalid (XBAR_m_axi_arvalid_A),
+            .s_axi_arready (UART_s_axi_arready),
+            .s_axi_rdata   (UART_s_axi_rdata),
+            .s_axi_rresp   (UART_s_axi_rresp),
+            .s_axi_rvalid  (UART_s_axi_rvalid),
+            .s_axi_rready  (XBAR_m_axi_rready_A),
+            .s_axi_awaddr  (XBAR_m_axi_awaddr_A),
+            .s_axi_awvalid (XBAR_m_axi_awvalid_A),
+            .s_axi_awready (UART_s_axi_awready),
+            .s_axi_wdata   (XBAR_m_axi_wdata_A),
+            .s_axi_wstrb   (XBAR_m_axi_wstrb_A),
+            .s_axi_wvalid  (XBAR_m_axi_wvalid_A),
+            .s_axi_wready  (UART_s_axi_wready),
+            .s_axi_bresp   (UART_s_axi_bresp),
+            .s_axi_bvalid  (UART_s_axi_bvalid),
+            .s_axi_bready  (XBAR_m_axi_bready_A)
         );
 
     RAM u_RAM(
             .clk            (clk),
             .arstn          (arstn),
-            .s_axi_araddr   (ARB_m_axi_araddr),
-            .s_axi_arvalid  (ARB_m_axi_arvalid),
+            .s_axi_araddr   (XBAR_m_axi_araddr_B),
+            .s_axi_arvalid  (XBAR_m_axi_arvalid_B),
             .s_axi_arready  (RAM_s_axi_arready),
             .s_axi_rdata    (RAM_s_axi_rdata),
             .s_axi_rresp    (RAM_s_axi_rresp),
             .s_axi_rvalid   (RAM_s_axi_rvalid),
-            .s_axi_rready   (ARB_m_axi_rready),
-            .s_axi_awaddr   (ARB_m_axi_awaddr),
-            .s_axi_awvalid  (ARB_m_axi_awvalid),
+            .s_axi_rready   (XBAR_m_axi_rready_B),
+            .s_axi_awaddr   (XBAR_m_axi_awaddr_B),
+            .s_axi_awvalid  (XBAR_m_axi_awvalid_B),
             .s_axi_awready  (RAM_s_axi_awready),
-            .s_axi_wdata    (ARB_m_axi_wdata),
-            .s_axi_wstrb    (ARB_m_axi_wstrb),
-            .s_axi_wvalid   (ARB_m_axi_wvalid),
+            .s_axi_wdata    (XBAR_m_axi_wdata_B),
+            .s_axi_wstrb    (XBAR_m_axi_wstrb_B),
+            .s_axi_wvalid   (XBAR_m_axi_wvalid_B),
             .s_axi_wready   (RAM_s_axi_wready),
             .s_axi_bresp    (RAM_s_axi_bresp),
             .s_axi_bvalid   (RAM_s_axi_bvalid),
-            .s_axi_bready   (ARB_m_axi_bready)
+            .s_axi_bready   (XBAR_m_axi_bready_B)
         );
 
 endmodule
