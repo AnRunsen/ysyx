@@ -35,6 +35,28 @@ extern "C" void itrace(int inst, int pc)
 #endif
 }
 
+extern "C" int mtime_read(int raddr)
+{
+    if (raddr == 0x10000004 || raddr == 0x10000008)
+    {
+        if (raddr == 0x10000004)
+        {
+            // 0x10000004是一个特殊的地址, 读取这里会返回当前时间的低32位
+            return (uint32_t)(clock());
+        }
+        else
+        {
+            // 0x10000008是一个特殊的地址, 读取这里会返回当前时间的高32位
+            return (uint32_t)(clock() >> 32);
+        }
+    }
+
+    else
+    {
+        printf("\033[31;1mUnknown MTIME Read: addr=0x%08x\033[0m\n", raddr);
+        assert(0);
+    }
+}
 extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
 {
     if (waddr == 0x10000000)
@@ -86,16 +108,8 @@ extern "C" int pmem_read(int raddr)
     // RTC相关
     else if (raddr == 0x10000004 || raddr == 0x10000008)
     {
-        if (raddr == 0x10000004)
-        {
-            // 0x10000004是一个特殊的地址, 读取这里会返回当前时间的低32位
-            return (uint32_t)(clock());
-        }
-        else
-        {
-            // 0x10000008是一个特殊的地址, 读取这里会返回当前时间的高32位
-            return (uint32_t)(clock() >> 32);
-        }
+        printf("should not reach here\n");
+        assert(0);
     }
 
     raddr = raddr - 0x80000000; // 内存映射地址转换
@@ -108,6 +122,13 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
     printf("Write: addr=0x%08x, data=0x%08x, wmask=0x%02x\n", waddr, wdata, wmask);
 #endif
     if (waddr == 0x10000000)
+    {
+        printf("should not reach here\n");
+        assert(0);
+    }
+
+    // RTC相关
+    else if (waddr == 0x10000004 || waddr == 0x10000008)
     {
         printf("should not reach here\n");
         assert(0);
