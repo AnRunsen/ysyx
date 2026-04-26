@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
-    // sdb_set_batch_mode();
+    sdb_set_batch_mode();
 
     sdb_mainloop();
 
