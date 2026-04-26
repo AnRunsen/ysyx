@@ -598,6 +598,7 @@ module CPU(
              .m_axi_bvalid_B  (RAM_s_axi_bvalid),
              .m_axi_bready_B  (XBAR_m_axi_bready_B),
              
+             .m_axi_araddr_C  (XBAR_m_axi_araddr_C),
              .m_axi_arvalid_C (XBAR_m_axi_arvalid_C),
              .m_axi_arready_C (MTIME_s_axi_arready),
              .m_axi_rdata_C   (MTIME_s_axi_rdata),
