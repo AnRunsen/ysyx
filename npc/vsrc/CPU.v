@@ -524,6 +524,8 @@ module CPU(
         );
 
     XBAR u_XBAR(
+            .clk             (clk),
+            .arstn           (arstn),
             .s_axi_araddr    (ARB_m_axi_araddr),
             .s_axi_arvalid   (ARB_m_axi_arvalid),
             .s_axi_arready   (XBAR_s_axi_arready),
