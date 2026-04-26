@@ -35,6 +35,24 @@ extern "C" void itrace(int inst, int pc)
 #endif
 }
 
+extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
+{
+    if (waddr == 0x10000000)
+    {
+        putchar(wdata & 0xFF);
+        fflush(stdout);
+    }
+
+    else
+    {
+        printf("\033[31;1mUnknown UART Write: addr=0x%08x, data=0x%08x, wmask=0x%02x\033[0m\n", waddr, wdata, wmask);
+        assert(0);
+    }
+
+    return;
+}
+
+
 extern "C" void sim_exit(int code)
 {
     if (code == 0)
@@ -58,16 +76,11 @@ extern "C" int pmem_read(int raddr)
 #ifdef MTRACE
     printf("Read: addr=0x%08x\n", raddr);
 #endif
-
-    if(raddr == 0x00000000)
-    {
-        exit_flag = true;
-        return 0;
-    }
     // 串口相关
     if (raddr == 0x10000000)
     {
-        return 0;
+        printf("should not reach here\n");
+        assert(0);
     }
 
     // RTC相关
@@ -94,15 +107,10 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
 #ifdef MTRACE
     printf("Write: addr=0x%08x, data=0x%08x, wmask=0x%02x\n", waddr, wdata, wmask);
 #endif
-    // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
-    // `wmask`中每比特表示`wdata`中1个字节的掩码,
-    // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
     if (waddr == 0x10000000)
     {
-        // 0x10000000是一个特殊的地址, 往这里写入数据会打印到控制台
-        putchar(wdata & 0xFF);
-        fflush(stdout);
-        return;
+        printf("should not reach here\n");
+        assert(0);
     }
 
     waddr = waddr - 0x80000000; // 内存映射地址转换
