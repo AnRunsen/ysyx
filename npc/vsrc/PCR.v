@@ -3,7 +3,7 @@ import PKG::ftrace;
 
 module PCR(
     input clk,
-    input arstn,
+    input reset,
     input [31:0] exu_result,
     input [31:0] imm,
     input ecall,
@@ -35,8 +35,8 @@ module PCR(
         
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             PC <= 32'h8000_0000;
         end
 

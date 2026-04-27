@@ -1,6 +1,6 @@
 module CSR(
     input clk,
-    input arstn,
+    input reset,
     input [11:0] waddr, //write addr
     input [11:0] raddr, //read addr
     input [31:0] srcR1,
@@ -36,40 +36,40 @@ module CSR(
         else rdata = 32'b0;
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) mtvec <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) mtvec <= 32'b0;
         else if(wen && waddr == 12'h305) mtvec <= (wr_sel) ? alu_res : srcR1; //mtvec
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) mepc <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) mepc <= 32'b0;
         else if(ecall) mepc <= w_epc; //write mepc with the current PC when ecall happens
         else if(wen && waddr == 12'h341) mepc <= (wr_sel) ? alu_res : srcR1; //mepc
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) mcause <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) mcause <= 32'b0;
         else if(ecall) mcause <= w_cause; //write mcause with the current cause when ecall happens
         else if(wen && waddr == 12'h342) mcause <= (wr_sel) ? alu_res : srcR1; //mcause
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) mcycle <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) mcycle <= 32'b0;
         else mcycle <= mcycle + 1;
     end
     
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) mcycleh <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) mcycleh <= 32'b0;
         else if(mcycle == 32'hffff_ffff) mcycleh <= mcycleh + 1;
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) mvendorid <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) mvendorid <= 32'b0;
         else mvendorid <= 32'h79737978; //just a random value
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) marchid <= 32'b0;
+    always @(posedge clk) begin
+        if(reset) marchid <= 32'b0;
         else marchid <= 32'h0DC78795; //231180181 in hex
     end
 

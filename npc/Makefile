@@ -1,6 +1,6 @@
 include ../Makefile
 
-TOP = CPU
+TOP = ysyx_26040125
 BUILD_DIR = build
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")

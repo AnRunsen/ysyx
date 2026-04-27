@@ -3,7 +3,7 @@ import PKG::pmem_write;
 
 module RAM(
     input clk,
-    input arstn,
+    input reset,
 
     input [31:0] s_axi_araddr,
     input s_axi_arvalid,
@@ -33,8 +33,8 @@ module RAM(
     reg  [7:0] lfsr;
     wire       lfsr_fb = lfsr[7] ^ lfsr[3] ^ lfsr[2] ^ lfsr[1];
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) lfsr <= 8'hAC;       // non-zero seed
+    always @(posedge clk) begin
+        if (reset) lfsr <= 8'hAC;       // non-zero seed
         else        lfsr <= {lfsr[6:0], lfsr_fb};
     end
 
@@ -52,8 +52,8 @@ module RAM(
     assign s_axi_rresp   = 2'b00;
     assign s_axi_rvalid  = (r_state == R_RESP);
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             r_state    <= R_IDLE;
             rdata_reg  <= 32'b0;
             r_addr_reg <= 32'b0;
@@ -100,8 +100,8 @@ module RAM(
     assign s_axi_bresp   = 2'b00;
     assign s_axi_bvalid  = (w_state == W_RESP);
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             w_state    <= W_IDLE;
             awaddr_reg <= 32'b0;
             wdata_reg  <= 32'b0;

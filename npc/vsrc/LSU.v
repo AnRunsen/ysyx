@@ -1,7 +1,7 @@
 `include "MACRO.v"
 module LSU(
     input clk,
-    input arstn,
+    input reset,
 
     /*data to recv*/
     input [4:0] s_rd,
@@ -174,8 +174,8 @@ module LSU(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             state <= IDLE;
         end
         else begin
@@ -203,8 +203,8 @@ module LSU(
     
     /*logic to recv data*/
     assign s_ready = (state == IDLE) || (state == PASS && m_ready && m_valid);
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             rd <= 5'b0;
             wb_en <= 1'b0;
             op_width <= 2'b0;
@@ -280,8 +280,8 @@ module LSU(
     /*logic to recv read data*/
     assign m_axi_rready = (state == READ_WAIT);
     reg [31:0] rdata_reg;
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             rdata_reg <= 32'b0;
         end
         else if(m_axi_rvalid && m_axi_rready) begin
