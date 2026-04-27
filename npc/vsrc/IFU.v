@@ -1,7 +1,7 @@
 import PKG::itrace;
 module IFU(
     input clk,
-    input arstn,
+    input reset,
 
     input next_inst,
 
@@ -49,8 +49,8 @@ module IFU(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             state <= REQ;
         end
         else begin
@@ -70,8 +70,8 @@ module IFU(
     /*logic to recv rdata*/
     reg [31:0] m_axi_rdata_reg;
     assign m_axi_rready = state == WAIT;
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             m_axi_rdata_reg <= 32'b0;
         end
 

@@ -1,6 +1,6 @@
-module CPU(
-        input clk,
-        input arstn
+module ysyx_26040125(
+        input clock,
+        input reset
     );
 
     // PCR outputs
@@ -226,9 +226,9 @@ module CPU(
     wire        	MTIME_s_axi_bvalid;
 
 
-    PCR u_PCR(
-            .clk         (clk),
-            .arstn       (arstn),
+    PCR ysyx_26040125_PCR(
+            .clk         (clock),
+            .reset       (reset),
             .exu_result  (WBU_pcr_exu_result),
             .imm         (WBU_pcr_imm),
             .ecall       (WBU_pcr_ecall),
@@ -240,9 +240,9 @@ module CPU(
             .PC          (PCR_PC)
         );
 
-    IFU u_IFU(
-            .clk            (clk),
-            .arstn          (arstn),
+    IFU ysyx_26040125_IFU(
+            .clk            (clock),
+            .reset          (reset),
             .next_inst      (WBU_next_inst),
             .m_Inst         (IFU_m_Inst),
             .m_PC           (IFU_m_PC),
@@ -268,9 +268,9 @@ module CPU(
             .m_axi_bready   (IFU_m_axi_bready)
         );
 
-    GPR u_GPR(
-            .clk    (clk),
-            .arstn  (arstn),
+    GPR ysyx_26040125_GPR(
+            .clk    (clock),
+            .reset  (reset),
             .wdata  (WBU_wdata),
             .waddr  (WBU_waddr[3:0]),
             .wen    (WBU_wen),
@@ -280,9 +280,9 @@ module CPU(
             .rdata2 (GPR_rdata2)
         );
 
-    IDU u_IDU(
-            .clk            (clk),
-            .arstn          (arstn),
+    IDU ysyx_26040125_IDU(
+            .clk            (clock),
+            .reset          (reset),
             .s_Inst         (IFU_m_Inst),
             .s_PC           (IFU_m_PC),
             .s_valid        (IFU_m_valid),
@@ -318,9 +318,9 @@ module CPU(
             .csr_addr       (IDU_csr_addr)
         );
 
-    EXU u_EXU(
-            .clk            (clk),
-            .arstn          (arstn),
+    EXU ysyx_26040125_EXU(
+            .clk            (clock),
+            .reset          (reset),
             .s_rd           (IDU_m_rd),
             .s_srcR1        (IDU_m_srcR1),
             .s_srcR2        (IDU_m_srcR2),
@@ -367,9 +367,9 @@ module CPU(
             .m_ready        (LSU_s_ready)
         );
 
-    LSU u_LSU(
-            .clk            (clk),
-            .arstn          (arstn),
+    LSU ysyx_26040125_LSU(
+            .clk            (clock),
+            .reset          (reset),
             .s_rd           (EXU_m_rd),
             .s_wb_en        (EXU_m_wb_en),
             .s_mem_en       (EXU_m_mem_en),
@@ -427,9 +427,9 @@ module CPU(
             .m_axi_bready   (LSU_m_axi_bready)
         );
 
-    WBU u_WBU(
-            .clk            (clk),
-            .arstn          (arstn),
+    WBU ysyx_26040125_WBU(
+            .clk            (clock),
+            .reset          (reset),
             .s_rd           (LSU_m_rd),
             .s_wb_en        (LSU_m_wb_en),
             .s_wb_sel       (LSU_m_wb_sel),
@@ -469,9 +469,9 @@ module CPU(
             .next_inst      (WBU_next_inst)
         );
 
-    CSR u_CSR(
-            .clk     (clk),
-            .arstn   (arstn),
+    CSR ysyx_26040125_CSR(
+            .clk     (clock),
+            .reset   (reset),
             .waddr    (WBU_csr_addr_),
             .raddr    (IDU_csr_addr),
             .srcR1   (WBU_csr_srcR1_),
@@ -484,9 +484,9 @@ module CPU(
             .rdata   (CSR_rdata)
         );
 
-    ARB u_ARB(
-            .clk             	( clk              ),
-            .arstn           	( arstn            ),
+    ARB ysyx_26040125_ARB(
+            .clk             	( clock              ),
+            .reset           	( reset            ),
             .s_axi_araddr_A  	( IFU_m_axi_araddr   ),
             .s_axi_arvalid_A 	( IFU_m_axi_arvalid  ),
             .s_axi_arready_A 	( ARB_s_axi_arready_A  ),
@@ -542,9 +542,9 @@ module CPU(
             .m_axi_bready    	( ARB_m_axi_bready     )
         );
 
-    XBAR u_XBAR(
-             .clk             (clk),
-             .arstn           (arstn),
+    XBAR ysyx_26040125_XBAR(
+             .clk             (clock),
+             .reset           (reset),
              .s_axi_araddr    (ARB_m_axi_araddr),
              .s_axi_arvalid   (ARB_m_axi_arvalid),
              .s_axi_arready   (XBAR_s_axi_arready),
@@ -617,9 +617,9 @@ module CPU(
              .m_axi_bready_C  (XBAR_m_axi_bready_C)
          );
 
-    UART u_UART(
-             .clk           (clk),
-             .arstn         (arstn),
+    UART ysyx_26040125_UART(
+             .clk           (clock),
+             .reset         (reset),
              .s_axi_araddr  (XBAR_m_axi_araddr_A),
              .s_axi_arvalid (XBAR_m_axi_arvalid_A),
              .s_axi_arready (UART_s_axi_arready),
@@ -639,9 +639,9 @@ module CPU(
              .s_axi_bready  (XBAR_m_axi_bready_A)
          );
 
-    RAM u_RAM(
-            .clk            (clk),
-            .arstn          (arstn),
+    RAM ysyx_26040125_RAM(
+            .clk            (clock),
+            .reset          (reset),
             .s_axi_araddr   (XBAR_m_axi_araddr_B),
             .s_axi_arvalid  (XBAR_m_axi_arvalid_B),
             .s_axi_arready  (RAM_s_axi_arready),
@@ -661,9 +661,9 @@ module CPU(
             .s_axi_bready   (XBAR_m_axi_bready_B)
         );
 
-    MTIME u_MTIME(
-              .clk           	( clk            ),
-              .arstn         	( arstn          ),
+    MTIME ysyx_26040125_MTIME(
+              .clk           	( clock            ),
+              .reset         	( reset          ),
               .s_axi_araddr  	( XBAR_m_axi_araddr_C   ),
               .s_axi_arvalid 	( XBAR_m_axi_arvalid_C ),
               .s_axi_arready 	( MTIME_s_axi_arready  ),

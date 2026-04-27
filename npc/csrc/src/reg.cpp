@@ -12,12 +12,12 @@
 *
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
-#include "VCPU.h"
-#include "VCPU___024root.h"
+#include "Vysyx_26040125.h"
+#include "Vysyx_26040125___024root.h"
 
 #define ARRLEN(arr) (sizeof(arr) / sizeof((arr)[0]))  
 
-extern VCPU* cpu;
+extern Vysyx_26040125* cpu;
 
 const char *regs[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -30,7 +30,7 @@ void isa_reg_display() {
   for (int i = 0; i < ARRLEN(regs) / 4; i++) {
     for (int j = 0; j < 4; j++) {
       int idx = i * 4 + j;
-      printf("%3s: 0x%08x ", regs[idx], cpu->rootp->CPU__DOT__u_GPR__DOT__gpr[idx]);
+      printf("%3s: 0x%08x ", regs[idx], cpu->rootp->ysyx_26040125__DOT__ysyx_26040125_GPR__DOT__gpr[idx]);
     }
     printf("\n");
   }

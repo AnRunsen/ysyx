@@ -1,7 +1,7 @@
 module XBAR(
     /*axi lite port*/
     input clk,
-    input arstn,
+    input reset,
 
     input [31:0] s_axi_araddr,
     input s_axi_arvalid,
@@ -118,16 +118,16 @@ module XBAR(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) r_state <= READ_IDLE;
+    always @(posedge clk) begin
+        if (reset) r_state <= READ_IDLE;
         else        r_state <= r_next_state;
     end
 
     assign s_axi_arready = (r_state == READ_IDLE);
 
     reg [31:0] raddr;
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             raddr <= 32'b0;
             r_sel <= 2'd0;
         end else if (s_axi_arvalid && s_axi_arready) begin
@@ -184,8 +184,8 @@ module XBAR(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) w_state <= WRITE_IDLE;
+    always @(posedge clk) begin
+        if (reset) w_state <= WRITE_IDLE;
         else        w_state <= w_next_state;
     end
 
@@ -196,8 +196,8 @@ module XBAR(
     reg [31:0] wdata;
     reg [3:0]  wstrb;
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             waddr <= 32'b0;
             w_sel <= 2'd0;
         end
@@ -207,8 +207,8 @@ module XBAR(
         end
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             wdata <= 32'b0;
             wstrb <= 4'b0;
         end else if (s_axi_wvalid && s_axi_wready) begin

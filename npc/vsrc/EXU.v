@@ -2,7 +2,7 @@
 
 module EXU(
     input clk,
-    input arstn,
+    input reset,
 
     /*recv data*/
     input [4:0] s_rd,
@@ -96,8 +96,8 @@ module EXU(
 
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             rd <= 5'b0;
             srcR1 <= 32'b0;
             srcR2 <= 32'b0;
@@ -182,8 +182,8 @@ module EXU(
     reg m_valid_reg;
     assign m_valid = m_valid_reg;
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             m_valid_reg <= 1'b0;
         end
         else begin

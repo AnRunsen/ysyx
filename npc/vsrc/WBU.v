@@ -1,7 +1,7 @@
 `include "MACRO.v"
 module WBU(
     input clk,
-    input arstn,
+    input reset,
 
     /*data to recv*/
     input [4:0] s_rd,
@@ -64,8 +64,8 @@ module WBU(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             state <= IDLE;
         end
         else begin
@@ -90,8 +90,8 @@ module WBU(
     reg [31:0] PC;
     reg [31:0] imm;
     assign s_ready = 1'b1;
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             rd <= 5'b0;
             wb_en <= 1'b0;
             wb_sel <= 3'b0;

@@ -1,4 +1,4 @@
-#include "VCPU.h"
+#include "Vysyx_26040125.h"
 #include "verilated_vcd_c.h"
 #include <stdio.h>
 #include <assert.h>
@@ -23,7 +23,7 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-VCPU* cpu = new VCPU;
+Vysyx_26040125* cpu = new Vysyx_26040125;
 VerilatedVcdC* tfp = new VerilatedVcdC;
 void init_disasm();
 char *elf_file = NULL;
@@ -72,32 +72,32 @@ int main(int argc, char *argv[])
 #endif
 
     cpu->contextp()->time(0);
-    cpu->clk = 0;
-    cpu->arstn = 0;
+    cpu->clock = 0;
+    cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
 
     cpu->contextp()->time(1);
-    cpu->clk = 1;
-    cpu->arstn = 0;
+    cpu->clock = 1;
+    cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
 
     cpu->contextp()->time(2);
-    cpu->clk = 0;
-    cpu->arstn = 1;
+    cpu->clock = 0;
+    cpu->reset = 0;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
 
     cpu->contextp()->time(3);
-    cpu->clk = 1;
-    cpu->arstn = 1;
+    cpu->clock = 1;
+    cpu->reset = 0;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());

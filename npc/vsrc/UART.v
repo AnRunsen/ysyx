@@ -2,7 +2,7 @@ import PKG::uart_write;
 
 module UART(
     input clk,
-    input arstn,
+    input reset,
 
     input [31:0] s_axi_araddr,
     input s_axi_arvalid,
@@ -80,8 +80,8 @@ module UART(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             state <= IDLE;
         end else begin
             state <= next_state;
@@ -95,8 +95,8 @@ module UART(
     reg [31:0] waddr;
     reg [31:0] wdata;
     reg [3:0] wstrb;
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             waddr <= 32'b0;
             wdata <= 32'b0;
             wstrb <= 4'b0;

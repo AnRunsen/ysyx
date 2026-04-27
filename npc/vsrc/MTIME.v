@@ -2,7 +2,7 @@ import PKG::mtime_read;
 
 module MTIME(
     input clk,
-    input arstn,
+    input reset,
 
     input [31:0] s_axi_araddr,
     input s_axi_arvalid,
@@ -58,16 +58,16 @@ module MTIME(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             state <= IDLE;
         end else begin
             state <= next_state;
         end
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if (!arstn) begin
+    always @(posedge clk) begin
+        if (reset) begin
             s_axi_rdata <= 32'b0;
         end
         else if (s_axi_arready && s_axi_arvalid) begin

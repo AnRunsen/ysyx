@@ -1,6 +1,6 @@
 module ARB(
     input clk,
-    input arstn,
+    input reset,
 
     /*axi lite port A*/
     input [31:0] s_axi_araddr_A,
@@ -120,8 +120,8 @@ module ARB(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             r_state <= R_POLLINGA;
         end
         else begin
@@ -187,8 +187,8 @@ module ARB(
         endcase
     end
 
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             w_state <= W_POLLINGA;
         end
         else begin

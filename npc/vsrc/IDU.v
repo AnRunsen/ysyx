@@ -2,7 +2,7 @@
 import PKG::sim_exit;
 module IDU(
     input clk,
-    input arstn,
+    input reset,
 
     /* explict ports*/
     input [31:0] s_Inst,
@@ -56,8 +56,8 @@ module IDU(
     reg [31:0] inst_reg;
     reg [31:0] pc_reg;
     assign s_ready = !m_valid || (m_valid & m_ready);
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             inst_reg <= 32'b0;
             pc_reg <= 32'b0;
         end
@@ -73,8 +73,8 @@ module IDU(
     assign m_PC = pc_reg;
     reg valid_reg;
     assign m_valid = valid_reg;
-    always @(posedge clk or negedge arstn) begin
-        if(!arstn) begin
+    always @(posedge clk) begin
+        if(reset) begin
             valid_reg <= 1'b0;
         end
 
