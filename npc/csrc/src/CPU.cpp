@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
     cpu->contextp()->time(0);
     cpu->clock = 0;
-    cpu->reset = 0;
+    cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
     cpu->contextp()->time(1);
     cpu->clock = 1;
-    cpu->reset = 0;
+    cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
     cpu->contextp()->time(2);
     cpu->clock = 0;
-    cpu->reset = 1;
+    cpu->reset = 0;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
     cpu->contextp()->time(3);
     cpu->clock = 1;
-    cpu->reset = 1;
+    cpu->reset = 0;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
