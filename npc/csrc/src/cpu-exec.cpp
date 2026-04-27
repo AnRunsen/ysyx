@@ -1,10 +1,10 @@
-#include "VCPU.h"
+#include "Vysyx_26040125.h"
 #include "verilated_vcd_c.h"
-#include "VCPU___024root.h"
+#include "Vysyx_26040125___024root.h"
 #include <stdint.h>
 #include "config.hpp"
 
-extern VCPU* cpu;
+extern Vysyx_26040125* cpu;
 extern VerilatedVcdC* tfp;
 extern bool exit_flag;
 extern "C" {
@@ -26,13 +26,13 @@ void cpu_exec(uint64_t n)
     }
     while(n-- > 0) {
         cpu->contextp()->timeInc(1);
-        cpu->clk = 0;
+        cpu->clock = 0;
         cpu->eval();
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
 #endif
         cpu->contextp()->timeInc(1);
-        cpu->clk = 1;
+        cpu->clock = 1;
         cpu->eval();
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
@@ -43,9 +43,9 @@ void cpu_exec(uint64_t n)
         difftest_regcpy(&dut_state, DIFFTEST_TO_DUT);
         
         for(uint32_t i = 0; i < 16; i++) {
-            if(dut_state.gpr[i] != cpu->rootp->CPU__DOT__u_GPR__DOT__gpr[i]) {
+            if(dut_state.gpr[i] != cpu->rootp->ysyx_26040125__DOT__u_GPR__DOT__gpr[i]) {
                 printf("Difftest failed at time %lu: gpr[%u] = 0x%08x, expected 0x%08x\n",
-                    cpu->contextp()->time(), i, cpu->rootp->CPU__DOT__u_GPR__DOT__gpr[i], dut_state.gpr[i]);
+                    cpu->contextp()->time(), i, cpu->rootp->ysyx_26040125__DOT__u_GPR__DOT__gpr[i], dut_state.gpr[i]);
                 exit_flag = true;
                 break;
             }

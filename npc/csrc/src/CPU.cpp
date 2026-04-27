@@ -72,32 +72,32 @@ int main(int argc, char *argv[])
 #endif
 
     cpu->contextp()->time(0);
-    cpu->clk = 0;
-    cpu->arstn = 0;
+    cpu->clock = 0;
+    cpu->reset = 0;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
 
     cpu->contextp()->time(1);
-    cpu->clk = 1;
-    cpu->arstn = 0;
+    cpu->clock = 1;
+    cpu->reset = 0;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
 
     cpu->contextp()->time(2);
-    cpu->clk = 0;
-    cpu->arstn = 1;
+    cpu->clock = 0;
+    cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
 
     cpu->contextp()->time(3);
-    cpu->clk = 1;
-    cpu->arstn = 1;
+    cpu->clock = 1;
+    cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
