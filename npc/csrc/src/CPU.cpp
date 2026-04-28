@@ -1,4 +1,4 @@
-#include "Vysyx_26040125.h"
+#include "VysyxSoCFull.h"
 #include "verilated_vcd_c.h"
 #include <stdio.h>
 #include <assert.h>
@@ -23,7 +23,7 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-Vysyx_26040125* cpu = new Vysyx_26040125;
+VysyxSoCFull* cpu = new VysyxSoCFull;
 VerilatedVcdC* tfp = new VerilatedVcdC;
 void init_disasm();
 char *elf_file = NULL;
@@ -41,6 +41,7 @@ typedef struct {
 
 int main(int argc, char *argv[])
 {
+    Verilated::commandArgs(argc, argv);
     if(argc > 2){
         load_bin(argv[1]);
         elf_file = argv[2];
@@ -71,7 +72,12 @@ int main(int argc, char *argv[])
     difftest_memcpy(0x80000000, mem, sizeof(mem), DIFFTEST_TO_REF);
 #endif
 
-    cpu->contextp()->time(0);
+cpu->contextp()->time(0);
+cpu->eval();
+
+//reset assert 100 cycles
+while(cpu->contextp()->time() < 100 && !exit_flag) {
+    cpu->contextp()->timeInc(1);
     cpu->clock = 0;
     cpu->reset = 1;
     cpu->eval();
@@ -79,30 +85,16 @@ int main(int argc, char *argv[])
     tfp->dump(cpu->contextp()->time());
 #endif
 
-    cpu->contextp()->time(1);
+    cpu->contextp()->timeInc(1);
     cpu->clock = 1;
     cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
+}
 
-    cpu->contextp()->time(2);
-    cpu->clock = 0;
-    cpu->reset = 0;
-    cpu->eval();
-#ifdef WAVEON
-    tfp->dump(cpu->contextp()->time());
-#endif
-
-    cpu->contextp()->time(3);
-    cpu->clock = 1;
-    cpu->reset = 0;
-    cpu->eval();
-#ifdef WAVEON
-    tfp->dump(cpu->contextp()->time());
-#endif
-    sdb_set_batch_mode();
+    // sdb_set_batch_mode();
 
     sdb_mainloop();
 

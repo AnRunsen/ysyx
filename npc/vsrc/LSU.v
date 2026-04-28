@@ -53,24 +53,35 @@ module LSU(
     output [31:0] m_axi_araddr,
     output m_axi_arvalid,
     input m_axi_arready,
+    output [3:0] m_axi_arid,
+    output [7:0] m_axi_arlen,
+    output [2:0] m_axi_arsize,
+    output [1:0] m_axi_arburst,
 
     input [31:0] m_axi_rdata,
     input [1:0] m_axi_rresp,
+    input [3:0] m_axi_rid,
+    input m_axi_rlast,
     input m_axi_rvalid,
     output m_axi_rready,
-
 
     output [31:0] m_axi_awaddr,
     output m_axi_awvalid,
     input m_axi_awready,
+    output [3:0] m_axi_awid,
+    output [7:0] m_axi_awlen,
+    output [2:0] m_axi_awsize,
+    output [1:0] m_axi_awburst,
 
     output [31:0] m_axi_wdata,
     output [3:0] m_axi_wstrb,
     output m_axi_wvalid,
+    output m_axi_wlast,
     input m_axi_wready,
 
     input [1:0] m_axi_bresp,
     input m_axi_bvalid,
+    input [3:0] m_axi_bid,
     output m_axi_bready
 );
 
@@ -265,10 +276,18 @@ module LSU(
     /*logic to send read addr*/
     assign m_axi_araddr = result;
     assign m_axi_arvalid = (state == READ_REQ);
+    assign m_axi_arid = 4'b0;
+    assign m_axi_arlen = 8'b0;
+    assign m_axi_arsize = 3'b010; //4 bytes
+    assign m_axi_arburst = 2'b01; //INCR
 
     /*logic to send write addr*/
     assign m_axi_awaddr = result;
     assign m_axi_awvalid = (state == WRITE_ADDR_REQ);
+    assign m_axi_awid = 4'b0;
+    assign m_axi_awlen = 8'b0;
+    assign m_axi_awsize = 3'b010; //4 bytes
+    assign m_axi_awburst = 2'b01; //INCR
 
     /*logic to send write data*/
     wire [31:0] wdata_ = srcR2 << (result[1:0]*8);
@@ -276,6 +295,7 @@ module LSU(
     assign m_axi_wstrb = (op_width == `OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
                          (op_width == `OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
     assign m_axi_wvalid = (state == WRITE_DATA_REQ);
+    assign m_axi_wlast = (state == WRITE_DATA_REQ);
 
     /*logic to recv read data*/
     assign m_axi_rready = (state == READ_WAIT);

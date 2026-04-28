@@ -37,16 +37,16 @@ extern "C" void itrace(int inst, int pc)
 
 extern "C" int mtime_read(int raddr)
 {
-    if (raddr == 0x10000004 || raddr == 0x10000008)
+    if (raddr == 0x02000004 || raddr == 0x02000008)
     {
-        if (raddr == 0x10000004)
+        if (raddr == 0x02000004)
         {
-            // 0x10000004是一个特殊的地址, 读取这里会返回当前时间的低32位
+            // 0x02000004是一个特殊的地址, 读取这里会返回当前时间的低32位
             return (uint32_t)(clock());
         }
         else
         {
-            // 0x10000008是一个特殊的地址, 读取这里会返回当前时间的高32位
+            // 0x02000008是一个特殊的地址, 读取这里会返回当前时间的高32位
             return (uint32_t)(clock() >> 32);
         }
     }
@@ -112,7 +112,7 @@ extern "C" int pmem_read(int raddr)
         assert(0);
     }
 
-    raddr = raddr - 0x80000000; // 内存映射地址转换
+    raddr = raddr - 0x20000000; // 内存映射地址转换
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t *)(mem + (raddr & ~0x3u));
 }
@@ -134,7 +134,7 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
         assert(0);
     }
 
-    waddr = waddr - 0x80000000; // 内存映射地址转换
+    waddr = waddr - 0x20000000; // 内存映射地址转换
     for (int i = 0; i < 4; i++)
     {
         if (wmask & (1 << i))
@@ -151,4 +151,9 @@ extern "C" void ftrace(int pc, int npc)
     int inst = pmem_read(pc);
     ftrace_detect(inst, pc, npc);
 #endif
+}
+
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) {
+    *data = pmem_read(addr);
 }

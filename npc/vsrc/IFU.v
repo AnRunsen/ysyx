@@ -12,28 +12,39 @@ module IFU(
 
     input [31:0] PC,
 
-    //axi lite interface to RAM
+    //axi interface to RAM
     output [31:0] m_axi_araddr,
     output m_axi_arvalid,
     input m_axi_arready,
+    output [3:0] m_axi_arid,
+    output [7:0] m_axi_arlen,
+    output [2:0] m_axi_arsize,
+    output [1:0] m_axi_arburst,
 
     input [31:0] m_axi_rdata,
     input [1:0] m_axi_rresp,
+    input [3:0] m_axi_rid,
+    input m_axi_rlast,
     input m_axi_rvalid,
     output m_axi_rready,
-
 
     output [31:0] m_axi_awaddr,
     output m_axi_awvalid,
     input m_axi_awready,
+    output [3:0] m_axi_awid,
+    output [7:0] m_axi_awlen,
+    output [2:0] m_axi_awsize,
+    output [1:0] m_axi_awburst,
 
     output [31:0] m_axi_wdata,
     output [3:0] m_axi_wstrb,
     output m_axi_wvalid,
+    output m_axi_wlast,
     input m_axi_wready,
 
     input [1:0] m_axi_bresp,
     input m_axi_bvalid,
+    input [3:0] m_axi_bid,
     output m_axi_bready
 );
 
@@ -65,6 +76,11 @@ module IFU(
     assign m_axi_wstrb = 4'b0;
     assign m_axi_wvalid = 1'b0;
     assign m_axi_bready = 1'b0;
+    assign m_axi_awid = 4'b0;
+    assign m_axi_awlen = 8'b0;
+    assign m_axi_awsize = 3'b0;
+    assign m_axi_awburst = 2'b0;
+    assign m_axi_wlast = 1'b0;
 
 
     /*logic to recv rdata*/
@@ -87,6 +103,10 @@ module IFU(
     /*logic to send ardata*/
     assign m_axi_araddr = PC;
     assign m_axi_arvalid = state == REQ;
+    assign m_axi_arid = 4'b0;
+    assign m_axi_arlen = 8'b0;
+    assign m_axi_arsize = 3'b010; //4 bytes
+    assign m_axi_arburst = 2'b01; //INCR
 
 
     /*logic to send data*/
