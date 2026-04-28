@@ -36,7 +36,7 @@ module MTIME(
     output [3:0]  s_axi_bid,
     output [1:0]  s_axi_bresp,
     output        s_axi_bvalid,
-    input         s_axi_bready,
+    input         s_axi_bready
 );
 
     /*write port unused*/
