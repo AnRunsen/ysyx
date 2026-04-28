@@ -1,4 +1,4 @@
-#include "Vysyx_26040125.h"
+#include "VysyxSoCFull.h"
 #include "verilated_vcd_c.h"
 #include <stdio.h>
 #include <assert.h>
@@ -23,7 +23,7 @@ void load_bin(const char *path) {
     fclose(fp);
 }
 
-Vysyx_26040125* cpu = new Vysyx_26040125;
+VysyxSoCFull* cpu = new VysyxSoCFull;
 VerilatedVcdC* tfp = new VerilatedVcdC;
 void init_disasm();
 char *elf_file = NULL;

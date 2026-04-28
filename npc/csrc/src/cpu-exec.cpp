@@ -1,10 +1,10 @@
-#include "Vysyx_26040125.h"
+#include "VysyxSoCFull.h"
 #include "verilated_vcd_c.h"
-#include "Vysyx_26040125___024root.h"
+#include "VysyxSoCFull___024root.h"
 #include <stdint.h>
 #include "config.hpp"
 
-extern Vysyx_26040125* cpu;
+extern VysyxSoCFull* cpu;
 extern VerilatedVcdC* tfp;
 extern bool exit_flag;
 extern "C" {
@@ -43,9 +43,9 @@ void cpu_exec(uint64_t n)
         difftest_regcpy(&dut_state, DIFFTEST_TO_DUT);
         
         for(uint32_t i = 0; i < 16; i++) {
-            if(dut_state.gpr[i] != cpu->rootp->ysyx_26040125__DOT__ysyx_26040125_GPR__DOT__gpr[i]) {
+            if(dut_state.gpr[i] != cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[i]) {
                 printf("Difftest failed at time %lu: gpr[%u] = 0x%08x, expected 0x%08x\n",
-                    cpu->contextp()->time(), i, cpu->rootp->ysyx_26040125__DOT__ysyx_26040125_GPR__DOT__gpr[i], dut_state.gpr[i]);
+                    cpu->contextp()->time(), i, cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[i], dut_state.gpr[i]);
                 exit_flag = true;
                 break;
             }
