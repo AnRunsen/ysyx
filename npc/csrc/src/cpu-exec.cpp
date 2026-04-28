@@ -27,12 +27,14 @@ void cpu_exec(uint64_t n)
     while(n-- > 0) {
         cpu->contextp()->timeInc(1);
         cpu->clock = 0;
+        cpu->reset = 0;
         cpu->eval();
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
 #endif
         cpu->contextp()->timeInc(1);
         cpu->clock = 1;
+        cpu->reset = 0;
         cpu->eval();
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
