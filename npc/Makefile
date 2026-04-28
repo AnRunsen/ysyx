@@ -38,7 +38,7 @@ prebuild: $(VSRCS)
 	verilator $(PREBUILD_FLAGS) $(VSRCS)
 
 run: ./$(BUILD_DIR)/V$(TOP)
-	$^ $(IMG) $(ELF)
+	$^ $(IMG) $(ELF) >&2
 
 build: ./$(BUILD_DIR)/V$(TOP)
 

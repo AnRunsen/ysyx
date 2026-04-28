@@ -278,7 +278,7 @@ module LSU(
     assign m_axi_arvalid = (state == READ_REQ);
     assign m_axi_arid = 4'b0;
     assign m_axi_arlen = 8'b0;
-    assign m_axi_arsize = 3'b010; //4 bytes
+    assign m_axi_arsize = {1'b0, op_width}; //4 bytes
     assign m_axi_arburst = 2'b01; //INCR
 
     /*logic to send write addr*/
@@ -286,7 +286,7 @@ module LSU(
     assign m_axi_awvalid = (state == WRITE_ADDR_REQ);
     assign m_axi_awid = 4'b0;
     assign m_axi_awlen = 8'b0;
-    assign m_axi_awsize = 3'b010; //4 bytes
+    assign m_axi_awsize = {1'b0, op_width}; //4 bytes
     assign m_axi_awburst = 2'b01; //INCR
 
     /*logic to send write data*/
