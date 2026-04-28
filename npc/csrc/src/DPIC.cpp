@@ -112,7 +112,7 @@ extern "C" int pmem_read(int raddr)
         assert(0);
     }
 
-    raddr = raddr - 0x80000000; // 内存映射地址转换
+    raddr = raddr - 0x20000000; // 内存映射地址转换
     // 总是读取地址为`raddr & ~0x3u`的4字节返回
     return *(uint32_t *)(mem + (raddr & ~0x3u));
 }
@@ -134,7 +134,7 @@ extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
         assert(0);
     }
 
-    waddr = waddr - 0x80000000; // 内存映射地址转换
+    waddr = waddr - 0x20000000; // 内存映射地址转换
     for (int i = 0; i < 4; i++)
     {
         if (wmask & (1 << i))
@@ -155,6 +155,5 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
-    //ebreak
-    *data = 0x00100073;
+    *data = pmem_read(addr);
 }
