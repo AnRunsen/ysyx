@@ -4,27 +4,39 @@ module MTIME(
     input clk,
     input reset,
 
-    input [31:0] s_axi_araddr,
-    input s_axi_arvalid,
-    output s_axi_arready,
+    input  [3:0]  s_axi_arid,
+    input  [31:0] s_axi_araddr,
+    input  [7:0]  s_axi_arlen,
+    input  [2:0]  s_axi_arsize,
+    input  [1:0]  s_axi_arburst,
+    input         s_axi_arvalid,
+    output        s_axi_arready,
 
+    output [3:0] s_axi_rid,
     output reg [31:0] s_axi_rdata,
-    output [1:0] s_axi_rresp,
-    output s_axi_rvalid,
-    input s_axi_rready,
+    output [1:0]  s_axi_rresp,
+    output        s_axi_rlast,
+    output        s_axi_rvalid,
+    input         s_axi_rready,
 
-    input [31:0] s_axi_awaddr,
-    input s_axi_awvalid,
-    output s_axi_awready,
+    input  [3:0]  s_axi_awid,
+    input  [31:0] s_axi_awaddr,
+    input  [7:0]  s_axi_awlen,
+    input  [2:0]  s_axi_awsize,
+    input  [1:0]  s_axi_awburst,
+    input         s_axi_awvalid,
+    output        s_axi_awready,
 
-    input [31:0] s_axi_wdata,
-    input [3:0] s_axi_wstrb,
-    input s_axi_wvalid,
-    output s_axi_wready,
+    input  [31:0] s_axi_wdata,
+    input  [3:0]  s_axi_wstrb,
+    input         s_axi_wlast,
+    input         s_axi_wvalid,
+    output        s_axi_wready,
 
-    output [1:0] s_axi_bresp,
-    output s_axi_bvalid,
-    input s_axi_bready
+    output [3:0]  s_axi_bid,
+    output [1:0]  s_axi_bresp,
+    output        s_axi_bvalid,
+    input         s_axi_bready,
 );
 
     /*write port unused*/
@@ -78,5 +90,8 @@ module MTIME(
     assign s_axi_arready = (state == IDLE);
     assign s_axi_rvalid  = (state == RESP);
     assign s_axi_rresp   = 2'b00;
+    assign s_axi_rlast   = 1'b1;
+    assign s_axi_rid     = 4'b0;
+    assign s_axi_bid     = 4'b0;
 
 endmodule

@@ -41,6 +41,7 @@ typedef struct {
 
 int main(int argc, char *argv[])
 {
+    Verilated::commandArgs(argc, argv);
     if(argc > 2){
         load_bin(argv[1]);
         elf_file = argv[2];
