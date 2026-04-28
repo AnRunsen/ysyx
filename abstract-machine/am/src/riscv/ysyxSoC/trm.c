@@ -1,4 +1,5 @@
 #include <am.h>
+#include <klib.h>
 #include <klib-macros.h>
 
 extern char _heap_start;
@@ -28,6 +29,11 @@ void halt(int code) {
 }
 
 void _trm_init() {
+  extern char _data_start;
+  extern char _data_lma;
+  extern char edata;
+  memcpy(&_data_start, &_data_lma, &edata - &_data_start);
+
   int ret = main(mainargs);
   halt(ret);
 }
