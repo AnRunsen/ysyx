@@ -72,7 +72,12 @@ int main(int argc, char *argv[])
     difftest_memcpy(0x80000000, mem, sizeof(mem), DIFFTEST_TO_REF);
 #endif
 
-    cpu->contextp()->time(0);
+cpu->contextp()->time(0);
+cpu->eval();
+
+//reset assert 100 cycles
+while(cpu->contextp()->time() < 100 && !exit_flag) {
+    cpu->contextp()->timeInc(1);
     cpu->clock = 0;
     cpu->reset = 1;
     cpu->eval();
@@ -80,29 +85,14 @@ int main(int argc, char *argv[])
     tfp->dump(cpu->contextp()->time());
 #endif
 
-    cpu->contextp()->time(1);
+    cpu->contextp()->timeInc(1);
     cpu->clock = 1;
     cpu->reset = 1;
     cpu->eval();
 #ifdef WAVEON
     tfp->dump(cpu->contextp()->time());
 #endif
-
-    cpu->contextp()->time(2);
-    cpu->clock = 0;
-    cpu->reset = 0;
-    cpu->eval();
-#ifdef WAVEON
-    tfp->dump(cpu->contextp()->time());
-#endif
-
-    cpu->contextp()->time(3);
-    cpu->clock = 1;
-    cpu->reset = 0;
-    cpu->eval();
-#ifdef WAVEON
-    tfp->dump(cpu->contextp()->time());
-#endif
+}
 
     // sdb_set_batch_mode();
 
