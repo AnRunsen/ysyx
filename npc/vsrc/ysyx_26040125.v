@@ -2,6 +2,8 @@ module ysyx_26040125(
         input  clock,
         input  reset,
 
+        input io_interrupt,
+
         // AXI4 Master port
         input         io_master_awready,
         output        io_master_awvalid,
