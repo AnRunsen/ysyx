@@ -37,16 +37,16 @@ extern "C" void itrace(int inst, int pc)
 
 extern "C" int mtime_read(int raddr)
 {
-    if (raddr == 0x10000004 || raddr == 0x10000008)
+    if (raddr == 0x02000004 || raddr == 0x02000008)
     {
-        if (raddr == 0x10000004)
+        if (raddr == 0x02000004)
         {
-            // 0x10000004是一个特殊的地址, 读取这里会返回当前时间的低32位
+            // 0x02000004是一个特殊的地址, 读取这里会返回当前时间的低32位
             return (uint32_t)(clock());
         }
         else
         {
-            // 0x10000008是一个特殊的地址, 读取这里会返回当前时间的高32位
+            // 0x02000008是一个特殊的地址, 读取这里会返回当前时间的高32位
             return (uint32_t)(clock() >> 32);
         }
     }
