@@ -8,6 +8,8 @@
 #include "ftrace.hpp"
 
 uint8_t mem[0x8000000]; // 128MB memory
+uint8_t flash[0x1000000]; // 16MB flash
+
 bool exit_flag = false;
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
@@ -48,6 +50,10 @@ int main(int argc, char *argv[])
     } else {
         printf("Usage: %s <binary> <elf_file>\n", argv[0]);
         assert(0);
+    }
+
+    for(uint32_t i = 0; i < sizeof(flash); i++) {
+        flash[i] = i;
     }
 
 #ifdef WAVEON
