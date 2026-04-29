@@ -1,4 +1,5 @@
 #include <am.h>
+#include <klib.h>
 #include <klib-macros.h>
 
 extern char _heap_start;
@@ -12,7 +13,10 @@ extern char _pmem_start;
 #define PMEM_SIZE (8 * 1024)// 8KB
 #define PMEM_END  ((uintptr_t)&_pmem_start + PMEM_SIZE)
 
-Area heap = RANGE(&_heap_start, PMEM_END);
+#define HEAP_SIZE (2 * 1024)// 2KB
+#define HEAP_END  ((uintptr_t)&_heap_start + HEAP_SIZE)
+
+Area heap = RANGE(&_heap_start, HEAP_END);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
 void putch(char ch) {
@@ -25,6 +29,15 @@ void halt(int code) {
 }
 
 void _trm_init() {
+  extern char _sdata;
+  extern char _data_lma;
+  extern char _edata;
+  memcpy(&_sdata, &_data_lma, &_edata - &_sdata);
+
+  extern char _sbss;
+  extern char _ebss;
+  memset(&_sbss, 0, &_ebss - &_sbss);
+
   int ret = main(mainargs);
   halt(ret);
 }
