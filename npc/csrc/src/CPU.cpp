@@ -19,8 +19,8 @@ void load_bin(const char *path) {
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
     rewind(fp);
-    assert(size <= (long)sizeof(mem));
-    size_t ret = fread(mem, 1, size, fp);
+    assert(size <= (long)sizeof(flash));
+    size_t ret = fread(flash, 1, size, fp);
     assert(ret == (size_t)size);
     fclose(fp);
 }
@@ -50,10 +50,6 @@ int main(int argc, char *argv[])
     } else {
         printf("Usage: %s <binary> <elf_file>\n", argv[0]);
         assert(0);
-    }
-
-    for(uint32_t i = 0; i < sizeof(flash); i++) {
-        flash[i] = i;
     }
 
 #ifdef WAVEON
