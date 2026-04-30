@@ -53,10 +53,27 @@ void uart_init() {
   *(volatile uint8_t*)(UART_BASE + UART_LCR) &= 0x7F;
 }
 
+static void machine_info()
+{
+  //read the mvendorid and marchid
+  uint32_t mvendorid, marchid;
+  __asm__ volatile ("csrr %0, mvendorid" : "=r"(mvendorid));
+  __asm__ volatile ("csrr %0, marchid" : "=r"(marchid));
+
+  //treat the mvendorid as 4 characters and print it out
+  char vendor[5];
+  vendor[0] = (mvendorid >> 24) & 0xFF;
+  vendor[1] = (mvendorid >> 16) & 0xFF;
+  vendor[2] = (mvendorid >> 8) & 0xFF;
+  vendor[3] = mvendorid & 0xFF;
+  vendor[4] = '\0';
+  printf("%s_%d\n", vendor, marchid);
+}
+
 void _trm_init() {
   load();
-
   uart_init();
+  machine_info();
   int ret = main(mainargs);
   halt(ret);
 }
