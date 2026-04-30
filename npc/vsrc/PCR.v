@@ -16,7 +16,7 @@ module PCR(
 );
 
     initial begin
-        PC = 32'h2000_0000;
+        PC = 32'h3000_0000;
     end
 
     reg [31:0] PC_next;
@@ -37,7 +37,7 @@ module PCR(
 
     always @(posedge clk) begin
         if(reset) begin
-            PC <= 32'h2000_0000;
+            PC <= 32'h3000_0000;
         end
 
         else begin
