@@ -70,7 +70,7 @@ module CSR(
 
     always @(posedge clk) begin
         if(reset) marchid <= 32'b0;
-        else marchid <= 32'h0DC78795; //231180181 in hex
+        else marchid <= 32'h018D573D; //26040125 in hex
     end
 
 endmodule
