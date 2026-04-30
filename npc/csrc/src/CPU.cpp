@@ -96,7 +96,7 @@ while(cpu->contextp()->time() < 100 && !exit_flag) {
 #endif
 }
 
-    // sdb_set_batch_mode();
+    sdb_set_batch_mode();
 
     sdb_mainloop();
 
