@@ -165,5 +165,6 @@ extern "C" void psram_read(int32_t addr, int32_t *data) {
     *data = *(uint32_t *)(psram + (addr & ~0x3u));
 }
 extern "C" void psram_write(int32_t addr, int8_t data) {
+    printf("psram_write: addr=0x%08x, data=0x%02x\n", addr, data);
     *(psram + addr) = data;
 }
