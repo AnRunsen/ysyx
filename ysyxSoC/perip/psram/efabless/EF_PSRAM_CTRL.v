@@ -100,7 +100,7 @@ module PSRAM_READER (
     always @ (negedge sck or negedge rst_n)
         if(!rst_n)
             counter <= 8'b0;
-        else if(~done)
+        else if(~done && state == READ)
             counter <= counter + 1'b1;
         else if(state == IDLE)
             counter <= 8'b0;
@@ -200,7 +200,7 @@ module PSRAM_WRITER (
     always @ (negedge sck or negedge rst_n)
         if(!rst_n)
             counter <= 8'b0;
-        else if(~done)
+        else if(~done && state == WRITE)
             counter <= counter + 1'b1;
         else if(state == IDLE)
             counter <= 8'b0;
