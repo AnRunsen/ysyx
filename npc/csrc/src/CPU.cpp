@@ -9,6 +9,7 @@
 
 uint8_t mem[0x8000000]; // 128MB memory
 uint8_t flash[0x1000000]; // 16MB flash
+uint8_t psram[0x1000000]; //16MB psram
 
 bool exit_flag = false;
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
