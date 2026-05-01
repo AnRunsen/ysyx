@@ -97,10 +97,10 @@ module PSRAM_READER (
         else
             ce_n <= 1'b1;
 
-    always @ (posedge clk or negedge rst_n)
+    always @ (negedge sck or negedge rst_n)
         if(!rst_n)
             counter <= 8'b0;
-        else if(sck & ~done)
+        else if(~done)
             counter <= counter + 1'b1;
         else if(state == IDLE)
             counter <= 8'b0;
