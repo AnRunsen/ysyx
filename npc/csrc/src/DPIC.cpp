@@ -9,6 +9,7 @@
 extern bool exit_flag;
 extern uint8_t mem[];
 extern uint8_t flash[];
+extern uint8_t psram[];
 
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
@@ -159,4 +160,10 @@ extern "C" void flash_read(int32_t addr, int32_t *data) {
 }
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
     *data = pmem_read(addr);
+}
+extern "C" void psram_read(int32_t addr, int32_t *data) {
+    *data = *(uint32_t *)(psram + (addr & ~0x3u));
+}
+extern "C" void psram_write(int32_t addr, int8_t data) {
+    *(psram + addr) = data;
 }
