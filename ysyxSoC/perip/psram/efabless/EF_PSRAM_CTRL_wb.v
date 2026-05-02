@@ -149,8 +149,7 @@ module EF_PSRAM_CTRL_wb (
     PSRAM_WRITER MW (
         .clk(clk_i),
         .rst_n(~rst_i),
-        // .addr({adr_i[23:2], waddr}),
-        .addr(adr_i),
+        .addr(adr_i[23:0]),
         .wr(mw_wr),
         .size(size),
         .done(mw_done),
