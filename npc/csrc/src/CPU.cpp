@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
         assert(0);
     }
 
+    printf("0x30000941: 0x%08x\n", flash[0x00000941]);
+
 #ifdef WAVEON
     Verilated::traceEverOn(true);
 #endif
