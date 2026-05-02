@@ -22,7 +22,7 @@ module psram(
 
   /*logic to recv cmd*/
   reg [7:0] cmd;
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       cmd <= 8'b0;
     end
@@ -109,7 +109,7 @@ module psram(
     endcase
   end
 
-  always @(posedge sck or posedge ce_n) begin
+  always @(negedge sck or posedge ce_n) begin
     if (ce_n) begin
       state <= CMD;
     end
