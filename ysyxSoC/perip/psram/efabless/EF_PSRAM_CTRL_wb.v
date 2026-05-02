@@ -83,7 +83,8 @@ module EF_PSRAM_CTRL_wb (
             count <= 3'b0;
         else if(sck && state == ST_QPI)
             count <= count + 1'b1;
-        else count <= 3'b0;
+        else if(state != ST_QPI)
+            count <= 3'b0;
     end
 
     reg qpi_sck;
