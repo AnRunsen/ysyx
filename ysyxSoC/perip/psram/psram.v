@@ -15,7 +15,7 @@ module psram(
       CMD: next_state = (count == 7) ? ADDR : CMD;
       ADDR: next_state = (count == 5) ? (cmd == 8'hEB ? WAIT : DATA) : ADDR;
       WAIT: next_state = (count == 5) ? DATA : WAIT;
-      DATA: next_state = (count == 7) ? CMD : DATA;
+      DATA: next_state = (count == 8) ? CMD : DATA;
       default: next_state = CMD;
     endcase
   end
@@ -56,7 +56,10 @@ module psram(
   reg [3:0] dout;
   /*logic to send data*/
   always @(posedge sck or posedge ce_n) begin
-    if (cmd == 8'hEB && state == DATA) begin
+    if(ce_n) begin
+      dout <= 4'b0;
+    end
+    else if (cmd == 8'hEB && state == DATA) begin
       case(count)
         0: dout <= data[7:4];
         1: dout <= data[3:0];
@@ -106,7 +109,7 @@ module psram(
       CMD: cycle = 8;
       ADDR: cycle = 6;
       WAIT: cycle = 6;
-      DATA: cycle = 8;
+      DATA: cycle = 9;
       default: cycle = 8;
     endcase
   end
