@@ -86,7 +86,7 @@ module EF_PSRAM_CTRL_wb (
         else count <= 3'b0;
     end
 
-    wire qpi_sck;
+    reg qpi_sck;
     always @ (posedge clk_i or posedge rst_i) begin
         if(rst_i)
             qpi_sck <= 1'b0;
