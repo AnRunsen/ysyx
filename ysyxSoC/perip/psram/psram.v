@@ -12,10 +12,10 @@ module psram(
   reg [7:0] count;
   always @(*) begin
     case(state)
-      CMD: next_state = (count == cycle) ? ADDR : CMD;
-      ADDR: next_state = (count == cycle) ? (cmd == 8'hEB ? WAIT : DATA) : ADDR;
-      WAIT: next_state = (count == cycle) ? DATA : WAIT;
-      DATA: next_state = (count == cycle) ? CMD : DATA;
+      CMD: next_state = (count == 7) ? ADDR : CMD;
+      ADDR: next_state = (count == 5) ? (cmd == 8'hEB ? WAIT : DATA) : ADDR;
+      WAIT: next_state = (count == 5) ? DATA : WAIT;
+      DATA: next_state = (count == 7) ? CMD : DATA;
       default: next_state = CMD;
     endcase
   end
@@ -109,7 +109,7 @@ module psram(
     endcase
   end
 
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       state <= CMD;
     end
@@ -123,7 +123,7 @@ module psram(
       count <= 8'b0;
     end
     else begin
-      if (count == cycle) begin
+      if (count == cycle - 1) begin
         count <= 8'b0;
       end
       else begin
