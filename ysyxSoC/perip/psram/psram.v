@@ -38,7 +38,7 @@ module psram(
   end
 
   reg QPI_flag;
-  always @(posedge sck or posedge ce_n) begin
+  always @(posedge sck) begin
     if(state == CMD && {cmd[6:0], dio[0]} == 8'h35) begin
       QPI_flag <= 1'b1;
     end
