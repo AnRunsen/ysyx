@@ -77,14 +77,14 @@ module EF_PSRAM_CTRL_wb (
         else
             state <= nstate;
 
-    reg [2:0] count;
+    reg [3:0] count;
     always @ (posedge clk_i or posedge rst_i) begin
         if(rst_i)
-            count <= 3'b0;
-        else if(sck && state == ST_QPI)
+            count <= 4'b0;
+        else if(sck && count < 4'b0111)
             count <= count + 1'b1;
         else if(state != ST_QPI)
-            count <= 3'b0;
+            count <= 4'b0;
     end
 
     reg qpi_sck;
@@ -112,7 +112,7 @@ module EF_PSRAM_CTRL_wb (
     always @* begin
         case(state)
             ST_QPI :
-                if(count == 3'b111)
+                if(count == 4'b1000)
                     nstate = ST_IDLE;
                 else
                     nstate = ST_QPI;
