@@ -81,7 +81,7 @@ module EF_PSRAM_CTRL_wb (
     always @ (posedge clk_i or posedge rst_i) begin
         if(rst_i)
             count <= 4'b0;
-        else if(sck && count < 4'b0111)
+        else if(sck && state == ST_QPI)
             count <= count + 1'b1;
         else if(state != ST_QPI)
             count <= 4'b0;
