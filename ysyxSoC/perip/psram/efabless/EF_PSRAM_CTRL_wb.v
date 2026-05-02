@@ -114,12 +114,12 @@ module EF_PSRAM_CTRL_wb (
                     nstate = ST_WAIT;
                 else
                     nstate = ST_IDLE;
-
             ST_WAIT :
                 if((mw_done & wb_we) | (mr_done & wb_re))
                     nstate = ST_IDLE;
                 else
                     nstate = ST_WAIT;
+            default : nstate = ST_QPI;
         endcase
     end
 
