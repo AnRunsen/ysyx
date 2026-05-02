@@ -162,10 +162,8 @@ extern "C" void mrom_read(uint32_t addr, uint32_t *data) {
     *data = pmem_read(addr);
 }
 extern "C" void psram_read(uint32_t addr, uint32_t *data) {
-    printf("psram_read: addr=0x%08x\n", addr);
     *data = *(uint32_t *)(psram + (addr & ~0x3u));
 }
 extern "C" void psram_write(uint32_t addr, uint8_t data) {
-    printf("psram_write: addr=0x%08x, data=0x%02x\n", addr, data);
     *(psram + addr) = data;
 }
