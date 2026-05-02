@@ -109,7 +109,7 @@ module psram(
     endcase
   end
 
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       state <= CMD;
     end
