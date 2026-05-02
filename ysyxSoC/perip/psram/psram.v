@@ -109,7 +109,7 @@ module psram(
       CMD: cycle = 8;
       ADDR: cycle = 6;
       WAIT: cycle = 6;
-      DATA: cycle = 8;
+      DATA: cycle = 9;
       default: cycle = 8;
     endcase
   end
