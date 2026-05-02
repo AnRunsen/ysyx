@@ -1,5 +1,5 @@
-ENTRY(_start)
-PHDRS { text PT_LOAD; data PT_LOAD; bss PT_NULL; }
+ENTRY(_bootloader)
+PHDRS { bootloader PT_LOAD; text PT_LOAD; data PT_LOAD; bss PT_NULL; }
 
 MEMORY {
   mrom : ORIGIN = 0x20000000, LENGTH = 4K
@@ -9,6 +9,10 @@ MEMORY {
 }
 
 SECTIONS {
+  .bootloader : {
+    *(bootloader)
+  } > flash AT > flash :bootloader
+
   .text : {
     _stext = .;
     *(entry)

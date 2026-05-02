@@ -34,22 +34,6 @@ void halt(int code) {
   while (1);
 }
 
-void load()
-{
-  // extern char _sdata;
-  // extern char _data_lma;
-  // extern char _edata;
-  // memcpy(&_sdata, &_data_lma, &_edata - &_sdata);
-
-  extern char _stext;
-  extern char _start_lma;
-  extern char _edata;
-  memcpy(&_stext, &_start_lma, &_edata - &_stext);
-
-  extern char _sbss;
-  extern char _ebss;
-  memset(&_sbss, 0, &_ebss - &_sbss);
-}
 
 void uart_init() {
   *(volatile uint8_t*)(UART_BASE + UART_LCR) |= 0x80;
@@ -76,7 +60,6 @@ static void machine_info()
 }
 
 void _trm_init() {
-  load();
   uart_init();
   machine_info();
   int ret = main(mainargs);
