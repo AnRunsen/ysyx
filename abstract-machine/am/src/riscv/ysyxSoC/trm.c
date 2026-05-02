@@ -36,10 +36,15 @@ void halt(int code) {
 
 void load()
 {
-  extern char _sdata;
-  extern char _data_lma;
+  // extern char _sdata;
+  // extern char _data_lma;
+  // extern char _edata;
+  // memcpy(&_sdata, &_data_lma, &_edata - &_sdata);
+
+  extern char _stext;
+  extern char _start_lma;
   extern char _edata;
-  memcpy(&_sdata, &_data_lma, &_edata - &_sdata);
+  memcpy(&_stext, &_start_lma, &_edata - &_stext);
 
   extern char _sbss;
   extern char _ebss;
