@@ -15,7 +15,7 @@ module psram(
       CMD: next_state = (count == 7) ? ADDR : CMD;
       ADDR: next_state = (count == 5) ? (cmd == 8'hEB ? WAIT : DATA) : ADDR;
       WAIT: next_state = (count == 5) ? DATA : WAIT;
-      DATA: next_state = (count == 7) ? CMD : DATA;
+      DATA: next_state = (count == 8) ? CMD : DATA;
       default: next_state = CMD;
     endcase
   end
