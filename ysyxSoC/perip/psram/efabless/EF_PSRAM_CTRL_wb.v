@@ -97,8 +97,14 @@ module EF_PSRAM_CTRL_wb (
             qpi_sck <= 1'b0;
     end
         
-    wire qpi_cen;
-    assign qpi_cen = (state == ST_QPI) ? 1'b0 : 1'b1;
+    reg qpi_cen;
+    always @ (posedge clk_i or posedge rst_i)
+        if(rst_i)
+            qpi_cen <= 1'b1;
+        else if(state == ST_QPI)
+            qpi_cen <= 1'b0;
+        else
+            qpi_cen <= 1'b1;
        
 
     wire [7:0] cmd_35 = 8'h35;
