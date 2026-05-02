@@ -55,18 +55,23 @@ module psram(
 
   reg [3:0] dout;
   /*logic to send data*/
-  always @(*) begin
-    case(count)
-      0: dout = data[7:4];
-      1: dout = data[3:0];
-      2: dout = data[15:12];
-      3: dout = data[11:8];
-      4: dout = data[23:20];
-      5: dout = data[19:16];
-      6: dout = data[31:28];
-      7: dout = data[27:24];
-      default: dout = 4'b0;
-    endcase
+  always @(posedge sck or posedge ce_n) begin
+    if(ce_n) begin
+      dout <= 4'b0;
+    end
+    else if (cmd == 8'hEB && state == DATA) begin
+      case(count)
+        0: dout <= data[7:4];
+        1: dout <= data[3:0];
+        2: dout <= data[15:12];
+        3: dout <= data[11:8];
+        4: dout <= data[23:20];
+        5: dout <= data[19:16];
+        6: dout <= data[31:28];
+        7: dout <= data[27:24];
+        default: dout <= 4'b0;
+      endcase
+    end
   end
 
   reg byte_flag;
