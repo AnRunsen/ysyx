@@ -44,7 +44,7 @@ module psram(
 
   /*logic to read data*/
   reg [31:0] data;
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       data <= 32'b0;
     end
