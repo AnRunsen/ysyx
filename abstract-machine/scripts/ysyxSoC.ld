@@ -43,7 +43,7 @@ SECTIONS {
 
   _heap_start = ALIGN(0x1000);
 
-  . = ORIGIN(psram) + LENGTH(psram);
+  . = ORIGIN(sram) + LENGTH(sram);
   _stack_pointer = .;
   
   _start_lma = LOADADDR(.text);
