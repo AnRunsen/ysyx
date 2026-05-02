@@ -97,10 +97,10 @@ module PSRAM_READER (
         else
             ce_n <= 1'b1;
 
-    always @ (negedge sck or negedge rst_n)
+    always @ (posedge clk or negedge rst_n)
         if(!rst_n)
             counter <= 8'b0;
-        else if(~done && state == READ)
+        else if(sck & ~done)
             counter <= counter + 1'b1;
         else if(state == IDLE)
             counter <= 8'b0;
@@ -114,9 +114,10 @@ module PSRAM_READER (
 
     // Sample with the negedge of sck
     wire[1:0] byte_index = {counter[7:1] - 8'd10}[1:0];
-    always @ (negedge sck)
+    always @ (posedge clk)
         if(counter >= 20 && counter <= FINAL_COUNT)
-            data[byte_index] <= {data[byte_index][3:0], din}; // Optimize!
+            if(sck)
+                data[byte_index] <= {data[byte_index][3:0], din}; // Optimize!
 
     assign dout     =   (counter < 8)   ?   {3'b0, CMD_EBH[7 - counter]}:
                         (counter == 8)  ?   saddr[23:20]        :
@@ -197,10 +198,10 @@ module PSRAM_WRITER (
         else
             ce_n <= 1'b1;
 
-    always @ (negedge sck or negedge rst_n)
+    always @ (posedge clk or negedge rst_n)
         if(!rst_n)
             counter <= 8'b0;
-        else if(~done && state == WRITE)
+        else if(sck & ~done)
             counter <= counter + 1'b1;
         else if(state == IDLE)
             counter <= 8'b0;

@@ -33,7 +33,7 @@ module psram(
 
   /*logic to recv addr*/
   reg [23:0] addr;
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       addr <= 24'b0;
     end
@@ -70,7 +70,7 @@ module psram(
   end
 
   reg byte_flag;
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       byte_flag <= 1'b0;
     end
@@ -80,7 +80,7 @@ module psram(
   end
 
   reg [3:0] buffer;
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if(ce_n) begin
       buffer <= 4'b0;
     end
@@ -92,7 +92,7 @@ module psram(
   wire [23:0] waddr = addr + {17'b0, count[7:1]};
 
   /*logic to write data*/
-  always @(negedge sck) begin
+  always @(posedge sck) begin
     if (cmd == 8'h38 && state == DATA && byte_flag) begin
       psram_write({8'b0, waddr}, {buffer, dio});
     end
@@ -109,7 +109,7 @@ module psram(
     endcase
   end
 
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       state <= CMD;
     end
@@ -118,7 +118,7 @@ module psram(
     end
   end
 
-  always @(negedge sck or posedge ce_n) begin
+  always @(posedge sck or posedge ce_n) begin
     if (ce_n) begin
       count <= 8'b0;
     end
