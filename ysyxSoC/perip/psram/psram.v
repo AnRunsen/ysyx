@@ -12,10 +12,10 @@ module psram(
   reg [7:0] count;
   always @(*) begin
     case(state)
-      CMD: next_state = (count == 7) ? ADDR : CMD;
-      ADDR: next_state = (count == 5) ? (cmd == 8'hEB ? WAIT : DATA) : ADDR;
-      WAIT: next_state = (count == 5) ? DATA : WAIT;
-      DATA: next_state = (count == 8) ? CMD : DATA;
+      CMD: next_state = (count == cycle) ? ADDR : CMD;
+      ADDR: next_state = (count == cycle) ? (cmd == 8'hEB ? WAIT : DATA) : ADDR;
+      WAIT: next_state = (count == cycle) ? DATA : WAIT;
+      DATA: next_state = (count == cycle) ? CMD : DATA;
       default: next_state = CMD;
     endcase
   end
@@ -26,8 +26,21 @@ module psram(
     if (ce_n) begin
       cmd <= 8'b0;
     end
-    else if (state == CMD) begin
-      cmd <= {cmd[6:0], dio[0]};
+
+    else if(state == CMD)begin
+      if (!QPI_flag) begin
+        cmd <= {cmd[6:0], dio[0]};
+      end
+      else begin
+        cmd <= {cmd[3:0], dio};
+      end
+    end
+  end
+
+  reg QPI_flag;
+  always @(posedge sck) begin
+    if(state == CMD && {cmd[6:0], dio[0]} == 8'h35) begin
+      QPI_flag <= 1'b1;
     end
   end
 
@@ -106,11 +119,11 @@ module psram(
   reg [7:0] cycle;
   always @(*) begin
     case(state)
-      CMD: cycle = 8;
-      ADDR: cycle = 6;
-      WAIT: cycle = 6;
-      DATA: cycle = 9;
-      default: cycle = 8;
+      CMD: cycle = (QPI_flag) ? 8'd1 : 8'd7;
+      ADDR: cycle = 8'd5;
+      WAIT: cycle = 8'd5;
+      DATA: cycle = 8'd8;
+      default: cycle = 8'd8;
     endcase
   end
 
@@ -128,7 +141,7 @@ module psram(
       count <= 8'b0;
     end
     else begin
-      if (count == cycle - 1) begin
+      if (count == cycle) begin
         count <= 8'b0;
       end
       else begin

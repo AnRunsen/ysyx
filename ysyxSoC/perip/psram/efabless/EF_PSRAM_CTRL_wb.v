@@ -39,8 +39,9 @@ module EF_PSRAM_CTRL_wb (
     output  wire [3:0]      douten
 );
 
-    localparam  ST_IDLE = 1'b0,
-                ST_WAIT = 1'b1;
+    localparam  ST_IDLE = 2'b00,
+                ST_QPI  = 2'b01,
+                ST_WAIT = 2'b10;
 
     wire        mr_sck;
     wire        mr_ce_n;
@@ -69,26 +70,63 @@ module EF_PSRAM_CTRL_wb (
     //wire[3:0]   wb_byte_sel     =   sel_i & {4{wb_we}};
 
     // The FSM
-    reg         state, nstate;
+    reg [1:0]         state, nstate;
     always @ (posedge clk_i or posedge rst_i)
         if(rst_i)
-            state <= ST_IDLE;
+            state <= ST_QPI;
         else
             state <= nstate;
 
+    reg [3:0] count;
+    always @ (posedge clk_i or posedge rst_i) begin
+        if(rst_i)
+            count <= 4'b0;
+        else if(state == ST_QPI)
+            count <= count + 1'b1;
+        else
+            count <= 4'b0;
+    end
+
+    reg qpi_sck;
+    always @ (posedge clk_i or posedge rst_i) begin
+        if(rst_i)
+            qpi_sck <= 1'b0;
+        else if(state == ST_QPI)
+            qpi_sck <= ~ qpi_sck;
+        else
+            qpi_sck <= 1'b0;
+    end
+        
+    reg qpi_cen;
+    always @ (posedge clk_i or posedge rst_i)
+        if(rst_i)
+            qpi_cen <= 1'b1;
+        else if(state == ST_QPI)
+            qpi_cen <= 1'b0;
+        else
+            qpi_cen <= 1'b1;
+       
+
+    wire [7:0] cmd_35 = 8'h35;
+
     always @* begin
         case(state)
+            ST_QPI :
+                if(count == 4'd15)
+                    nstate = ST_IDLE;
+                else
+                    nstate = ST_QPI;
             ST_IDLE :
                 if(wb_valid)
                     nstate = ST_WAIT;
                 else
                     nstate = ST_IDLE;
-
             ST_WAIT :
                 if((mw_done & wb_we) | (mr_done & wb_re))
                     nstate = ST_IDLE;
                 else
                     nstate = ST_WAIT;
+            default : nstate = ST_QPI;
         endcase
     end
 
@@ -161,10 +199,10 @@ module EF_PSRAM_CTRL_wb (
         .douten(mw_doe)
     );
 
-    assign sck  = wb_we ? mw_sck  : mr_sck;
-    assign ce_n = wb_we ? mw_ce_n : mr_ce_n;
-    assign dout = wb_we ? mw_dout : mr_dout;
-    assign douten  = wb_we ? {4{mw_doe}}  : {4{mr_doe}};
+    assign sck  = (state == ST_QPI) ? qpi_sck : (wb_we ? mw_sck  : mr_sck);
+    assign ce_n = (state == ST_QPI) ? qpi_cen : (wb_we ? mw_ce_n : mr_ce_n);
+    assign dout = (state == ST_QPI) ? {3'b0, cmd_35[7 - count[3:1]]} : (wb_we ? mw_dout : mr_dout);
+    assign douten  = (state == ST_QPI) ? 4'b0001 : (wb_we ? {4{mw_doe}}  : {4{mr_doe}});
 
     assign mw_din = din;
     assign mr_din = din;
