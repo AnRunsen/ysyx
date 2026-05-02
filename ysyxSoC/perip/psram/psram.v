@@ -123,7 +123,7 @@ module psram(
       count <= 8'b0;
     end
     else begin
-      if (count == cycle - 1) begin
+      if (count == cycle) begin
         count <= 8'b0;
       end
       else begin
