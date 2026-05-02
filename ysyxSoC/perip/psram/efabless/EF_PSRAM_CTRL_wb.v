@@ -74,7 +74,7 @@ module EF_PSRAM_CTRL_wb (
     always @ (posedge clk_i or posedge rst_i)
         if(rst_i)
             state <= ST_QPI;
-        else if(sck)
+        else
             state <= nstate;
 
     reg [2:0] count;
