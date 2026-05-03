@@ -125,35 +125,35 @@ static int cmd_help(char *args) {
 }
 
 static int cmd_x(char *args) {
-  /* extract the first argument */
-  char *arg = strtok(NULL, " ");
+  // /* extract the first argument */
+  // char *arg = strtok(NULL, " ");
 
-  if (arg == NULL) {
-    printf("Hint: Try x <num> <addr>\n");
-  }
+  // if (arg == NULL) {
+  //   printf("Hint: Try x <num> <addr>\n");
+  // }
 
-  else{
-    int scannum = atoi(arg);
+  // else{
+  //   int scannum = atoi(arg);
 
-    arg = strtok(NULL, " ");
-    if(arg == NULL) {
-      printf("Hint: Try x <num> <addr>\n");
-    }
-    else {
-      int startaddr = (int)strtol(arg, NULL, 0);
+  //   arg = strtok(NULL, " ");
+  //   if(arg == NULL) {
+  //     printf("Hint: Try x <num> <addr>\n");
+  //   }
+  //   else {
+  //     int startaddr = (int)strtol(arg, NULL, 0);
 
-      if(startaddr % 4 != 0) {
-        printf("Address should be aligned to 4 bytes.\n");
-        return 0;
-      }
+  //     if(startaddr % 4 != 0) {
+  //       printf("Address should be aligned to 4 bytes.\n");
+  //       return 0;
+  //     }
       
-      for(int i=0; i<scannum; i++)
-      {
-        printf("0x%08x: 0x%08x\n", startaddr + i*4, pmem_read(startaddr + i*4));
-      }
-    }
+  //     for(int i=0; i<scannum; i++)
+  //     {
+  //       printf("0x%08x: 0x%08x\n", startaddr + i*4, pmem_read(startaddr + i*4));
+  //     }
+  //   }
     
-  }
+  // }
   return 0;
 }
 

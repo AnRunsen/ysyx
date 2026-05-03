@@ -2,10 +2,9 @@ include ../Makefile
 
 TOP = ysyxSoCFull
 BUILD_DIR = build
-VSRCS = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
+ALL_V = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
+VSRCS := $(filter-out $(abspath ./vsrc/unused/%), $(ALL_V))
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
-#remove the vsrc/unused files
-VSRCS := $(filter-out $(abspath ./vsrc/unused/%), $(VSRCS))
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
