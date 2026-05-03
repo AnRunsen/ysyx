@@ -1,5 +1,6 @@
 AM_SRCS := riscv/ysyxSoC/start.S \
-           riscv/ysyxSoC/bootloader.S \
+           riscv/ysyxSoC/fsbl.S \
+           riscv/ysyxSoC/ssbl.S \
            riscv/ysyxSoC/trm.c \
            riscv/ysyxSoC/ioe.c \
            riscv/ysyxSoC/timer.c \
@@ -11,7 +12,7 @@ AM_SRCS := riscv/ysyxSoC/start.S \
 
 CFLAGS    += -fdata-sections -ffunction-sections
 LDSCRIPTS += $(AM_HOME)/scripts/ysyxSoC.ld
-LDFLAGS   += --gc-sections -e _bootloader
+LDFLAGS   += --gc-sections -e _fsbl
 
 MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = the_insert-arg_rule_in_Makefile_will_insert_mainargs_here

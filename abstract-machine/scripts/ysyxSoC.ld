@@ -1,5 +1,5 @@
-ENTRY(_bootloader)
-PHDRS { bootloader PT_LOAD; text PT_LOAD; rodata PT_LOAD; data PT_LOAD; bss PT_NULL; }
+ENTRY(_fsbl)
+PHDRS {fsbl PT_LOAD; ssbl PT_LOAD; text PT_LOAD; rodata PT_LOAD; data PT_LOAD; bss PT_NULL; }
 
 MEMORY {
   mrom : ORIGIN = 0x20000000, LENGTH = 4K
@@ -9,11 +9,17 @@ MEMORY {
 }
 
 SECTIONS {
-  .bootloader : {
-    _sbootloader = .;
-    *(bootloader)
-  } > flash AT > flash :bootloader
-  _ebootloader = .;
+  .fsbl : {
+    _sfsbl = .;
+    *(fsbl)
+  } > flash AT > flash :fsbl
+  _efsbl = .;
+
+  .ssbl : {
+    _sssbl = .;
+    *(ssbl)
+  } > sram AT > flash :ssbl
+  _essbl = .;
 
   .text : {
     _stext = .;
@@ -49,5 +55,6 @@ SECTIONS {
   . = ORIGIN(sram) + LENGTH(sram);
   _stack_pointer = .;
   
-  _start_lma = LOADADDR(.text);
+  _image_lma = LOADADDR(.text);
+  _ssbl_lma = LOADADDR(.ssbl);
 }
