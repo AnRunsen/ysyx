@@ -7,7 +7,7 @@
 #include "ftrace.hpp"
 
 extern bool exit_flag;
-extern uint8_t mem[];
+extern uint8_t mrom[];
 extern uint8_t flash[];
 extern uint8_t psram[];
 
@@ -95,57 +95,6 @@ extern "C" void sim_exit(int code)
     exit_flag = true;
 }
 
-extern "C" int pmem_read(int raddr)
-{
-#ifdef MTRACE
-    printf("Read: addr=0x%08x\n", raddr);
-#endif
-    // 串口相关
-    if (raddr == 0x10000000)
-    {
-        printf("should not reach here\n");
-        assert(0);
-    }
-
-    // RTC相关
-    else if (raddr == 0x10000004 || raddr == 0x10000008)
-    {
-        printf("should not reach here\n");
-        assert(0);
-    }
-
-    raddr = raddr - 0x20000000; // 内存映射地址转换
-    // 总是读取地址为`raddr & ~0x3u`的4字节返回
-    return *(uint32_t *)(mem + (raddr & ~0x3u));
-}
-extern "C" void pmem_write(int waddr, int wdata, uint8_t wmask)
-{
-#ifdef MTRACE
-    printf("Write: addr=0x%08x, data=0x%08x, wmask=0x%02x\n", waddr, wdata, wmask);
-#endif
-    if (waddr == 0x10000000)
-    {
-        printf("should not reach here\n");
-        assert(0);
-    }
-
-    // RTC相关
-    else if (waddr == 0x10000004 || waddr == 0x10000008)
-    {
-        printf("should not reach here\n");
-        assert(0);
-    }
-
-    waddr = waddr - 0x20000000; // 内存映射地址转换
-    for (int i = 0; i < 4; i++)
-    {
-        if (wmask & (1 << i))
-        {
-            mem[(waddr & ~0x3u) + i] = (wdata >> (i << 3)) & 0xFF;
-        }
-    }
-}
-
 
 extern "C" void ftrace(int pc, int npc)
 {
@@ -159,11 +108,15 @@ extern "C" void flash_read(uint32_t addr, uint32_t *data) {
     *data = *(uint32_t *)(flash + (addr & ~0x3u));
 }
 extern "C" void mrom_read(uint32_t addr, uint32_t *data) {
-    *data = pmem_read(addr);
+    addr = addr - 0x20000000;
+    *data = *(uint32_t *)(mrom + (addr & ~0x3u));
 }
+
 extern "C" void psram_read(uint32_t addr, uint32_t *data) {
     *data = *(uint32_t *)(psram + (addr & ~0x3u));
 }
+
 extern "C" void psram_write(uint32_t addr, uint8_t data) {
+    printf("Write to PSRAM: addr=0x%08x, data=0x%02x\n", addr, data);
     *(psram + addr) = data;
 }
