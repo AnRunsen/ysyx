@@ -10,8 +10,10 @@ MEMORY {
 
 SECTIONS {
   .bootloader : {
+    _sbootloader = .;
     *(bootloader)
   } > flash AT > flash :bootloader
+  _ebootloader = .;
 
   .text : {
     _stext = .;
