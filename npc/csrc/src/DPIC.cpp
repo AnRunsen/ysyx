@@ -120,6 +120,7 @@ extern "C" void psram_read(uint32_t addr, uint32_t *data) {
 
 extern "C" void psram_write(uint32_t addr, uint8_t data) {
     *(psram + addr) = data;
+    printf("psram write: addr=0x%08x, data=0x%08x\n", addr, data);
 }
 
 extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t *data) {
