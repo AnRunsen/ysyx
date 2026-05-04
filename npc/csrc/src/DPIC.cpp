@@ -7,9 +7,10 @@
 #include "ftrace.hpp"
 
 extern bool exit_flag;
-extern uint8_t mrom[];
-extern uint8_t flash[];
-extern uint8_t psram[];
+extern uint8_t mrom[0x8000000];
+extern uint8_t flash[0x1000000];
+extern uint8_t psram[0x1000000];
+extern uint16_t sdram[4][8192][512];
 
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
@@ -118,4 +119,17 @@ extern "C" void psram_read(uint32_t addr, uint32_t *data) {
 
 extern "C" void psram_write(uint32_t addr, uint8_t data) {
     *(psram + addr) = data;
+}
+
+extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t *data) {
+    *data = sdram[bank][row_addr][col_addr];
+}
+
+extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t data, uint8_t wmask) {
+    if (wmask & 0x1) {
+        sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0xFF00) | (data & 0x00FF);
+    }
+    if (wmask & 0x2) {
+        sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0x00FF) | (data & 0xFF00);
+    }
 }
