@@ -127,10 +127,10 @@ extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, u
 
 extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t data, uint8_t wmask) {
     printf("sdram write: bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", bank, row_addr, col_addr, data, wmask);
-    if (wmask & 0x1) {
+    if (~wmask & 0x1) {
         sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0xFF00) | (data & 0x00FF);
     }
-    if (wmask & 0x2) {
+    if (~wmask & 0x2) {
         sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0x00FF) | (data & 0xFF00);
     }
 }
