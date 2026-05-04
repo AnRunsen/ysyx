@@ -31,10 +31,7 @@ extern "C" void itrace(int inst, int pc)
 
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
-    extern bool itrace_enable;
-    // if (itrace_enable) {
-        printf("Inst to be exe:%s\n", buf);
-    // }
+    printf("Inst to be exe:%s\n", buf);
 #endif
 }
 

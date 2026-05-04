@@ -8,7 +8,6 @@
 #include "reg.hpp"
 
 static int is_batch_mode = false;
-bool itrace_enable = true;
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -29,7 +28,6 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  itrace_enable = false;
   cpu_exec(-1);
   return 0;
 }
@@ -41,7 +39,6 @@ static int cmd_q(char *args) {
 
 static int cmd_si(char *args) {
   if(args == NULL) {
-    itrace_enable = true;
     cpu_exec(1);
   }
   else {
@@ -50,12 +47,6 @@ static int cmd_si(char *args) {
       printf("Invalid number of instructions: %d\n", num);
     }
     else {
-      if(num <= 10) {
-        itrace_enable = true;
-      }
-      else {
-        itrace_enable = false;
-      }
       cpu_exec(num);
     }
   }
