@@ -1,9 +1,9 @@
-.section bootloader, "ax"
-.globl _bootloader
-.type _bootloader, @function
+.section ssbl, "ax"
+.globl _ssbl
+.type _ssbl, @function
 
-_bootloader:
-  la t2, _start_lma   # src: LMA of .text in flash (runs forward through all sections)
+_ssbl:
+  la t2, _image_lma   # src: LMA of .text in flash (runs forward through all sections)
 
   # Copy .text byte by byte
   la t0, _stext

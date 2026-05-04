@@ -7,9 +7,10 @@
 #include "sdb.hpp"
 #include "ftrace.hpp"
 
-uint8_t mem[0x8000000]; // 128MB memory
+uint8_t mrom[0x8000000]; // 128MB mrom
 uint8_t flash[0x1000000]; // 16MB flash
 uint8_t psram[0x1000000]; //16MB psram
+uint16_t sdram[4][8192][512]; // 4 banks, 8192 rows, 512 columns
 
 bool exit_flag = false;
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
@@ -44,6 +45,8 @@ typedef struct {
 
 int main(int argc, char *argv[])
 {
+    setbuf(stdout, NULL);
+
     Verilated::commandArgs(argc, argv);
     if(argc > 2){
         load_bin(argv[1]);
