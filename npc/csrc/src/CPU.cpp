@@ -44,6 +44,8 @@ typedef struct {
 
 int main(int argc, char *argv[])
 {
+    setbuf(stdout, NULL);
+
     Verilated::commandArgs(argc, argv);
     if(argc > 2){
         load_bin(argv[1]);
