@@ -5,6 +5,7 @@ BUILD_DIR = build
 ALL_V = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
 VSRCS := $(filter-out $(abspath ./vsrc/unused/%), $(ALL_V))
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
+CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
@@ -26,7 +27,7 @@ PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP)\
 -I$(abspath ../ysyxSoC/perip/spi/rtl)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 
-./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS)
+./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
 

@@ -111,7 +111,10 @@ module sdram(
   wire [8:0] write_burst_addr = col_addr + {6'b0, write_cnt};
   always @(posedge clk) begin
     if(cke) begin
-      if(state == WRITE && write_cnt > 0 && write_cnt <= BL) begin
+      if(state == IDLE && cmd == 4'b0100) begin
+        sdram_write({6'b0, ba}, {19'b0, row_addr[ba]}, {23'b0, a[8:0]}, dq, {6'b0, dqm});
+      end 
+      else if(state == WRITE && write_cnt < BL) begin
         sdram_write({6'b0, bank_sel}, {19'b0, row_addr[bank_sel]}, {23'b0, write_burst_addr}, dq, {6'b0, dqm});
       end
     end
