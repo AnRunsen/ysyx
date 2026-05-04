@@ -20,7 +20,9 @@ module sdram(
   reg [ 1:0] bank_sel;
   reg [8:0] col_addr;
   wire [2:0] CL = mode_reg[6:4];
-  wire [2:0] BL = mode_reg[2:0];
+  wire [3:0] BL = mode_reg[2:0] == 3'b000 ? 4'd1 : 
+  mode_reg[2:0] == 3'b001 ? 4'd2 : 
+  mode_reg[2:0] == 3'b010 ? 4'd4 : 4'd8;
 
   always @(posedge clk) begin
     if(cke) begin
@@ -49,22 +51,22 @@ module sdram(
   localparam IDLE = 2'd0, READ = 2'd1, WAIT = 2'd2, WRITE = 2'd3;
   reg [1:0] state, next_state;
 
-  reg [2:0] burst_cnt;
+  reg [3:0] burst_cnt;
   always @(posedge clk) begin
     if(cke) begin
       if(state == READ) begin
-        burst_cnt <= burst_cnt + 3'd1;
+        burst_cnt <= burst_cnt + 4'd1;
       end else begin
         burst_cnt <= 0;
       end
     end
   end
 
-  reg [2:0] write_cnt;
+  reg [3:0] write_cnt;
   always @(posedge clk) begin
     if(cke) begin
       if((state == IDLE && cmd == 4'b0100) || state == WRITE) begin
-        write_cnt <= write_cnt + 3'd1;
+        write_cnt <= write_cnt + 4'd1;
       end
       else begin
         write_cnt <= 0;
@@ -99,7 +101,7 @@ module sdram(
   end
 
   reg [15:0] read_data;
-  wire [8:0] burst_addr = col_addr + {6'b0, burst_cnt};
+  wire [8:0] burst_addr = col_addr + {5'b0, burst_cnt};
   always @(posedge clk) begin
     if(cke) begin
       if(state == READ && burst_cnt < BL) begin
@@ -108,7 +110,7 @@ module sdram(
     end
   end
 
-  wire [8:0] write_burst_addr = col_addr + {6'b0, write_cnt};
+  wire [8:0] write_burst_addr = col_addr + {5'b0, write_cnt};
   always @(posedge clk) begin
     if(cke) begin
       if(state == IDLE && cmd == 4'b0100) begin
