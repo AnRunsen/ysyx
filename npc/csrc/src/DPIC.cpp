@@ -93,15 +93,6 @@ extern "C" void sim_exit(int code)
     exit_flag = true;
 }
 
-
-extern "C" void ftrace(int pc, int npc)
-{
-#ifdef FTRACE
-    int inst = sdram_read_laddr(pc);
-    ftrace_detect(inst, pc, npc);
-#endif
-}
-
 extern "C" void flash_read(uint32_t addr, uint32_t *data) {
     *data = *(uint32_t *)(flash + (addr & ~0x3u));
     // printf("flash read: addr=0x%08x, data=0x%08x\n", addr, *data);
@@ -146,4 +137,12 @@ uint32_t sdram_read_laddr(uint32_t addr){
     uint32_t low = sdram[bank][row_addr][col_addr];
     uint32_t high = sdram[bank][row_addr][col_addr + 1];
     return low | (high << 16);
+}
+
+extern "C" void ftrace(int pc, int npc)
+{
+#ifdef FTRACE
+    int inst = sdram_read_laddr(pc);
+    ftrace_detect(inst, pc, npc);
+#endif
 }
