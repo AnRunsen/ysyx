@@ -47,6 +47,6 @@ build: ./$(BUILD_DIR)/V$(TOP)
 clean:
 	rm -rf $(BUILD_DIR)
 
--include ./board/board.mk
+include ./board/board.mk
 
 
