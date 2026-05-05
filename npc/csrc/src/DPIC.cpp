@@ -104,6 +104,7 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void flash_read(uint32_t addr, uint32_t *data) {
     *data = *(uint32_t *)(flash + (addr & ~0x3u));
+    printf("flash read: addr=0x%08x, data=0x%08x\n", addr, *data);
 }
 extern "C" void mrom_read(uint32_t addr, uint32_t *data) {
     addr = addr - 0x20000000;
@@ -126,7 +127,7 @@ extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, u
 }
 
 extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t data, uint8_t wmask) {
-    // printf("sdram write: bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", bank, row_addr, col_addr, data, wmask);
+    printf("sdram write: bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", bank, row_addr, col_addr, data, wmask);
     if (~wmask & 0x1) {
         sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0xFF00) | (data & 0x00FF);
     }
