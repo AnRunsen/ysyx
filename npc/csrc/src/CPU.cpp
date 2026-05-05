@@ -23,8 +23,8 @@ void load_bin(const char *path) {
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
     rewind(fp);
-    assert(size <= (long)sizeof(flash));
-    size_t ret = fread(flash, 1, size, fp);
+    assert(size <= (long)sizeof(psram));
+    size_t ret = fread(psram, 1, size, fp);
     assert(ret == (size_t)size);
     fclose(fp);
 }
