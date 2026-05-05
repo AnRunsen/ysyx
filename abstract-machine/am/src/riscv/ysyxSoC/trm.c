@@ -5,8 +5,6 @@
 extern char _heap_start;
 int main(const char *args);
 
-extern char _pmem_start;
-
 #define UART_BASE 0x10000000L
 #define UART_TX   0x0
 #define UART_LCR  0x3
@@ -14,10 +12,7 @@ extern char _pmem_start;
 #define UART_DL_MSB 0x1
 #define UART_DL_LSB 0x0
 
-#define PMEM_SIZE (8 * 1024)// 8KB
-#define PMEM_END  ((uintptr_t)&_pmem_start + PMEM_SIZE)
-
-#define HEAP_SIZE (2 * 1024)// 2KB
+#define HEAP_SIZE (4 * 1024 * 1024)// 4M
 #define HEAP_END  ((uintptr_t)&_heap_start + HEAP_SIZE)
 
 Area heap = RANGE(&_heap_start, HEAP_END);
