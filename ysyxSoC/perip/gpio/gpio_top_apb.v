@@ -87,7 +87,7 @@ module gpio_top_apb(
       gpio_switch <= 16'b0;
       gpio_seg <= 32'b0;
     end
-    else if(state == WORKING && write_reg && in_penable) begin
+    else if(state == WORKING && write_reg && in_penable && !pready_reg) begin
       case(addr_reg[3:0])
         4'h0: begin
           if(strb_reg[0]) gpio_led[7:0] <= wdata_reg[7:0];
@@ -102,7 +102,7 @@ module gpio_top_apb(
         default: ;
       endcase
     end
-    else if(state == WORKING && !write_reg && in_penable) begin
+    else if(state == WORKING && !write_reg && in_penable && !pready_reg) begin
       case(addr_reg[3:0])
         4'h0: rdata_reg <= {16'b0, gpio_led};
         4'h4: rdata_reg <= {16'b0, gpio_switch};
