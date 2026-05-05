@@ -27,9 +27,9 @@ PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP)\
 -I$(abspath ../ysyxSoC/perip/spi/rtl)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 
-./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H)
+./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H) $(BIND_FILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
+	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
 ./csrc/src/disasm.cpp: $(LIBCAPSTONE)
 
@@ -46,5 +46,7 @@ build: ./$(BUILD_DIR)/V$(TOP)
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+-include ./board/board.mk
 
 

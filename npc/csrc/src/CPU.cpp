@@ -7,6 +7,8 @@
 #include "sdb.hpp"
 #include "ftrace.hpp"
 
+#include <nvboard.h>
+
 uint8_t mrom[0x8000000]; // 128MB mrom
 uint8_t flash[0x1000000]; // 16MB flash
 uint8_t psram[0x1000000]; //16MB psram
@@ -38,6 +40,8 @@ void difftest_memcpy(uint32_t addr, void *buf, size_t n, bool direction);
 void difftest_regcpy(void *dut, bool direction);
 }
 
+void nvboard_bind_all_pins(VysyxSoCFull *top);
+
 typedef struct {
   uint32_t gpr[16];
   uint32_t pc;
@@ -56,6 +60,8 @@ int main(int argc, char *argv[])
         assert(0);
     }
 
+    nvboard_bind_all_pins(cpu);
+    nvboard_init();
 
 #ifdef WAVEON
     Verilated::traceEverOn(true);
@@ -79,27 +85,27 @@ int main(int argc, char *argv[])
     difftest_memcpy(0x80000000, mem, sizeof(mem), DIFFTEST_TO_REF);
 #endif
 
-cpu->contextp()->time(0);
-cpu->eval();
-
-//reset assert 100 cycles
-while(cpu->contextp()->time() < 100 && !exit_flag) {
-    cpu->contextp()->timeInc(1);
-    cpu->clock = 0;
-    cpu->reset = 1;
+    cpu->contextp()->time(0);
     cpu->eval();
-#ifdef WAVEON
-    tfp->dump(cpu->contextp()->time());
-#endif
 
-    cpu->contextp()->timeInc(1);
-    cpu->clock = 1;
-    cpu->reset = 1;
-    cpu->eval();
-#ifdef WAVEON
-    tfp->dump(cpu->contextp()->time());
-#endif
-}
+    //reset assert 100 cycles
+    while(cpu->contextp()->time() < 100 && !exit_flag) {
+        cpu->contextp()->timeInc(1);
+        cpu->clock = 0;
+        cpu->reset = 1;
+        cpu->eval();
+    #ifdef WAVEON
+        tfp->dump(cpu->contextp()->time());
+    #endif
+
+        cpu->contextp()->timeInc(1);
+        cpu->clock = 1;
+        cpu->reset = 1;
+        cpu->eval();
+    #ifdef WAVEON
+        tfp->dump(cpu->contextp()->time());
+    #endif
+    }
 
     sdb_set_batch_mode();
 
@@ -121,6 +127,8 @@ while(cpu->contextp()->time() < 100 && !exit_flag) {
         ftrace_info.strtab = NULL;
     }
 #endif
+
+    nvboard_quit();
     delete cpu;
     return 0;
 }
