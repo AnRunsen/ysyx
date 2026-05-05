@@ -11,8 +11,38 @@ extern uint8_t mrom[0x8000000];
 extern uint8_t flash[0x1000000];
 extern uint8_t psram[0x1000000];
 extern uint16_t sdram[4][8192][512];
+extern uint8_t vbuf[640*480*4];
 
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+
+uint32_t sdram_read_laddr(uint32_t addr){
+    addr &= ~0x3u;
+
+    uint32_t row_addr = (addr >> 12) & 0x1fffu;
+    uint32_t bank = (addr >> 10) & 0x3u;
+    uint32_t col_addr = ((addr >> 1) & 0x1ffu);
+
+    uint32_t low = sdram[bank][row_addr][col_addr];
+    uint32_t high = sdram[bank][row_addr][col_addr + 1];
+    return low | (high << 16);
+}
+
+void sdram_write_laddr(uint32_t addr, uint16_t data) {
+    uint32_t row_addr = (addr >> 12) & 0x1fffu;
+    uint32_t bank = (addr >> 10) & 0x3u;
+    uint32_t col_addr = ((addr >> 1) & 0x1ffu);
+
+    sdram[bank][row_addr][col_addr] = data;
+    // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
+}
+
+extern "C" void ftrace(int pc, int npc)
+{
+#ifdef FTRACE
+    int inst = sdram_read_laddr(pc);
+    ftrace_detect(inst, pc, npc);
+#endif
+}
 
 extern "C" void itrace(int inst, int pc)
 {
@@ -127,33 +157,18 @@ extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, 
     }
 }
 
-uint32_t sdram_read_laddr(uint32_t addr){
-    addr &= ~0x3u;
-
-    uint32_t row_addr = (addr >> 12) & 0x1fffu;
-    uint32_t bank = (addr >> 10) & 0x3u;
-    uint32_t col_addr = ((addr >> 1) & 0x1ffu);
-
-    uint32_t low = sdram[bank][row_addr][col_addr];
-    uint32_t high = sdram[bank][row_addr][col_addr + 1];
-    return low | (high << 16);
+extern "C" void vga_write(uint32_t addr, uint32_t color, uint8_t strb) {
+    addr = addr & 0xFFFFFFu;
+    if (addr < 640*480*4) {
+        if (~strb & 0x1) *(vbuf + addr) = color & 0xFF;
+        if (~strb & 0x2) *(vbuf + addr + 1) = (color >> 8) & 0xFF;
+        if (~strb & 0x4) *(vbuf + addr + 2) = (color >> 16) & 0xFF;
+        if (~strb & 0x8) *(vbuf + addr + 3) = (color >> 24) & 0xFF;
+    } else assert(0);
 }
 
-void sdram_write_laddr(uint32_t addr, uint16_t data) {
-    uint32_t row_addr = (addr >> 12) & 0x1fffu;
-    uint32_t bank = (addr >> 10) & 0x3u;
-    uint32_t col_addr = ((addr >> 1) & 0x1ffu);
-
-    sdram[bank][row_addr][col_addr] = data;
-    // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
-}
-
-
-
-extern "C" void ftrace(int pc, int npc)
-{
-#ifdef FTRACE
-    int inst = sdram_read_laddr(pc);
-    ftrace_detect(inst, pc, npc);
-#endif
+extern "C" void vga_read(uint32_t x, uint32_t y, uint32_t *color) {
+    uint32_t addr = (y * 640 + x) * 4;
+    if (x < 640 && y < 480) *color = *(uint32_t *)(vbuf + addr);
+    else assert(0);
 }
