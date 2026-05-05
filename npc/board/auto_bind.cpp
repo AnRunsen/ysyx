@@ -12,4 +12,6 @@ void nvboard_bind_all_pins(VysyxSoCFull* top) {
 	nvboard_bind_pin( &top->externalPins_gpio_seg_5, 8, SEG5A, SEG5B, SEG5C, SEG5D, SEG5E, SEG5F, SEG5G, DEC5P);
 	nvboard_bind_pin( &top->externalPins_gpio_seg_6, 8, SEG6A, SEG6B, SEG6C, SEG6D, SEG6E, SEG6F, SEG6G, DEC6P);
 	nvboard_bind_pin( &top->externalPins_gpio_seg_7, 8, SEG7A, SEG7B, SEG7C, SEG7D, SEG7E, SEG7F, SEG7G, DEC7P);
+	nvboard_bind_pin( &top->externalPins_uart_rx, 1, UART_RX);
+	nvboard_bind_pin( &top->externalPins_uart_tx, 1, UART_TX);
 }
