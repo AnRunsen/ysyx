@@ -80,7 +80,6 @@ module gpio_top_apb(
   reg [31:0] gpio_seg; //0x8 RW
 
   reg [31:0] rdata_reg;
-  reg pready_reg;
 
   always @(posedge clock) begin
     if(reset) begin
@@ -102,8 +101,6 @@ module gpio_top_apb(
         end
         default: ;
       endcase
-
-      pready_reg <= 1'b1;
     end
     else if(state == WORKING && !write_reg && in_penable) begin
       case(addr_reg[3:0])
@@ -112,7 +109,20 @@ module gpio_top_apb(
         4'h8: rdata_reg <= gpio_seg;
         default: ;
       endcase
+    end
+  end
 
+  reg pready_reg;
+  always @(posedge clock) begin
+    if(reset) begin
+      pready_reg <= 1'b0;
+    end
+
+    else if(in_penable && pready_reg) begin
+      pready_reg <= 1'b0;
+    end  
+
+    else if(in_penable) begin
       pready_reg <= 1'b1;
     end
   end
