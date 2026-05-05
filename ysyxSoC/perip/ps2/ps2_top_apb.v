@@ -90,7 +90,7 @@ module ps2_top_apb(
   end
 
   wire [7:0] data;
-  wire nextdata_n = (state == WORKING && in_penable && !in_pwrite && !in_pready);
+  wire nextdata_n = ~(state == WORKING && in_penable && !in_pwrite && !in_pready);
   reg ready;
   reg overflow;     // fifo overflow
   // internal signal, for test
