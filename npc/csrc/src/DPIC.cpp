@@ -141,6 +141,7 @@ uint32_t sdram_read_laddr(uint32_t addr){
 }
 
 void sdram_write_laddr(uint32_t addr, uint16_t data) {
+    printf("sdram write: addr=0x%08x, data=0x%04x\n", addr, data);
     addr &= ~0x3u;
 
     uint32_t row_addr = (addr >> 12) & 0x1fffu;
