@@ -16,7 +16,6 @@ void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
 extern "C" void itrace(int inst, int pc)
 {
-    printf("Inst to be exe: pc=0x%08x, inst=0x%08x\n", pc, inst);
 #ifdef ITRACE
     char buf[128];
     char *p = buf;
