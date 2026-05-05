@@ -133,7 +133,7 @@ uint32_t sdram_read_laddr(uint32_t addr){
 
     uint32_t row_addr = (addr >> 12) & 0x1fffu;
     uint32_t bank = (addr >> 10) & 0x3u;
-    uint32_t col_addr = ((addr >> 2) & 0xffu) << 1;
+    uint32_t col_addr = ((addr >> 1) & 0x1ffu);
 
     uint32_t low = sdram[bank][row_addr][col_addr];
     uint32_t high = sdram[bank][row_addr][col_addr + 1];
@@ -143,7 +143,7 @@ uint32_t sdram_read_laddr(uint32_t addr){
 void sdram_write_laddr(uint32_t addr, uint16_t data) {
     uint32_t row_addr = (addr >> 12) & 0x1fffu;
     uint32_t bank = (addr >> 10) & 0x3u;
-    uint32_t col_addr = ((addr >> 2) & 0xffu) << 1;
+    uint32_t col_addr = ((addr >> 1) & 0x1ffu);
 
     sdram[bank][row_addr][col_addr] = data;
     printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
