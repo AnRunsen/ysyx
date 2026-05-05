@@ -129,8 +129,6 @@ extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, 
 }
 
 uint32_t sdram_read_laddr(uint32_t addr){
-    addr &= ~0x3u;
-
     uint32_t row_addr = (addr >> 12) & 0x1fffu;
     uint32_t bank = (addr >> 10) & 0x3u;
     uint32_t col_addr = ((addr >> 2) & 0xffu) << 1;
