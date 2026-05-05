@@ -1,4 +1,5 @@
 include ../Makefile
+include ./board/board.mk
 
 TOP = ysyxSoCFull
 BUILD_DIR = build
@@ -47,6 +48,5 @@ build: ./$(BUILD_DIR)/V$(TOP)
 clean:
 	rm -rf $(BUILD_DIR)
 
-include ./board/board.mk
 
 
