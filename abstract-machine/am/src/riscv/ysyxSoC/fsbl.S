@@ -17,5 +17,5 @@ _fsbl:
   j    1b
 
 2:
-  la   t0, _ssbl     # jump to _start in psram
+  la   t0, _ssbl
   jr   t0

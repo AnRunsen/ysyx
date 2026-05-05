@@ -13,6 +13,7 @@ uint8_t mrom[0x8000000]; // 128MB mrom
 uint8_t flash[0x1000000]; // 16MB flash
 uint8_t psram[0x1000000]; //16MB psram
 uint16_t sdram[4][8192][512]; // 4 banks, 8192 rows, 512 columns
+uint8_t vbuf[640*480*4]; // 640*480 vga buffer
 
 bool exit_flag = false;
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
