@@ -97,7 +97,7 @@ extern "C" void sim_exit(int code)
 extern "C" void ftrace(int pc, int npc)
 {
 #ifdef FTRACE
-    int inst = pmem_read(pc);
+    int inst = sdram_read_laddr(pc);
     ftrace_detect(inst, pc, npc);
 #endif
 }
@@ -134,4 +134,16 @@ extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, 
     if (~wmask & 0x2) {
         sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0x00FF) | (data & 0xFF00);
     }
+}
+
+uint32_t sdram_read_laddr(uint32_t addr){
+    addr &= ~0x3u;
+
+    uint32_t row_addr = (addr >> 12) & 0x1fffu;
+    uint32_t bank = (addr >> 10) & 0x3u;
+    uint32_t col_addr = ((addr >> 2) & 0xffu) << 1;
+
+    uint32_t low = sdram[bank][row_addr][col_addr];
+    uint32_t high = sdram[bank][row_addr][col_addr + 1];
+    return low | (high << 16);
 }
