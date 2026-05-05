@@ -146,17 +146,23 @@ module gpio_top_apb(
   function [7:0] seg_out;
     input [3:0] num;
     case(num)
-      4'h0: seg_out = 8'b11000000;
-      4'h1: seg_out = 8'b11111001;
-      4'h2: seg_out = 8'b10100100;
-      4'h3: seg_out = 8'b10110000;
-      4'h4: seg_out = 8'b10011001;
-      4'h5: seg_out = 8'b10010010;
-      4'h6: seg_out = 8'b10000010;
-      4'h7: seg_out = 8'b11111000;
-      4'h8: seg_out = 8'b10000000;
-      4'h9: seg_out = 8'b10010000;
-      default: seg_out = 8'b11111111; // off
+      4'h0: seg_out = ~8'b11111100;
+      4'h1: seg_out = ~8'b01100000;
+      4'h2: seg_out = ~8'b11011010;
+      4'h3: seg_out = ~8'b11110010;
+      4'h4: seg_out = ~8'b01100110;
+      4'h5: seg_out = ~8'b10110110;
+      4'h6: seg_out = ~8'b10111110;
+      4'h7: seg_out = ~8'b11100000;
+      4'h8: seg_out = ~8'b11111110;
+      4'h9: seg_out = ~8'b11110110;
+      4'ha: seg_out = ~8'b11101110;
+      4'hb: seg_out = ~8'b00111110;
+      4'hc: seg_out = ~8'b10011100;
+      4'hd: seg_out = ~8'b01111010;
+      4'he: seg_out = ~8'b10011110;
+      4'hf: seg_out = ~8'b10001110;
+      default: seg_out = ~8'b00000000; // off
     endcase
   endfunction
 
