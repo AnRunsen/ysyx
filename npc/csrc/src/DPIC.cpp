@@ -104,6 +104,7 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void flash_read(uint32_t addr, uint32_t *data) {
     *data = *(uint32_t *)(flash + (addr & ~0x3u));
+    // printf("flash read: addr=0x%08x, data=0x%08x\n", addr, *data);
 }
 extern "C" void mrom_read(uint32_t addr, uint32_t *data) {
     addr = addr - 0x20000000;

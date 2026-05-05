@@ -3,6 +3,7 @@
 #include "VysyxSoCFull___024root.h"
 #include <stdint.h>
 #include "config.hpp"
+#include <nvboard.h>
 
 extern VysyxSoCFull* cpu;
 extern VerilatedVcdC* tfp;
@@ -56,6 +57,8 @@ void cpu_exec(uint64_t n)
         if(exit_flag) {
             break;
         }
+
+        nvboard_update();
     }
     return;
 }
