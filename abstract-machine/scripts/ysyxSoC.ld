@@ -13,34 +13,34 @@ SECTIONS {
   .fsbl : {
     _sfsbl = .;
     *(fsbl)
-  } > flash AT > flash :fsbl
+  } > sdram AT > sdram :fsbl
   _efsbl = .;
 
   .ssbl : {
     _sssbl = .;
     *(ssbl)
-  } > sram AT > flash :ssbl
+  } > sdram AT > sdram :ssbl
   _essbl = .;
 
   .text : {
     _stext = .;
     *(entry)
     *(.text*)
-  } > sdram AT > flash :text
+  } > sdram AT > sdram :text
   _etext = .;
 
   .rodata : {
     _srodata = .;
     *(.rodata*)
     *(.srodata*)
-  } > sdram AT > flash :rodata
+  } > sdram AT > sdram :rodata
   _erodata = .;
 
   .data : {
     _sdata = .;
     *(.data*)
     *(.sdata*)
-  } > sdram AT > flash :data
+  } > sdram AT > sdram :data
   _edata = .;
 
   .bss : {
@@ -48,7 +48,7 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > sdram AT > flash :bss
+  } > sdram AT > sdram :bss
   _ebss = .;
 
   _heap_start = ALIGN(0x1000);

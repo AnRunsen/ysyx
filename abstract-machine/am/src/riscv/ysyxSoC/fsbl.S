@@ -2,6 +2,7 @@
 .globl _fsbl
 .type _fsbl, @function
 
+/*
 _fsbl:
   la t2, _ssbl_lma
 
@@ -18,4 +19,8 @@ _fsbl:
 
 2:
   la   t0, _ssbl
+  jr   t0
+*/
+_fsbl:
+  la   t0, _start
   jr   t0

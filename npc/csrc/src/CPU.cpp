@@ -13,6 +13,7 @@ uint8_t mrom[0x8000000]; // 128MB mrom
 uint8_t flash[0x1000000]; // 16MB flash
 uint8_t psram[0x1000000]; //16MB psram
 uint16_t sdram[4][8192][512]; // 4 banks, 8192 rows, 512 columns
+uint16_t tmp_buf[4*8192*512];
 
 bool exit_flag = false;
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
@@ -23,9 +24,17 @@ void load_bin(const char *path) {
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
     rewind(fp);
-    assert(size <= (long)sizeof(flash));
-    size_t ret = fread(flash, 1, size, fp);
+    assert(size <= (long)sizeof(tmp_buf));
+    size_t ret = fread(tmp_buf, 1, size, fp);
     assert(ret == (size_t)size);
+
+    void sdram_write_laddr(uint32_t addr, uint16_t data, uint8_t wmask);
+    for (size_t i = 0; i < (size + 3) / 4; i++) {
+        uint32_t word = ((uint32_t *)tmp_buf)[i];
+        sdram_write_laddr(i * 4, word & 0xFFFF, 0x1);
+        sdram_write_laddr(i * 4 + 2, (word >> 16) & 0xFFFF, 0x2);
+    }
+
     fclose(fp);
 }
 
