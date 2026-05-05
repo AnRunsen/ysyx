@@ -139,7 +139,7 @@ uint32_t sdram_read_laddr(uint32_t addr){
     return low | (high << 16);
 }
 
-void sdram_write_laddr(uint32_t addr, uint16_t data, uint8_t wmask) {
+void sdram_write_laddr(uint32_t addr, uint16_t data) {
     addr &= ~0x3u;
 
     uint32_t row_addr = (addr >> 12) & 0x1fffu;

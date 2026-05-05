@@ -28,11 +28,12 @@ void load_bin(const char *path) {
     size_t ret = fread(tmp_buf, 1, size, fp);
     assert(ret == (size_t)size);
 
-    void sdram_write_laddr(uint32_t addr, uint16_t data, uint8_t wmask);
+    void sdram_write_laddr(uint32_t addr, uint16_t data);
     for (size_t i = 0; i < (size + 3) / 4; i++) {
         uint32_t word = ((uint32_t *)tmp_buf)[i];
-        sdram_write_laddr(i * 4, word & 0xFFFF, 0x1);
-        sdram_write_laddr(i * 4 + 2, (word >> 16) & 0xFFFF, 0x2);
+        printf("Loading word: addr=0x%08x, data=0x%08x\n", i * 4, word);
+        sdram_write_laddr(i * 4, word & 0xFFFF);
+        sdram_write_laddr(i * 4 + 2, (word >> 16) & 0xFFFF);
     }
 
     fclose(fp);
