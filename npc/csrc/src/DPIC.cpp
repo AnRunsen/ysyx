@@ -172,5 +172,5 @@ extern "C" void vga_read(uint32_t x, uint32_t y, uint32_t *color) {
     uint32_t addr = (y * 640 + x) * 4;
     if (x < 640 && y < 480) *color = *(uint32_t *)(vbuf + addr);
     else assert(0);
-    printf("vga read: x=%d, y=%d, color=0x%08x\n", x, y, *color);
+    if(*color != 0) printf("vga read: x=%d, y=%d, color=0x%08x\n", x, y, *color);
 }
