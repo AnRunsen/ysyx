@@ -1,4 +1,5 @@
 #include <am.h>
+#include <klib.h>
 #include <klib-macros.h>
 
 void __am_timer_init();
@@ -21,6 +22,30 @@ static void __am_uart_rx(AM_UART_RX_T *cfg) {
   }
 }
 
+void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
+  uint32_t h = 480;
+  uint32_t w = 640;
+  *cfg = (AM_GPU_CONFIG_T) {
+    .present = true, .has_accel = false,
+    .width = w, .height = h,
+    .vmemsz = w * h * sizeof(uint32_t)
+  };
+}
+
+void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
+  printf("GPU FBDRAW: x=%d, y=%d, w=%d, h=%d, sync=%d\n", ctl->x, ctl->y, ctl->w, ctl->h, ctl->sync);
+  uint32_t *fb = (uint32_t *)0x21000000;
+  int size_w = 640;
+
+  for (int y = 0; y < ctl->h; y ++) {
+    for (int x = 0; x < ctl->w; x ++) {
+      int fb_idx = (ctl->y + y) * size_w + ctl->x + x;
+      int buf_idx = y * ctl->w + x;
+      fb[fb_idx] = ((uint32_t *)ctl->pixels)[buf_idx];
+    }
+  }
+}
+
 typedef void (*handler_t)(void *buf);
 static void *lut[128] = {
   [AM_TIMER_CONFIG] = __am_timer_config,
@@ -30,6 +55,8 @@ static void *lut[128] = {
   [AM_INPUT_KEYBRD] = __am_input_keybrd,
   [AM_UART_CONFIG]  = __am_uart_config,
   [AM_UART_RX]      = __am_uart_rx,
+  [AM_GPU_CONFIG  ] = __am_gpu_config,
+  [AM_GPU_FBDRAW  ] = __am_gpu_fbdraw,
 };
 
 static void fail(void *buf) { panic("access nonexist register"); }
