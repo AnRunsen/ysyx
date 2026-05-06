@@ -47,6 +47,7 @@ extern "C" void ftrace(int pc, int npc)
 extern "C" void itrace(int inst, int pc)
 {
 #ifdef ITRACE
+    printf("inst=0x%08x, pc=0x%08x", inst, pc);
     char buf[128];
     char *p = buf;
     p += snprintf(p, sizeof(buf), "%08x:", pc);
