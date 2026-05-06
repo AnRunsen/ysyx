@@ -33,7 +33,6 @@ void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
 }
 
 void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
-  printf("GPU FBDRAW: x=%d, y=%d, w=%d, h=%d, sync=%d\n", ctl->x, ctl->y, ctl->w, ctl->h, ctl->sync);
   uint32_t *fb = (uint32_t *)0x21000000;
   int size_w = 640;
 

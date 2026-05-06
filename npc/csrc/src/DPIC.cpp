@@ -144,11 +144,14 @@ extern "C" void psram_write(uint32_t addr, uint8_t data) {
 
 extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t *data) {
     *data = sdram[bank][row_addr][col_addr];
-    // printf("sdram read: bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", bank, row_addr, col_addr, *data);
+
+    uint32_t addr = (bank << 10) | (row_addr << 12) | (col_addr << 1);
+    // printf("sdram read: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, *data);
 }
 
 extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t data, uint8_t wmask) {
-    // printf("sdram write: bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", bank, row_addr, col_addr, data, wmask);
+    uint32_t addr = (bank << 10) | (row_addr << 12) | (col_addr << 1);
+    // printf("sdram write: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", addr, bank, row_addr, col_addr, data, wmask);
     if (~wmask & 0x1) {
         sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0xFF00) | (data & 0x00FF);
     }
@@ -160,10 +163,10 @@ extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, 
 extern "C" void vga_write(uint32_t addr, uint32_t color, uint8_t strb) {
     addr = addr & 0xFFFFFFu;
     if (addr < 640*480*4) {
-        if (~strb & 0x1) *(vbuf + addr) = color & 0xFF;
-        if (~strb & 0x2) *(vbuf + addr + 1) = (color >> 8) & 0xFF;
-        if (~strb & 0x4) *(vbuf + addr + 2) = (color >> 16) & 0xFF;
-        if (~strb & 0x8) *(vbuf + addr + 3) = (color >> 24) & 0xFF;
+        if (strb & 0x1) *(vbuf + addr) = color & 0xFF;
+        if (strb & 0x2) *(vbuf + addr + 1) = (color >> 8) & 0xFF;
+        if (strb & 0x4) *(vbuf + addr + 2) = (color >> 16) & 0xFF;
+        if (strb & 0x8) *(vbuf + addr + 3) = (color >> 24) & 0xFF;
     } else assert(0);
 }
 
