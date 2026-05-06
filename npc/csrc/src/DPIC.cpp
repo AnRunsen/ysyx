@@ -160,10 +160,10 @@ extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, 
 extern "C" void vga_write(uint32_t addr, uint32_t color, uint8_t strb) {
     addr = addr & 0xFFFFFFu;
     if (addr < 640*480*4) {
-        if (~strb & 0x1) *(vbuf + addr) = color & 0xFF;
-        if (~strb & 0x2) *(vbuf + addr + 1) = (color >> 8) & 0xFF;
-        if (~strb & 0x4) *(vbuf + addr + 2) = (color >> 16) & 0xFF;
-        if (~strb & 0x8) *(vbuf + addr + 3) = (color >> 24) & 0xFF;
+        if (strb & 0x1) *(vbuf + addr) = color & 0xFF;
+        if (strb & 0x2) *(vbuf + addr + 1) = (color >> 8) & 0xFF;
+        if (strb & 0x4) *(vbuf + addr + 2) = (color >> 16) & 0xFF;
+        if (strb & 0x8) *(vbuf + addr + 3) = (color >> 24) & 0xFF;
     } else assert(0);
 }
 
