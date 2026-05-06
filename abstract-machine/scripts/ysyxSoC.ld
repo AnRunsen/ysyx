@@ -10,40 +10,40 @@ MEMORY {
 }
 
 SECTIONS {
-  .fsbl : {
+  .fsbl : ALIGN(8) {
     _sfsbl = .;
     *(fsbl)
   } > flash AT > flash :fsbl
   _efsbl = .;
 
-  .ssbl : {
+  .ssbl : ALIGN(8) {
     _sssbl = .;
     *(ssbl)
   } > sram AT > flash :ssbl
   _essbl = .;
 
-  .text : {
+  .text : ALIGN(8){
     _stext = .;
     *(entry)
     *(.text*)
   } > sdram AT > flash :text
   _etext = .;
 
-  .rodata : {
+  .rodata : ALIGN(8){
     _srodata = .;
     *(.rodata*)
     *(.srodata*)
   } > sdram AT > flash :rodata
   _erodata = .;
 
-  .data : {
+  .data : ALIGN(8){
     _sdata = .;
     *(.data*)
     *(.sdata*)
   } > sdram AT > flash :data
   _edata = .;
 
-  .bss : {
+  .bss : ALIGN(8){
     _sbss = .;
     *(.bss*)
     *(.sbss*)
@@ -56,6 +56,9 @@ SECTIONS {
   . = ORIGIN(sram) + LENGTH(sram);
   _stack_pointer = .;
   
-  _image_lma = LOADADDR(.text);
   _ssbl_lma = LOADADDR(.ssbl);
+  _text_lma = LOADADDR(.text);
+  _rodata_lma = LOADADDR(.rodata);
+  _data_lma = LOADADDR(.data);
+  _bss_lma = LOADADDR(.bss);
 }
