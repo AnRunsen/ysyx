@@ -165,7 +165,6 @@ extern "C" void vga_write(uint32_t addr, uint32_t color, uint8_t strb) {
         if (~strb & 0x4) *(vbuf + addr + 2) = (color >> 16) & 0xFF;
         if (~strb & 0x8) *(vbuf + addr + 3) = (color >> 24) & 0xFF;
     } else assert(0);
-    printf("vga write: addr=0x%08x, color=0x%08x, strb=0x%02x\n", addr, color, strb);
 }
 
 extern "C" void vga_read(uint32_t x, uint32_t y, uint32_t *color) {
