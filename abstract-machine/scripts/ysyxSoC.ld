@@ -56,9 +56,9 @@ SECTIONS {
   . = ORIGIN(sram) + LENGTH(sram);
   _stack_pointer = .;
   
-  _ssbl_lma = ADDR(.ssbl);
-  _text_lma = ADDR(.text);
-  _rodata_lma = ADDR(.rodata);
-  _data_lma = ADDR(.data);
-  _bss_lma = ADDR(.bss);
+  _ssbl_lma = LOADADDR(.ssbl);
+  _text_lma = LOADADDR(.text);
+  _rodata_lma = LOADADDR(.rodata);
+  _data_lma = LOADADDR(.data);
+  _bss_lma = LOADADDR(.bss);
 }
