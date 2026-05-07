@@ -2,7 +2,7 @@
 .globl _ssbl
 .type _ssbl, @function
 
-/*#define __RTTHREAD__*/ 
+@ #define __RTTHREAD__
 
 _ssbl:
   la t2, _text_lma
