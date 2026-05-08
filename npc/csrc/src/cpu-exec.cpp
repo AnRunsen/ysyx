@@ -36,6 +36,7 @@ typedef struct {
 stage_clk_cnt stclk_cnt;
 
 enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
+enum { IFU, IDU, EXU, LSU, WBU };
 
 extern "C" {
 void difftest_exec(uint64_t n);
