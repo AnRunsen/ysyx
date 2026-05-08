@@ -132,9 +132,9 @@ extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
 
 extern "C" void sim_exit(int code)
 {
-    printf("\033[34mTotal Cycles: \t%lu\n", cycle_cnt);
+    printf("\033[34mTotal Cycles: \t\t%lu\n", cycle_cnt);
     printf("Total Instructions: \t%lu\n", instr_cnt);
-    printf("IPC: \t%f\n", (double)instr_cnt / (double)cycle_cnt);
+    printf("IPC: \t\t\t%f\n", (double)instr_cnt / (double)cycle_cnt);
 
     printf("Performance Counters:\n");
     printf("  IFU: %lu\n", perf_cnt.ifu);
