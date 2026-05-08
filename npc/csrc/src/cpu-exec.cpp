@@ -33,7 +33,7 @@ typedef struct {
     uint64_t clk_lsu;
     uint64_t clk_wbu;
 } stage_clk_cnt;
-stage_clk_cnt stclk_cnt;
+extern stage_clk_cnt stclk_cnt;
 
 enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
 enum { IFU, IDU, EXU, LSU, WBU };
