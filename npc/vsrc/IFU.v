@@ -1,6 +1,8 @@
-import PKG::itrace;
-import PKG::perf_cnt_update;
-import PKG::stage_update;
+`ifndef SYNTHESIS
+    import PKG::itrace;
+    import PKG::perf_cnt_update;
+    import PKG::stage_update;
+`endif
 module IFU(
     input clk,
     input reset,

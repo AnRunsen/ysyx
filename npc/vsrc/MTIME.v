@@ -1,4 +1,6 @@
-import PKG::mtime_read;
+`ifndef SYNTHESIS
+    import PKG::mtime_read;
+`endif
 
 module MTIME(
     input clk,

@@ -1,5 +1,7 @@
 `include "MACRO.v"
-import PKG::ftrace;
+`ifndef SYNTHESIS
+    import PKG::ftrace;
+`endif
 
 module PCR(
     input clk,

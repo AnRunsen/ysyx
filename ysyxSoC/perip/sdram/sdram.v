@@ -1,5 +1,7 @@
-import "DPI-C" function void sdram_read(input byte bank, input int row_addr, input int col_addr, output shortint data);
-import "DPI-C" function void sdram_write(input byte bank, input int row_addr, input int col_addr, input shortint data, input byte wmask);
+`ifndef SYNTHESIS
+  import "DPI-C" function void sdram_read(input byte bank, input int row_addr, input int col_addr, output shortint data);
+  import "DPI-C" function void sdram_write(input byte bank, input int row_addr, input int col_addr, input shortint data, input byte wmask);
+`endif
 
 module sdram(
   input        clk,
