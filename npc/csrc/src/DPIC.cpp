@@ -12,6 +12,8 @@ extern uint8_t flash[0x1000000];
 extern uint8_t psram[0x1000000];
 extern uint16_t sdram[4][8192][512];
 extern uint8_t vbuf[640*480*4];
+extern uint64_t cycle_cnt;
+extern uint64_t instr_cnt;
 
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
@@ -46,6 +48,7 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void itrace(int inst, int pc)
 {
+    instr_cnt ++;
 #ifdef ITRACE
     char buf[128];
     char *p = buf;
@@ -107,6 +110,7 @@ extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
 
 extern "C" void sim_exit(int code)
 {
+    printf("IPC: %f\n", (double)instr_cnt / (double)cycle_cnt);
     if (code == 0)
     {
         printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);

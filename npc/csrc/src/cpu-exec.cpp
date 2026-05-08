@@ -8,6 +8,7 @@
 extern VysyxSoCFull* cpu;
 extern VerilatedVcdC* tfp;
 extern bool exit_flag;
+extern uint64_t cycle_cnt;
 extern "C" {
 void difftest_exec(uint64_t n);
 void difftest_regcpy(void *dut, bool direction);
@@ -40,6 +41,9 @@ void cpu_exec(uint64_t n)
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
 #endif
+
+        cycle_cnt++;
+
 #ifdef DIFFTEST
         difftest_exec(1);
         CPU_state dut_state;
