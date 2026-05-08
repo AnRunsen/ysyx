@@ -1,4 +1,5 @@
 `include "MACRO.v"
+import PKG::stage_update;
 module WBU(
     input clk,
     input reset,
@@ -53,6 +54,14 @@ module WBU(
     output next_inst
     /*data to send end*/
 );
+
+`ifndef SYNTHESIS
+    always @(posedge clk) begin
+        if(next_inst) begin
+            stage_update(0);
+        end
+    end
+`endif
 
     localparam IDLE = 1'b0, VALID = 1'b1;
     reg state, next_state;

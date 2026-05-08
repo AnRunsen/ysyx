@@ -83,7 +83,11 @@ module MTIME(
             s_axi_rdata <= 32'b0;
         end
         else if (s_axi_arready && s_axi_arvalid) begin
-            s_axi_rdata <= mtime_read(s_axi_araddr);
+            `ifndef SYNTHESIS
+                s_axi_rdata <= mtime_read(s_axi_araddr);
+            `else
+                s_axi_rdata <= 32'b0; // During synthesis, we cannot call DPI function, so we return 0
+            `endif
         end
     end
 
