@@ -195,6 +195,7 @@ extern "C" void sim_exit(int code)
     printf("IPC: \t\t\t%f\n", (double)instr_cnt / (double)cycle_cnt);
     printf("============================\n");
     printf("Instructions of each type:\n");
+    printf("  Type\t\tCount\tPercentage\tClocks\tIPC\n");
     printf("  BRANCH: \t%lu\t%f%%\t%lu\t%f\n", itype_cnt.branch, (double)itype_cnt.branch / (double)instr_cnt * 100, itype_clk_cnt.clk_branch, (double)itype_cnt.branch / (double)itype_clk_cnt.clk_branch);
     printf("  JAL: \t\t%lu\t%f%%\t%lu\t%f\n", itype_cnt.jal, (double)itype_cnt.jal / (double)instr_cnt * 100, itype_clk_cnt.clk_jal, (double)itype_cnt.jal / (double)itype_clk_cnt.clk_jal);
     printf("  JALR: \t%lu\t%f%%\t%lu\t%f\n", itype_cnt.jalr, (double)itype_cnt.jalr / (double)instr_cnt * 100, itype_clk_cnt.clk_jalr, (double)itype_cnt.jalr / (double)itype_clk_cnt.clk_jalr);
