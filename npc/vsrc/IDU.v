@@ -2,6 +2,7 @@
 import PKG::sim_exit;
 import PKG::perf_cnt_update;
 import PKG::itype_cnt_update;
+import PKG::stage_update;
 module IDU(
     input clk,
     input reset,
@@ -56,6 +57,7 @@ module IDU(
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(1);
+            stage_update(2);
             case(opcode)
                 7'b1100011: itype_cnt_update(0); //branch
                 7'b1101111: itype_cnt_update(1); //jal

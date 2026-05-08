@@ -1,5 +1,6 @@
 `include "MACRO.v"
 import PKG::perf_cnt_update;
+import PKG::stage_update;
 module LSU(
     input clk,
     input reset,
@@ -87,7 +88,10 @@ module LSU(
 );
 
     always @(posedge clk) begin
-        if(m_valid & m_ready) perf_cnt_update(3);
+        if(m_valid & m_ready) begin
+            perf_cnt_update(3);
+            stage_update(4);
+        end
     end
 
     localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,

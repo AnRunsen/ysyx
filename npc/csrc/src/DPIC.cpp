@@ -26,6 +26,8 @@ performance_cnt perf_cnt;
 
 enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
 uint8_t inst_type = -1;
+enum { IFU, IDU, EXU, LSU, WBU };
+uint8_t stage = -1;
 
 typedef struct {
     uint64_t branch;
@@ -57,6 +59,16 @@ typedef struct {
 
 instr_clk_cnt itype_clk_cnt;
 
+typedef struct {
+    uint64_t clk_ifu;
+    uint64_t clk_idu;
+    uint64_t clk_exu;
+    uint64_t clk_lsu;
+    uint64_t clk_wbu;
+} stage_clk_cnt;
+
+stage_clk_cnt stclk_cnt;
+
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
 uint32_t sdram_read_laddr(uint32_t addr){
@@ -78,6 +90,21 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
 
     sdram[bank][row_addr][col_addr] = data;
     // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
+}
+
+extern "C" void stage_update(uint8_t target) {
+    switch (target) {
+        case 0: stage = IFU;
+        break;
+        case 1: stage = IDU;
+        break;
+        case 2: stage = EXU;
+        break;
+        case 3: stage = LSU;
+        break;
+        case 4: stage = WBU;
+        break;
+    }
 }
 
 extern "C" void itype_cnt_update(uint8_t target) {
@@ -206,6 +233,14 @@ extern "C" void sim_exit(int code)
     printf("  LOAD: \t%lu\t%f%%\t%lu\t%f\n", itype_cnt.load, (double)itype_cnt.load / (double)instr_cnt * 100, itype_clk_cnt.clk_load, (double)itype_cnt.load / (double)itype_clk_cnt.clk_load);
     printf("  STORE: \t%lu\t%f%%\t%lu\t%f\n", itype_cnt.store, (double)itype_cnt.store / (double)instr_cnt * 100, itype_clk_cnt.clk_store, (double)itype_cnt.store / (double)itype_clk_cnt.clk_store);
     printf("  SYSTEM: \t%lu\t%f%%\t%lu\t%f\n", itype_cnt.system, (double)itype_cnt.system / (double)instr_cnt * 100, itype_clk_cnt.clk_system, (double)itype_cnt.system / (double)itype_clk_cnt.clk_system);
+    printf("============================\n");
+    printf("Clocks of each stage:\n");
+    printf("  Stage\t\tClocks\tPercentage\n");
+    printf("  IFU: \t%lu\t%f%%\n", stclk_cnt.clk_ifu, (double)stclk_cnt.clk_ifu / (double)cycle_cnt * 100);
+    printf("  IDU: \t%lu\t%f%%\n", stclk_cnt.clk_idu, (double)stclk_cnt.clk_idu / (double)cycle_cnt * 100);
+    printf("  EXU: \t%lu\t%f%%\n", stclk_cnt.clk_exu, (double)stclk_cnt.clk_exu / (double)cycle_cnt * 100);
+    printf("  LSU: \t%lu\t%f%%\n", stclk_cnt.clk_lsu, (double)stclk_cnt.clk_lsu / (double)cycle_cnt * 100);
+    printf("  WBU: \t%lu\t%f%%\n", stclk_cnt.clk_wbu, (double)stclk_cnt.clk_wbu / (double)cycle_cnt * 100);
     printf("============================\n");
     printf("Performance Counters:\n");
     printf("  IFU: \t%lu\n", perf_cnt.ifu);

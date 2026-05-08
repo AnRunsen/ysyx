@@ -10,6 +10,7 @@ extern VerilatedVcdC* tfp;
 extern bool exit_flag;
 extern uint64_t cycle_cnt;
 extern uint8_t inst_type;
+extern uint8_t stage;
 
 typedef struct {
     uint64_t clk_branch;
@@ -24,6 +25,16 @@ typedef struct {
     uint64_t clk_system;
 } instr_clk_cnt;
 extern instr_clk_cnt itype_clk_cnt;
+
+typedef struct {
+    uint64_t clk_ifu;
+    uint64_t clk_idu;
+    uint64_t clk_exu;
+    uint64_t clk_lsu;
+    uint64_t clk_wbu;
+} stage_clk_cnt;
+stage_clk_cnt stclk_cnt;
+
 enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
 
 extern "C" {
@@ -61,27 +72,40 @@ void cpu_exec(uint64_t n)
 
         cycle_cnt++;
         switch(inst_type) {
-        case BRANCH: itype_clk_cnt.clk_branch += 1;
-        break;
-        case JAL: itype_clk_cnt.clk_jal += 1;
-        break;
-        case JALR: itype_clk_cnt.clk_jalr += 1;
-        break;
-        case LUI: itype_clk_cnt.clk_lui += 1;
-        break;
-        case AUIPC: itype_clk_cnt.clk_auipc += 1;
-        break;
-        case OP: itype_clk_cnt.clk_op += 1;
-        break;
-        case OP_IMM: itype_clk_cnt.clk_op_imm += 1;
-        break;
-        case LOAD: itype_clk_cnt.clk_load += 1;
-        break;
-        case STORE: itype_clk_cnt.clk_store += 1;
-        break;
-        case SYSTEM: itype_clk_cnt.clk_system += 1;
-        break;
-    }
+            case BRANCH: itype_clk_cnt.clk_branch += 1;
+            break;
+            case JAL: itype_clk_cnt.clk_jal += 1;
+            break;
+            case JALR: itype_clk_cnt.clk_jalr += 1;
+            break;
+            case LUI: itype_clk_cnt.clk_lui += 1;
+            break;
+            case AUIPC: itype_clk_cnt.clk_auipc += 1;
+            break;
+            case OP: itype_clk_cnt.clk_op += 1;
+            break;
+            case OP_IMM: itype_clk_cnt.clk_op_imm += 1;
+            break;
+            case LOAD: itype_clk_cnt.clk_load += 1;
+            break;
+            case STORE: itype_clk_cnt.clk_store += 1;
+            break;
+            case SYSTEM: itype_clk_cnt.clk_system += 1;
+            break;
+        }
+
+        switch(stage) {
+            case IFU: stclk_cnt.clk_ifu += 1;
+            break;
+            case IDU: stclk_cnt.clk_idu += 1;
+            break;
+            case EXU: stclk_cnt.clk_exu += 1;
+            break;
+            case LSU: stclk_cnt.clk_lsu += 1;
+            break;
+            case WBU: stclk_cnt.clk_wbu += 1;
+            break;
+        }
 
 #ifdef DIFFTEST
         difftest_exec(1);

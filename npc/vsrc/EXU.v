@@ -1,5 +1,6 @@
 `include "MACRO.v"
 import PKG::perf_cnt_update;
+import PKG::stage_update;
 module EXU(
     input clk,
     input reset,
@@ -65,7 +66,10 @@ module EXU(
 );
 
     always @(posedge clk) begin
-        if(m_valid & m_ready) perf_cnt_update(2);
+        if(m_valid & m_ready) begin
+            perf_cnt_update(2);
+            stage_update(3);
+        end
     end
 
 
