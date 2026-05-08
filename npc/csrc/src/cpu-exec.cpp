@@ -24,6 +24,7 @@ typedef struct {
     uint64_t clk_system;
 } instr_clk_cnt;
 extern instr_clk_cnt itype_clk_cnt;
+enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
 
 extern "C" {
 void difftest_exec(uint64_t n);
