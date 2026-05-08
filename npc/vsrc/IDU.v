@@ -1,6 +1,7 @@
 `include "MACRO.v"
 import PKG::sim_exit;
 import PKG::perf_cnt_update;
+import PKG::itype_cnt_update;
 module IDU(
     input clk,
     input reset,
@@ -53,7 +54,22 @@ module IDU(
 );
 
     always @(posedge clk) begin
-        if(m_valid & m_ready) perf_cnt_update(1);
+        if(m_valid & m_ready) begin
+            perf_cnt_update(1);
+            case(opcode)
+                7'b1100011: itype_cnt_update(0); //branch
+                7'b1101111: itype_cnt_update(1); //jal
+                7'b1100111: itype_cnt_update(2); //jalr
+                7'b0110111: itype_cnt_update(3); //lui
+                7'b0010111: itype_cnt_update(4); //auipc
+                7'b0110011: itype_cnt_update(5); //OP
+                7'b0010011: itype_cnt_update(6); //OP-IMM
+                7'b0000011: itype_cnt_update(7); //LOAD
+                7'b0100011: itype_cnt_update(8); //STORE
+                7'b1110011: itype_cnt_update(9); //SYSTEM
+                default: itype_cnt_update(10); //OTHER
+            endcase
+        end
     end
 
 
@@ -331,5 +347,8 @@ module IDU(
             end
         endcase 
     end
+
+
+
 endmodule
 

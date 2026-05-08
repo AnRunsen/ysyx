@@ -24,6 +24,39 @@ typedef struct {
 
 performance_cnt perf_cnt;
 
+enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
+uint8_t inst_type = -1;
+
+typedef struct {
+    uint64_t branch;
+    uint64_t jal;
+    uint64_t jalr;
+    uint64_t lui;
+    uint64_t auipc;
+    uint64_t op;
+    uint64_t op_imm;
+    uint64_t load;
+    uint64_t store;
+    uint64_t system;
+} instr_type_cnt;
+
+instr_type_cnt itype_cnt;
+
+typedef struct {
+    uint64_t clk_branch;
+    uint64_t clk_jal;
+    uint64_t clk_jalr;
+    uint64_t clk_lui;
+    uint64_t clk_auipc;
+    uint64_t clk_op;
+    uint64_t clk_op_imm;
+    uint64_t clk_load;
+    uint64_t clk_store;
+    uint64_t clk_system;
+} instr_clk_cnt;
+
+instr_clk_cnt itype_clk_cnt;
+
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
 uint32_t sdram_read_laddr(uint32_t addr){
@@ -45,6 +78,31 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
 
     sdram[bank][row_addr][col_addr] = data;
     // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
+}
+
+extern "C" void itype_cnt_update(uint8_t target) {
+    switch (target) {
+        case 0: itype_cnt.branch++; inst_type = BRANCH;
+        break;
+        case 1: itype_cnt.jal++; inst_type = JAL;
+        break;
+        case 2: itype_cnt.jalr++; inst_type = JALR;
+        break;
+        case 3: itype_cnt.lui++; inst_type = LUI;
+        break;
+        case 4: itype_cnt.auipc++; inst_type = AUIPC;
+        break;
+        case 5: itype_cnt.op++; inst_type = OP;
+        break;
+        case 6: itype_cnt.op_imm++; inst_type = OP_IMM;
+        break;
+        case 7: itype_cnt.load++; inst_type = LOAD;
+        break;
+        case 8: itype_cnt.store++; inst_type = STORE;
+        break;
+        case 9: itype_cnt.system++; inst_type = SYSTEM;
+        break;
+    }
 }
 
 extern "C" void perf_cnt_update(uint8_t target) {
@@ -71,6 +129,28 @@ extern "C" void ftrace(int pc, int npc)
 extern "C" void itrace(int inst, int pc)
 {
     instr_cnt ++;
+    switch(inst_type) {
+        case BRANCH: itype_clk_cnt.clk_branch += 1;
+        break;
+        case JAL: itype_clk_cnt.clk_jal += 1;
+        break;
+        case JALR: itype_clk_cnt.clk_jalr += 1;
+        break;
+        case LUI: itype_clk_cnt.clk_lui += 1;
+        break;
+        case AUIPC: itype_clk_cnt.clk_auipc += 1;
+        break;
+        case OP: itype_clk_cnt.clk_op += 1;
+        break;
+        case OP_IMM: itype_clk_cnt.clk_op_imm += 1;
+        break;
+        case LOAD: itype_clk_cnt.clk_load += 1;
+        break;
+        case STORE: itype_clk_cnt.clk_store += 1;
+        break;
+        case SYSTEM: itype_clk_cnt.clk_system += 1;
+        break;
+    }
 #ifdef ITRACE
     char buf[128];
     char *p = buf;
