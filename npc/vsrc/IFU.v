@@ -1,5 +1,5 @@
 import PKG::itrace;
-import PKG::perf_cnt;
+import PKG::perf_cnt_update;
 module IFU(
     input clk,
     input reset,
@@ -50,7 +50,7 @@ module IFU(
 );
 
     always @(posedge clk) begin
-        if(m_valid && m_ready) perf_cnt(0);
+        if(m_valid && m_ready) perf_cnt_update(0);
     end
 
     localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;

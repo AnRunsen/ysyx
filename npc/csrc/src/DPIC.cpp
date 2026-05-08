@@ -48,16 +48,16 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
 }
 
 extern "C" void perf_cnt_update(uint8_t target) {
-    // switch (target) {
-    //     case 0: perf_cnt.ifu++;
-    //     break;
-    //     case 1: perf_cnt.idu++;
-    //     break;
-    //     case 2: perf_cnt.exu++;
-    //     break;
-    //     case 3: perf_cnt.lsu++;
-    //     break;
-    // }
+    switch (target) {
+        case 0: perf_cnt.ifu++;
+        break;
+        case 1: perf_cnt.idu++;
+        break;
+        case 2: perf_cnt.exu++;
+        break;
+        case 3: perf_cnt.lsu++;
+        break;
+    }
 }
 
 extern "C" void ftrace(int pc, int npc)
@@ -134,13 +134,13 @@ extern "C" void sim_exit(int code)
 {
     printf("\033[34mTotal Cycles: %lu\n", cycle_cnt);
     printf("Total Instructions: %lu\n", instr_cnt);
-    printf("IPC: %f\033[0m\n", (double)instr_cnt / (double)cycle_cnt);
+    printf("IPC: %f\n", (double)instr_cnt / (double)cycle_cnt);
 
-    // printf("Performance Counters:\n");
-    // printf("  IFU: %lu\n", perf_cnt.ifu);
-    // printf("  IDU: %lu\n", perf_cnt.idu);
-    // printf("  EXU: %lu\n", perf_cnt.exu);
-    // printf("  LSU: %lu\033[0m\n", perf_cnt.lsu);
+    printf("Performance Counters:\n");
+    printf("  IFU: %lu\n", perf_cnt.ifu);
+    printf("  IDU: %lu\n", perf_cnt.idu);
+    printf("  EXU: %lu\n", perf_cnt.exu);
+    printf("  LSU: %lu\033[0m\n", perf_cnt.lsu);
 
     if (code == 0)
     {

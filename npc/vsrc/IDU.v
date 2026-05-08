@@ -1,6 +1,6 @@
 `include "MACRO.v"
 import PKG::sim_exit;
-import PKG::perf_cnt;
+import PKG::perf_cnt_update;
 module IDU(
     input clk,
     input reset,
@@ -53,7 +53,7 @@ module IDU(
 );
 
     always @(posedge clk) begin
-        if(m_valid & m_ready) perf_cnt(1);
+        if(m_valid & m_ready) perf_cnt_update(1);
     end
 
 
