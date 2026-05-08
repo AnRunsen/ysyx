@@ -48,16 +48,16 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
 }
 
 extern "C" void perf_cnt_update(uint8_t target) {
-    switch (target) {
-        case 0: perf_cnt.ifu++;
-        break;
-        case 1: perf_cnt.idu++;
-        break;
-        case 2: perf_cnt.exu++;
-        break;
-        case 3: perf_cnt.lsu++;
-        break;
-    }
+    // switch (target) {
+    //     case 0: perf_cnt.ifu++;
+    //     break;
+    //     case 1: perf_cnt.idu++;
+    //     break;
+    //     case 2: perf_cnt.exu++;
+    //     break;
+    //     case 3: perf_cnt.lsu++;
+    //     break;
+    // }
 }
 
 extern "C" void ftrace(int pc, int npc)
