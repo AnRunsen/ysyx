@@ -86,13 +86,14 @@ module LSU(
     input [3:0] m_axi_bid,
     output m_axi_bready
 );
-
+`ifndef SYNTHESIS
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(3);
             stage_update(4);
         end
     end
+`endif
 
     localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
                 READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110;
