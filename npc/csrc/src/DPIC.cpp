@@ -129,28 +129,6 @@ extern "C" void ftrace(int pc, int npc)
 extern "C" void itrace(int inst, int pc)
 {
     instr_cnt ++;
-    switch(inst_type) {
-        case BRANCH: itype_clk_cnt.clk_branch += 1;
-        break;
-        case JAL: itype_clk_cnt.clk_jal += 1;
-        break;
-        case JALR: itype_clk_cnt.clk_jalr += 1;
-        break;
-        case LUI: itype_clk_cnt.clk_lui += 1;
-        break;
-        case AUIPC: itype_clk_cnt.clk_auipc += 1;
-        break;
-        case OP: itype_clk_cnt.clk_op += 1;
-        break;
-        case OP_IMM: itype_clk_cnt.clk_op_imm += 1;
-        break;
-        case LOAD: itype_clk_cnt.clk_load += 1;
-        break;
-        case STORE: itype_clk_cnt.clk_store += 1;
-        break;
-        case SYSTEM: itype_clk_cnt.clk_system += 1;
-        break;
-    }
 #ifdef ITRACE
     char buf[128];
     char *p = buf;
