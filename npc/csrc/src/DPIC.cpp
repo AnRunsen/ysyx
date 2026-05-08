@@ -216,6 +216,18 @@ extern "C" void sim_exit(int code)
     printf("Total Instructions: \t%lu\n", instr_cnt);
     printf("IPC: \t\t\t%f\n", (double)instr_cnt / (double)cycle_cnt);
     printf("============================\n");
+    printf("Instructions of each type:\n");
+    printf("  BRANCH: %lu\n", itype_cnt.branch);
+    printf("  JAL: %lu\n", itype_cnt.jal);
+    printf("  JALR: %lu\n", itype_cnt.jalr);
+    printf("  LUI: %lu\n", itype_cnt.lui);
+    printf("  AUIPC: %lu\n", itype_cnt.auipc);
+    printf("  OP: %lu\n", itype_cnt.op);
+    printf("  OP-IMM: %lu\n", itype_cnt.op_imm);
+    printf("  LOAD: %lu\n", itype_cnt.load);
+    printf("  STORE: %lu\n", itype_cnt.store);
+    printf("  SYSTEM: %lu\033[0m\n", itype_cnt.system);
+    printf("============================\n");
     printf("Performance Counters:\n");
     printf("  IFU: %lu\n", perf_cnt.ifu);
     printf("  IDU: %lu\n", perf_cnt.idu);
