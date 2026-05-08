@@ -111,6 +111,8 @@ extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
 extern "C" void sim_exit(int code)
 {
     printf("IPC: %f\n", (double)instr_cnt / (double)cycle_cnt);
+    printf("Total Cycles: %lu\n", cycle_cnt);
+    printf("Total Instructions: %lu\n", instr_cnt);
     if (code == 0)
     {
         printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);
