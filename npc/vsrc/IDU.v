@@ -1,5 +1,6 @@
 `include "MACRO.v"
 import PKG::sim_exit;
+import PKG::perf_cnt;
 module IDU(
     input clk,
     input reset,
@@ -50,6 +51,10 @@ module IDU(
     input [31:0] srcR2_in,
     input [31:0] csr_data
 );
+
+    always @(posedge clk) begin
+        if(m_valid & m_ready) perf_cnt(1);
+    end
 
 
     /*logic to recv data*/

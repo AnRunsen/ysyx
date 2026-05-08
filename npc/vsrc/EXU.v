@@ -1,5 +1,5 @@
 `include "MACRO.v"
-
+import PKG::perf_cnt;
 module EXU(
     input clk,
     input reset,
@@ -63,6 +63,10 @@ module EXU(
     input m_ready
     /*send data end*/
 );
+
+    always @(posedge clk) begin
+        if(m_valid & m_ready) perf_cnt(2);
+    end
 
 
     reg [4:0] rd;

@@ -1,4 +1,5 @@
 import PKG::itrace;
+import PKG::perf_cnt;
 module IFU(
     input clk,
     input reset,
@@ -47,6 +48,10 @@ module IFU(
     input [3:0] m_axi_bid,
     output m_axi_bready
 );
+
+    always @(posedge clk) begin
+        if(m_valid && m_ready) perf_cnt(0);
+    end
 
     localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
     reg [1:0] state, next_state;

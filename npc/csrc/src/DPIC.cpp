@@ -15,6 +15,15 @@ extern uint8_t vbuf[640*480*4];
 extern uint64_t cycle_cnt;
 extern uint64_t instr_cnt;
 
+typedef struct {
+    uint64_t ifu;
+    uint64_t idu;
+    uint64_t exu;
+    uint64_t lsu;
+} performance_cnt;
+
+performance_cnt perf_cnt;
+
 void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
 uint32_t sdram_read_laddr(uint32_t addr){
@@ -36,6 +45,19 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
 
     sdram[bank][row_addr][col_addr] = data;
     // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
+}
+
+extern "C" void perf_cnt_update(uint8_t target) {
+    switch (target) {
+        case 0: perf_cnt.ifu++;
+        break;
+        case 1: perf_cnt.idu++;
+        break;
+        case 2: perf_cnt.exu++;
+        break;
+        case 3: perf_cnt.lsu++;
+        break;
+    }
 }
 
 extern "C" void ftrace(int pc, int npc)
@@ -110,10 +132,16 @@ extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
 
 extern "C" void sim_exit(int code)
 {
-    printf("Total Cycles: %lu\n", cycle_cnt);
+    printf("\033[34mTotal Cycles: %lu\n", cycle_cnt);
     printf("Total Instructions: %lu\n", instr_cnt);
     printf("IPC: %f\n", (double)instr_cnt / (double)cycle_cnt);
-    
+
+    printf("Performance Counters:\n");
+    printf("  IFU: %lu\n", perf_cnt.ifu);
+    printf("  IDU: %lu\n", perf_cnt.idu);
+    printf("  EXU: %lu\n", perf_cnt.exu);
+    printf("  LSU: %lu\033[0m\n", perf_cnt.lsu);
+
     if (code == 0)
     {
         printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);

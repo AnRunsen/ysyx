@@ -1,4 +1,5 @@
 `include "MACRO.v"
+import PKG::perf_cnt;
 module LSU(
     input clk,
     input reset,
@@ -84,6 +85,10 @@ module LSU(
     input [3:0] m_axi_bid,
     output m_axi_bready
 );
+
+    always @(posedge clk) begin
+        if(m_valid & m_ready) perf_cnt(3);
+    end
 
     localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
                 READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110;
