@@ -252,9 +252,9 @@ extern "C" void sim_exit(int code)
     printf("  IFU: \t%lu\n", perf_cnt.ifu);
     printf("  IDU: \t%lu\n", perf_cnt.idu);
     printf("  EXU: \t%lu\n", perf_cnt.exu);
-    printf("  LSU: \t%lu\033[0m\n", perf_cnt.lsu);
+    printf("  LSU: \t%lu\n", perf_cnt.lsu);
     printf("============================\n");
-    printf("  Num of iCache hit: %lu\t%f%%\n", ihit_cnt, (double)ihit_cnt / (double)instr_cnt * 100);
+    printf("  Num of iCache hit: %lu\t%f%%\033[0m\n", ihit_cnt, (double)ihit_cnt / (double)instr_cnt * 100);
 
     if (code == 0)
     {
