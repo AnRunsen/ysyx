@@ -133,6 +133,8 @@ module vga_top_apb(
   always @(*) begin
     `ifndef SYNTHESIS
       vga_read({22'b0, h_addr}, {22'b0, v_addr}, color);
+    `else
+      color = 32'hFFFF_FFFF;
     `endif
   end
 
