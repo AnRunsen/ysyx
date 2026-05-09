@@ -17,6 +17,7 @@ uint8_t vbuf[640*480*4]; // 640*480 vga buffer
 
 uint64_t cycle_cnt = 0;
 uint64_t instr_cnt = 0;
+uint64_t ihit_cnt = 0;
 
 bool exit_flag = false;
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };

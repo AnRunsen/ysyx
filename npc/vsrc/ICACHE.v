@@ -1,3 +1,6 @@
+`ifndef SYNTHESIS
+    import PKG::ihit_num;
+`endif
 module ICACHE#(
     parameter LINE_NUM = 16,
     parameter LINE_SIZE = 4
@@ -79,6 +82,16 @@ module ICACHE#(
     output m_axi_bready
     /*verilator lint_on UNUSED */
 );
+
+    `ifndef SYNTHESIS
+        always @(posedge clk) begin
+            if(state == JUDGE && hit) begin
+                ihit_num();
+            end
+        end
+    `endif
+
+
     localparam TAG_SIZE = 32 - $clog2(LINE_NUM) - $clog2(LINE_SIZE);
     /*unused axi signal(write channel)*/
     assign s_axi_awready = 1'b0;
