@@ -670,7 +670,7 @@ module ysyx_26040125(
     ICACHE #(
         .LINE_NUM  	( 16  ),
         .LINE_SIZE 	( 4   ))
-    u_ICACHE(
+    ysyx_26040125_ICACHE(
         .clk           	( clock          ),
         .reset         	( reset          ),
         .s_axi_arid    	( IFU_m_axi_arid     ),

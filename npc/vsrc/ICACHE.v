@@ -104,6 +104,7 @@ module ICACHE#(
 
     wire [$clog2(LINE_NUM)-1:0] index = addr_reg[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
     wire [TAG_SIZE-1:0] tag = addr_reg[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
+    wire hit = valid[index] && tags[index] == tag;
 
     localparam IDLE = 3'd0, JUDGE = 3'd1, REQ = 3'd2, WAIT = 3'd3, RESP = 3'd4;
     reg [2:0] state, next_state;
@@ -111,7 +112,7 @@ module ICACHE#(
     always @(*) begin
         case(state)
             IDLE: next_state = (s_axi_arvalid & s_axi_arready) ? JUDGE : state;
-            JUDGE: next_state = (valid[index] && tags[index] == tag) ? RESP : REQ;
+            JUDGE: next_state = hit ? RESP : REQ;
             REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
             WAIT: next_state = m_axi_rvalid && m_axi_rready ? RESP : state;
             RESP: next_state = s_axi_rvalid && s_axi_rready ? IDLE : state;
