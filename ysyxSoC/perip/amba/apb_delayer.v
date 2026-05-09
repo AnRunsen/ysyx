@@ -82,7 +82,7 @@ module apb_delayer(
   assign out_pwrite  = in_pwrite;
   assign out_pwdata  = in_pwdata;
   assign out_pstrb   = in_pstrb;
-  assign in_pready   = (delay_cnt == 0);
+  assign in_pready   = (delay_cnt == 0 && delay_flag);
   assign in_prdata   = out_prdata_reg;
   assign in_pslverr  = out_pslverr_reg;
 
