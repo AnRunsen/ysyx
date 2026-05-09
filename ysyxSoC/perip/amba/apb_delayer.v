@@ -62,6 +62,19 @@ module apb_delayer(
     end
   end
 
+  reg [31:0] out_prdata_reg;
+  reg        out_pslverr_reg;
+  always @(posedge clock) begin
+    if (reset) begin
+      out_prdata_reg <= 32'b0;
+      out_pslverr_reg <= 1'b0;
+    end
+    else if (out_pready && out_penable) begin
+      out_prdata_reg <= out_prdata;
+      out_pslverr_reg <= out_pslverr;
+    end
+  end
+
   assign out_paddr   = in_paddr;
   assign out_psel    = in_psel && (!delay_flag);
   assign out_penable = in_penable && (!delay_flag);
@@ -70,8 +83,8 @@ module apb_delayer(
   assign out_pwdata  = in_pwdata;
   assign out_pstrb   = in_pstrb;
   assign in_pready   = (delay_cnt == 0);
-  assign in_prdata   = out_prdata;
-  assign in_pslverr  = out_pslverr;
+  assign in_prdata   = out_prdata_reg;
+  assign in_pslverr  = out_pslverr_reg;
 
 `else
 
