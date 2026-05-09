@@ -236,11 +236,11 @@ extern "C" void sim_exit(int code)
     printf("============================\n");
     printf("Clocks of each stage:\n");
     printf("  Stage\t\tClocks\tPercentage\n");
-    printf("  IFU: \t%lu\t%f%%\n", stclk_cnt.clk_ifu, (double)stclk_cnt.clk_ifu / (double)cycle_cnt * 100);
-    printf("  IDU: \t%lu\t%f%%\n", stclk_cnt.clk_idu, (double)stclk_cnt.clk_idu / (double)cycle_cnt * 100);
-    printf("  EXU: \t%lu\t%f%%\n", stclk_cnt.clk_exu, (double)stclk_cnt.clk_exu / (double)cycle_cnt * 100);
-    printf("  LSU: \t%lu\t%f%%\n", stclk_cnt.clk_lsu, (double)stclk_cnt.clk_lsu / (double)cycle_cnt * 100);
-    printf("  WBU: \t%lu\t%f%%\n", stclk_cnt.clk_wbu, (double)stclk_cnt.clk_wbu / (double)cycle_cnt * 100);
+    printf("  IFU: \t\t%lu\t%f%%\n", stclk_cnt.clk_ifu, (double)stclk_cnt.clk_ifu / (double)cycle_cnt * 100);
+    printf("  IDU: \t\t%lu\t%f%%\n", stclk_cnt.clk_idu, (double)stclk_cnt.clk_idu / (double)cycle_cnt * 100);
+    printf("  EXU: \t\t%lu\t%f%%\n", stclk_cnt.clk_exu, (double)stclk_cnt.clk_exu / (double)cycle_cnt * 100);
+    printf("  LSU: \t\t%lu\t%f%%\n", stclk_cnt.clk_lsu, (double)stclk_cnt.clk_lsu / (double)cycle_cnt * 100);
+    printf("  WBU: \t\t%lu\t%f%%\n", stclk_cnt.clk_wbu, (double)stclk_cnt.clk_wbu / (double)cycle_cnt * 100);
     printf("============================\n");
     printf("Performance Counters:\n");
     printf("  IFU: \t%lu\n", perf_cnt.ifu);

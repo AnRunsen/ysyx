@@ -1,8 +1,10 @@
 `include "MACRO.v"
-import PKG::sim_exit;
-import PKG::perf_cnt_update;
-import PKG::itype_cnt_update;
-import PKG::stage_update;
+`ifndef SYNTHESIS
+    import PKG::sim_exit;
+    import PKG::perf_cnt_update;
+    import PKG::itype_cnt_update;
+    import PKG::stage_update;
+`endif
 module IDU(
     input clk,
     input reset,

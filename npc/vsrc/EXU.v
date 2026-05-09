@@ -1,6 +1,8 @@
 `include "MACRO.v"
-import PKG::perf_cnt_update;
-import PKG::stage_update;
+`ifndef SYNTHESIS
+    import PKG::perf_cnt_update;
+    import PKG::stage_update;
+`endif
 module EXU(
     input clk,
     input reset,

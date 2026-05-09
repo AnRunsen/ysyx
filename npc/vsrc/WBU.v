@@ -1,5 +1,8 @@
 `include "MACRO.v"
-import PKG::stage_update;
+`ifndef SYNTHESIS
+    import PKG::stage_update;
+`endif
+
 module WBU(
     input clk,
     input reset,
