@@ -33,7 +33,31 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
+#define DEFAULT_CACHE_BLOCK_SIZE 64
+#define DEFAULT_CACHE_NUM_SETS 64
+#define DEFAULT_CACHE_NUM_WAYS 4
+
 ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
+
+typedef struct {
+  bool valid;
+  uint64_t tag;
+  uint64_t last_used;
+} cache_line_t;
+
+typedef struct {
+  bool initialized;
+  size_t block_size;
+  size_t num_sets;
+  size_t num_ways;
+  uint64_t accesses;
+  uint64_t hits;
+  uint64_t misses;
+  uint64_t timestamp;
+  cache_line_t *lines;
+} cache_sim_t;
+
+static cache_sim_t icache = {};
 
 #ifdef CONFIG_FTRACE
 /* ftrace 调用深度（缩进水平） */
@@ -144,10 +168,97 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 #endif
 }
 
+static bool is_power_of_two(size_t value)
+{
+  return value != 0 && (value & (value - 1)) == 0;
+}
+
+static size_t read_cache_config(const char *name, size_t default_value, bool must_be_power_of_two)
+{
+#ifdef CONFIG_TARGET_AM
+  return default_value;
+#else
+  const char *value = getenv(name);
+  if (value == NULL || *value == '\0')
+    return default_value;
+
+  char *end = NULL;
+  unsigned long parsed = strtoul(value, &end, 0);
+  Assert(end != value && *end == '\0' && parsed > 0,
+         "%s should be a positive integer, but got '%s'", name, value);
+  Assert(!must_be_power_of_two || is_power_of_two(parsed),
+         "%s should be a power of two, but got '%s'", name, value);
+  return parsed;
+#endif
+}
+
+static cache_line_t *cache_set_base(cache_sim_t *cache, size_t set_index)
+{
+  return cache->lines + set_index * cache->num_ways;
+}
+
+static void init_cachesim(void)
+{
+  if (icache.initialized)
+    return;
+
+  icache.block_size = read_cache_config("NEMU_CACHE_BLOCK_SIZE", DEFAULT_CACHE_BLOCK_SIZE, true);
+  icache.num_sets = read_cache_config("NEMU_CACHE_NUM_SETS", DEFAULT_CACHE_NUM_SETS, true);
+  icache.num_ways = read_cache_config("NEMU_CACHE_NUM_WAYS", DEFAULT_CACHE_NUM_WAYS, false);
+  icache.lines = calloc(icache.num_sets * icache.num_ways, sizeof(*icache.lines));
+
+  Assert(icache.lines != NULL, "failed to allocate cache simulator metadata");
+  icache.initialized = true;
+  Log("cache simulator: block=%zuB, sets=%zu, ways=%zu", icache.block_size, icache.num_sets, icache.num_ways);
+}
+
+static void cachesim(Decode *s)
+{
+  init_cachesim();
+
+  icache.accesses++;
+  icache.timestamp++;
+
+  uint64_t block_addr = s->pc / icache.block_size;
+  size_t set_index = block_addr % icache.num_sets;
+  uint64_t tag = block_addr / icache.num_sets;
+  cache_line_t *set = cache_set_base(&icache, set_index);
+  cache_line_t *victim = &set[0];
+
+  for (size_t way = 0; way < icache.num_ways; way++)
+  {
+    cache_line_t *line = &set[way];
+    if (line->valid && line->tag == tag)
+    {
+      icache.hits++;
+      line->last_used = icache.timestamp;
+      return;
+    }
+
+    if (!line->valid)
+    {
+      victim = line;
+      break;
+    }
+
+    if (line->last_used < victim->last_used)
+    {
+      victim = line;
+    }
+  }
+
+  icache.misses++;
+  victim->valid = true;
+  victim->tag = tag;
+  victim->last_used = icache.timestamp;
+}
+
 static void exec_once(Decode *s, vaddr_t pc)
 {
   s->pc = pc;
   s->snpc = pc;
+
+  cachesim(s);
   isa_exec_once(s);
   cpu.pc = s->dnpc;
 #ifdef CONFIG_ITRACE
@@ -214,6 +325,14 @@ static void statistic()
 #define NUMBERIC_FMT MUXDEF(CONFIG_TARGET_AM, "%", "%'") PRIu64
   Log("host time spent = " NUMBERIC_FMT " us", g_timer);
   Log("total guest instructions = " NUMBERIC_FMT, g_nr_guest_inst);
+  if (icache.initialized && icache.accesses > 0)
+  {
+    uint64_t hit_percent_x100 = icache.hits * 10000 / icache.accesses;
+    Log("cache hit statistics = " NUMBERIC_FMT " hits / " NUMBERIC_FMT " accesses (%" PRIu64 ".%02" PRIu64 "%%), misses = " NUMBERIC_FMT,
+        icache.hits, icache.accesses,
+        hit_percent_x100 / 100, hit_percent_x100 % 100,
+        icache.misses);
+  }
   if (g_timer > 0)
     Log("simulation frequency = " NUMBERIC_FMT " inst/s", g_nr_guest_inst * 1000000 / g_timer);
   else
@@ -229,8 +348,7 @@ void assert_fail_msg()
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n)
 {
-  // g_print_step = (n < MAX_INST_TO_PRINT);
-  g_print_step = true;
+  g_print_step = (n < MAX_INST_TO_PRINT);
   switch (nemu_state.state)
   {
   case NEMU_END:
