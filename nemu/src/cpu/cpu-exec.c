@@ -33,9 +33,9 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
-#define DEFAULT_CACHE_BLOCK_SIZE 64
-#define DEFAULT_CACHE_NUM_SETS 64
-#define DEFAULT_CACHE_NUM_WAYS 4
+#define DEFAULT_CACHE_BLOCK_SIZE 4
+#define DEFAULT_CACHE_NUM_SETS 16
+#define DEFAULT_CACHE_NUM_WAYS 1
 
 ring_buffer_t ring_buffer = {.head = 0, .tail = 0, .size = 0};
 
