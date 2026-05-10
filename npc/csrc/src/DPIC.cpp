@@ -14,6 +14,7 @@ extern uint16_t sdram[4][8192][512];
 extern uint8_t vbuf[640*480*4];
 extern uint64_t cycle_cnt;
 extern uint64_t instr_cnt;
+extern uint64_t ihit_cnt;
 
 typedef struct {
     uint64_t ifu;
@@ -90,6 +91,11 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
 
     sdram[bank][row_addr][col_addr] = data;
     // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
+}
+
+extern "C" void ihit_num()
+{
+    ihit_cnt++;
 }
 
 extern "C" void stage_update(uint8_t target) {
@@ -246,7 +252,9 @@ extern "C" void sim_exit(int code)
     printf("  IFU: \t%lu\n", perf_cnt.ifu);
     printf("  IDU: \t%lu\n", perf_cnt.idu);
     printf("  EXU: \t%lu\n", perf_cnt.exu);
-    printf("  LSU: \t%lu\033[0m\n", perf_cnt.lsu);
+    printf("  LSU: \t%lu\n", perf_cnt.lsu);
+    printf("============================\n");
+    printf("  Num of iCache hit: %lu\t%f%%\033[0m\n", ihit_cnt, (double)ihit_cnt / (double)instr_cnt * 100);
 
     if (code == 0)
     {
