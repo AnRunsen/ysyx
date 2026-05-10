@@ -202,9 +202,9 @@ static void init_cachesim(void)
   if (icache.initialized)
     return;
 
-  icache.block_size = read_cache_config("NEMU_CACHE_BLOCK_SIZE", DEFAULT_CACHE_BLOCK_SIZE, true);
-  icache.num_sets = read_cache_config("NEMU_CACHE_NUM_SETS", DEFAULT_CACHE_NUM_SETS, true);
-  icache.num_ways = read_cache_config("NEMU_CACHE_NUM_WAYS", DEFAULT_CACHE_NUM_WAYS, false);
+  icache.block_size = read_cache_config("BLOCK_SIZE", DEFAULT_CACHE_BLOCK_SIZE, true);
+  icache.num_sets = read_cache_config("NUM_SETS", DEFAULT_CACHE_NUM_SETS, true);
+  icache.num_ways = read_cache_config("NUM_WAYS", DEFAULT_CACHE_NUM_WAYS, false);
   icache.lines = calloc(icache.num_sets * icache.num_ways, sizeof(*icache.lines));
 
   Assert(icache.lines != NULL, "failed to allocate cache simulator metadata");
