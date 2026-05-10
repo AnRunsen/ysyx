@@ -1,6 +1,4 @@
-`ifndef SYNTHESIS
-    import PKG::mtime_read;
-`endif
+import PKG::mtime_read;
 
 module MTIME(
     input clk,
@@ -85,11 +83,7 @@ module MTIME(
             s_axi_rdata <= 32'b0;
         end
         else if (s_axi_arready && s_axi_arvalid) begin
-            `ifndef SYNTHESIS
-                s_axi_rdata <= mtime_read(s_axi_araddr);
-            `else
-                s_axi_rdata <= 32'b0; // During synthesis, we cannot call DPI function, so we return 0
-            `endif
+            s_axi_rdata <= mtime_read(s_axi_araddr);
         end
     end
 

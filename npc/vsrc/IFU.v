@@ -1,8 +1,4 @@
-`ifndef SYNTHESIS
-    import PKG::itrace;
-    import PKG::perf_cnt_update;
-    import PKG::stage_update;
-`endif
+import PKG::itrace;
 module IFU(
     input clk,
     input reset,
@@ -51,14 +47,6 @@ module IFU(
     input [3:0] m_axi_bid,
     output m_axi_bready
 );
-`ifndef SYNTHESIS
-    always @(posedge clk) begin
-        if(m_valid && m_ready) begin
-            perf_cnt_update(0);
-            stage_update(1);
-        end
-    end
-`endif
 
     localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
     reg [1:0] state, next_state;
@@ -106,9 +94,7 @@ module IFU(
         else begin
             if(m_axi_rready && m_axi_rvalid) begin
                 m_axi_rdata_reg <= m_axi_rdata;
-                `ifndef SYNTHESIS
-                    itrace(m_axi_rdata, PC);
-                `endif
+                itrace(m_axi_rdata, PC);
             end
         end
     end

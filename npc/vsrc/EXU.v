@@ -1,8 +1,5 @@
 `include "MACRO.v"
-`ifndef SYNTHESIS
-    import PKG::perf_cnt_update;
-    import PKG::stage_update;
-`endif
+
 module EXU(
     input clk,
     input reset,
@@ -66,14 +63,6 @@ module EXU(
     input m_ready
     /*send data end*/
 );
-`ifndef SYNTHESIS
-    always @(posedge clk) begin
-        if(m_valid & m_ready) begin
-            perf_cnt_update(2);
-            stage_update(3);
-        end
-    end
-`endif
 
 
     reg [4:0] rd;

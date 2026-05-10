@@ -1,7 +1,5 @@
-`ifndef SYNTHESIS
-  import "DPI-C" function void vga_write(input int addr, input int color, input byte strb);
-  import "DPI-C" function void vga_read(input int x, input int y, output int color);
-`endif
+import "DPI-C" function void vga_write(input int addr, input int color, input byte strb);
+import "DPI-C" function void vga_read(input int x, input int y, output int color);
 
 module vga_top_apb(
   input         clock,
@@ -76,9 +74,7 @@ module vga_top_apb(
   /*The Vbuf is Write Only*/
   always @(posedge clock) begin
     if(state == WORKING && write_reg && in_penable && !pready_reg) begin
-      `ifndef SYNTHESIS
-        vga_write(addr_reg, wdata_reg, {4'b0, strb_reg});
-      `endif
+      vga_write(addr_reg, wdata_reg, {4'b0, strb_reg});
     end
   end
 
@@ -131,11 +127,7 @@ module vga_top_apb(
 
   reg [31:0] color;
   always @(*) begin
-    `ifndef SYNTHESIS
-      vga_read({22'b0, h_addr}, {22'b0, v_addr}, color);
-    `else
-      color = 32'hFFFF_FFFF;
-    `endif
+    vga_read({22'b0, h_addr}, {22'b0, v_addr}, color);
   end
 
   //生成同步信号    

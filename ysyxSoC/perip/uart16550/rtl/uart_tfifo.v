@@ -211,9 +211,7 @@ begin
             begin
                 top   <= #1 top_plus_1;
                 count <= #1 count + 1'b1;
-                `ifndef SYNTHESIS
-                    $write("%c", data_in);
-                `endif
+                $write("%c", data_in);
             end
         2'b01 : if(count>0)
             begin
@@ -223,9 +221,7 @@ begin
         2'b11 : begin
                 bottom <= #1 bottom + 1'b1;
                 top    <= #1 top_plus_1;
-                `ifndef SYNTHESIS
-                    $write("%c", data_in);
-                `endif
+                $write("%c", data_in);
                 end
         default: ;
         endcase

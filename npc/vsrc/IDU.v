@@ -1,10 +1,5 @@
 `include "MACRO.v"
-`ifndef SYNTHESIS
-    import PKG::sim_exit;
-    import PKG::perf_cnt_update;
-    import PKG::itype_cnt_update;
-    import PKG::stage_update;
-`endif
+import PKG::sim_exit;
 module IDU(
     input clk,
     input reset,
@@ -55,27 +50,7 @@ module IDU(
     input [31:0] srcR2_in,
     input [31:0] csr_data
 );
-`ifndef SYNTHESIS
-    always @(posedge clk) begin
-        if(m_valid & m_ready) begin
-            perf_cnt_update(1);
-            stage_update(2);
-            case(opcode)
-                7'b1100011: itype_cnt_update(0); //branch
-                7'b1101111: itype_cnt_update(1); //jal
-                7'b1100111: itype_cnt_update(2); //jalr
-                7'b0110111: itype_cnt_update(3); //lui
-                7'b0010111: itype_cnt_update(4); //auipc
-                7'b0110011: itype_cnt_update(5); //OP
-                7'b0010011: itype_cnt_update(6); //OP-IMM
-                7'b0000011: itype_cnt_update(7); //LOAD
-                7'b0100011: itype_cnt_update(8); //STORE
-                7'b1110011: itype_cnt_update(9); //SYSTEM
-                default: itype_cnt_update(10); //OTHER
-            endcase
-        end
-    end
-`endif
+
 
     /*logic to recv data*/
     reg [31:0] inst_reg;
@@ -180,9 +155,7 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_LTU;  //bltu
                     3'b111: m_alu_op = `ALU_OP_GEU;  //bgeu
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
@@ -206,9 +179,7 @@ module IDU(
                         m_brju     = `PC_FAR;
                     end
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
@@ -243,9 +214,7 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_OR;   //or
                     3'b111: m_alu_op = `ALU_OP_AND;  //and
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
@@ -266,9 +235,7 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_OR;   //ori
                     3'b111: m_alu_op = `ALU_OP_AND;  //andi
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
@@ -288,9 +255,7 @@ module IDU(
                     3'b100: begin m_op_width = `OP_WIDTH_BYTE; m_mem_signext = 0; end //lbu
                     3'b101: begin m_op_width = `OP_WIDTH_HALF; m_mem_signext = 0; end //lhu
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
@@ -307,9 +272,7 @@ module IDU(
                     3'b001: m_op_width = `OP_WIDTH_HALF; //sh
                     3'b010: m_op_width = `OP_WIDTH_WORD; //sw
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
@@ -318,9 +281,7 @@ module IDU(
                 case(funct3)
                     3'b000: begin
                         if(funct7 == 7'b0000000 && rs2 == 5'b00001) begin
-                            `ifndef SYNTHESIS
-                                if(m_valid) sim_exit(m_srcR1); //ebreak
-                            `endif
+                            if(m_valid) sim_exit(m_srcR1); //ebreak
                         end
                         else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //m_ecall
                             m_csr_addr = 12'h305; //mtvec
@@ -331,9 +292,7 @@ module IDU(
                             m_mret = 1;
                         end
                         else begin
-                            `ifndef SYNTHESIS
-                                if(m_valid) sim_exit(inst_reg);
-                            `endif
+                            if(m_valid) sim_exit(inst_reg);
                         end
                         
                     end
@@ -357,22 +316,15 @@ module IDU(
                         m_csr_addr = inst_reg[31:20];
                     end
                     default: begin
-                        `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
-                        `endif
+                        if(m_valid) sim_exit(inst_reg);
                     end
                 endcase
             end
 
             default:begin
-                `ifndef SYNTHESIS
-                    if(m_valid) sim_exit(inst_reg);
-                `endif
+                if(m_valid) sim_exit(inst_reg);
             end
         endcase 
     end
-
-
-
 endmodule
 

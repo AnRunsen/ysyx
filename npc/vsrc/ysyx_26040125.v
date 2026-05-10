@@ -331,37 +331,6 @@ module ysyx_26040125(
     wire [1:0]  MTIME_s_axi_bresp;
     wire        MTIME_s_axi_bvalid;
 
-    //ICACHE outputs
-    wire        	ICACHE_s_axi_arready;
-    wire [3:0]  	ICACHE_s_axi_rid;
-    wire [31:0] 	ICACHE_s_axi_rdata;
-    wire [1:0]  	ICACHE_s_axi_rresp;
-    wire        	ICACHE_s_axi_rlast;
-    wire        	ICACHE_s_axi_rvalid;
-    wire        	ICACHE_s_axi_awready;
-    wire        	ICACHE_s_axi_wready;
-    wire [3:0]  	ICACHE_s_axi_bid;
-    wire [1:0]  	ICACHE_s_axi_bresp;
-    wire        	ICACHE_s_axi_bvalid;
-    wire [31:0] 	ICACHE_m_axi_araddr;
-    wire        	ICACHE_m_axi_arvalid;
-    wire [3:0]  	ICACHE_m_axi_arid;
-    wire [7:0]  	ICACHE_m_axi_arlen;
-    wire [2:0]  	ICACHE_m_axi_arsize;
-    wire [1:0]  	ICACHE_m_axi_arburst;
-    wire        	ICACHE_m_axi_rready;
-    wire [31:0] 	ICACHE_m_axi_awaddr;
-    wire        	ICACHE_m_axi_awvalid;
-    wire [3:0]  	ICACHE_m_axi_awid;
-    wire [7:0]  	ICACHE_m_axi_awlen;
-    wire [2:0]  	ICACHE_m_axi_awsize;
-    wire [1:0]  	ICACHE_m_axi_awburst;
-    wire [31:0] 	ICACHE_m_axi_wdata;
-    wire [3:0]  	ICACHE_m_axi_wstrb;
-    wire        	ICACHE_m_axi_wvalid;
-    wire        	ICACHE_m_axi_wlast;
-    wire        	ICACHE_m_axi_bready;
-
     // Connect io_master to XBAR master B
     assign io_master_arvalid  = XBAR_m_axi_arvalid_B;
     assign io_master_araddr   = XBAR_m_axi_araddr_B;
@@ -408,20 +377,20 @@ module ysyx_26040125(
             .PC             (PCR_PC),
             .m_axi_araddr   (IFU_m_axi_araddr),
             .m_axi_arvalid  (IFU_m_axi_arvalid),
-            .m_axi_arready  (ICACHE_s_axi_arready),
+            .m_axi_arready  (ARB_s_axi_arready_A),
             .m_axi_arid     (IFU_m_axi_arid),
             .m_axi_arlen    (IFU_m_axi_arlen),
             .m_axi_arsize   (IFU_m_axi_arsize),
             .m_axi_arburst  (IFU_m_axi_arburst),
-            .m_axi_rdata    (ICACHE_s_axi_rdata),
-            .m_axi_rresp    (ICACHE_s_axi_rresp),
-            .m_axi_rid      (ICACHE_s_axi_rid),
-            .m_axi_rlast    (ICACHE_s_axi_rlast),
-            .m_axi_rvalid   (ICACHE_s_axi_rvalid),
+            .m_axi_rdata    (ARB_s_axi_rdata_A),
+            .m_axi_rresp    (ARB_s_axi_rresp_A),
+            .m_axi_rid      (ARB_s_axi_rid_A),
+            .m_axi_rlast    (ARB_s_axi_rlast_A),
+            .m_axi_rvalid   (ARB_s_axi_rvalid_A),
             .m_axi_rready   (IFU_m_axi_rready),
             .m_axi_awaddr   (IFU_m_axi_awaddr),
             .m_axi_awvalid  (IFU_m_axi_awvalid),
-            .m_axi_awready  (ICACHE_s_axi_awready),
+            .m_axi_awready  (ARB_s_axi_awready_A),
             .m_axi_awid     (IFU_m_axi_awid),
             .m_axi_awlen    (IFU_m_axi_awlen),
             .m_axi_awsize   (IFU_m_axi_awsize),
@@ -430,10 +399,10 @@ module ysyx_26040125(
             .m_axi_wstrb    (IFU_m_axi_wstrb),
             .m_axi_wvalid   (IFU_m_axi_wvalid),
             .m_axi_wlast    (IFU_m_axi_wlast),
-            .m_axi_wready   (ICACHE_s_axi_wready),
-            .m_axi_bresp    (ICACHE_s_axi_bresp),
-            .m_axi_bvalid   (ICACHE_s_axi_bvalid),
-            .m_axi_bid      (ICACHE_s_axi_bid),
+            .m_axi_wready   (ARB_s_axi_wready_A),
+            .m_axi_bresp    (ARB_s_axi_bresp_A),
+            .m_axi_bvalid   (ARB_s_axi_bvalid_A),
+            .m_axi_bid      (ARB_s_axi_bid_A),
             .m_axi_bready   (IFU_m_axi_bready)
         );
 
@@ -665,106 +634,37 @@ module ysyx_26040125(
             .rdata   (CSR_rdata)
         );
 
-
-
-    ICACHE #(
-        .LINE_NUM  	( 16  ),
-        .LINE_SIZE 	( 4   ))
-    ysyx_26040125_ICACHE(
-        .clk           	( clock          ),
-        .reset         	( reset          ),
-        .s_axi_arid    	( IFU_m_axi_arid     ),
-        .s_axi_araddr  	( IFU_m_axi_araddr   ),
-        .s_axi_arlen   	( IFU_m_axi_arlen    ),
-        .s_axi_arsize  	( IFU_m_axi_arsize   ),
-        .s_axi_arburst 	( IFU_m_axi_arburst  ),
-        .s_axi_arvalid 	( IFU_m_axi_arvalid  ),
-        .s_axi_arready 	( ICACHE_s_axi_arready  ),
-        .s_axi_rid     	( ICACHE_s_axi_rid      ),
-        .s_axi_rdata   	( ICACHE_s_axi_rdata    ),
-        .s_axi_rresp   	( ICACHE_s_axi_rresp    ),
-        .s_axi_rlast   	( ICACHE_s_axi_rlast    ),
-        .s_axi_rvalid  	( ICACHE_s_axi_rvalid   ),
-        .s_axi_rready  	( IFU_m_axi_rready     ),
-        .s_axi_awid    	( IFU_m_axi_awid       ),
-        .s_axi_awaddr  	( IFU_m_axi_awaddr     ),
-        .s_axi_awlen   	( IFU_m_axi_awlen      ),
-        .s_axi_awsize  	( IFU_m_axi_awsize     ),
-        .s_axi_awburst 	( IFU_m_axi_awburst    ),
-        .s_axi_awvalid 	( IFU_m_axi_awvalid    ),
-        .s_axi_awready 	( ICACHE_s_axi_awready  ),
-        .s_axi_wdata   	( IFU_m_axi_wdata      ),
-        .s_axi_wstrb   	( IFU_m_axi_wstrb      ),
-        .s_axi_wlast   	( IFU_m_axi_wlast      ),
-        .s_axi_wvalid  	( IFU_m_axi_wvalid     ),
-        .s_axi_wready  	( ICACHE_s_axi_wready   ),
-        .s_axi_bid     	( ICACHE_s_axi_bid      ),
-        .s_axi_bresp   	( ICACHE_s_axi_bresp    ),
-        .s_axi_bvalid  	( ICACHE_s_axi_bvalid   ),
-        .s_axi_bready  	( IFU_m_axi_bready   ),
-        .m_axi_araddr  	( ICACHE_m_axi_araddr   ),
-        .m_axi_arvalid 	( ICACHE_m_axi_arvalid  ),
-        .m_axi_arready 	( ARB_s_axi_arready_A  ),
-        .m_axi_arid    	( ICACHE_m_axi_arid     ),
-        .m_axi_arlen   	( ICACHE_m_axi_arlen    ),
-        .m_axi_arsize  	( ICACHE_m_axi_arsize   ),
-        .m_axi_arburst 	( ICACHE_m_axi_arburst  ),
-        .m_axi_rdata   	( ARB_s_axi_rdata_A    ),
-        .m_axi_rresp   	( ARB_s_axi_rresp_A    ),
-        .m_axi_rid     	( ARB_s_axi_rid_A      ),
-        .m_axi_rlast   	( ARB_s_axi_rlast_A    ),
-        .m_axi_rvalid  	( ARB_s_axi_rvalid_A   ),
-        .m_axi_rready  	( ICACHE_m_axi_rready   ),
-        .m_axi_awaddr  	( ICACHE_m_axi_awaddr   ),
-        .m_axi_awvalid 	( ICACHE_m_axi_awvalid  ),
-        .m_axi_awready 	( ARB_s_axi_awready_A  ),
-        .m_axi_awid    	( ICACHE_m_axi_awid     ),
-        .m_axi_awlen   	( ICACHE_m_axi_awlen    ),
-        .m_axi_awsize  	( ICACHE_m_axi_awsize   ),
-        .m_axi_awburst 	( ICACHE_m_axi_awburst  ),
-        .m_axi_wdata   	( ICACHE_m_axi_wdata    ),
-        .m_axi_wstrb   	( ICACHE_m_axi_wstrb    ),
-        .m_axi_wvalid  	( ICACHE_m_axi_wvalid   ),
-        .m_axi_wlast   	( ICACHE_m_axi_wlast    ),
-        .m_axi_wready  	( ARB_s_axi_wready_A    ),
-        .m_axi_bresp   	( ARB_s_axi_bresp_A     ),
-        .m_axi_bvalid  	( ARB_s_axi_bvalid_A    ),
-        .m_axi_bid     	( ARB_s_axi_bid_A       ),
-        .m_axi_bready  	( ICACHE_m_axi_bready   )
-    );
-
-
     ARB ysyx_26040125_ARB(
             .clk               ( clock                ),
             .reset             ( reset                ),
-            .s_axi_araddr_A    ( ICACHE_m_axi_araddr     ),
-            .s_axi_arvalid_A   ( ICACHE_m_axi_arvalid    ),
+            .s_axi_araddr_A    ( IFU_m_axi_araddr     ),
+            .s_axi_arvalid_A   ( IFU_m_axi_arvalid    ),
             .s_axi_arready_A   ( ARB_s_axi_arready_A  ),
-            .s_axi_arid_A      ( ICACHE_m_axi_arid       ),
-            .s_axi_arlen_A     ( ICACHE_m_axi_arlen      ),
-            .s_axi_arsize_A    ( ICACHE_m_axi_arsize     ),
-            .s_axi_arburst_A   ( ICACHE_m_axi_arburst    ),
+            .s_axi_arid_A      ( IFU_m_axi_arid       ),
+            .s_axi_arlen_A     ( IFU_m_axi_arlen      ),
+            .s_axi_arsize_A    ( IFU_m_axi_arsize     ),
+            .s_axi_arburst_A   ( IFU_m_axi_arburst    ),
             .s_axi_rdata_A     ( ARB_s_axi_rdata_A    ),
             .s_axi_rresp_A     ( ARB_s_axi_rresp_A    ),
             .s_axi_rvalid_A    ( ARB_s_axi_rvalid_A   ),
-            .s_axi_rready_A    ( ICACHE_m_axi_rready     ),
+            .s_axi_rready_A    ( IFU_m_axi_rready     ),
             .s_axi_rid_A       ( ARB_s_axi_rid_A      ),
             .s_axi_rlast_A     ( ARB_s_axi_rlast_A    ),
-            .s_axi_awaddr_A    ( ICACHE_m_axi_awaddr     ),
-            .s_axi_awvalid_A   ( ICACHE_m_axi_awvalid    ),
+            .s_axi_awaddr_A    ( IFU_m_axi_awaddr     ),
+            .s_axi_awvalid_A   ( IFU_m_axi_awvalid    ),
             .s_axi_awready_A   ( ARB_s_axi_awready_A  ),
-            .s_axi_awid_A      ( ICACHE_m_axi_awid       ),
-            .s_axi_awlen_A     ( ICACHE_m_axi_awlen      ),
-            .s_axi_awsize_A    ( ICACHE_m_axi_awsize     ),
-            .s_axi_awburst_A   ( ICACHE_m_axi_awburst    ),
-            .s_axi_wdata_A     ( ICACHE_m_axi_wdata      ),
-            .s_axi_wstrb_A     ( ICACHE_m_axi_wstrb      ),
-            .s_axi_wvalid_A    ( ICACHE_m_axi_wvalid     ),
+            .s_axi_awid_A      ( IFU_m_axi_awid       ),
+            .s_axi_awlen_A     ( IFU_m_axi_awlen      ),
+            .s_axi_awsize_A    ( IFU_m_axi_awsize     ),
+            .s_axi_awburst_A   ( IFU_m_axi_awburst    ),
+            .s_axi_wdata_A     ( IFU_m_axi_wdata      ),
+            .s_axi_wstrb_A     ( IFU_m_axi_wstrb      ),
+            .s_axi_wvalid_A    ( IFU_m_axi_wvalid     ),
             .s_axi_wready_A    ( ARB_s_axi_wready_A   ),
-            .s_axi_wlast_A     ( ICACHE_m_axi_wlast      ),
+            .s_axi_wlast_A     ( IFU_m_axi_wlast      ),
             .s_axi_bresp_A     ( ARB_s_axi_bresp_A    ),
             .s_axi_bvalid_A    ( ARB_s_axi_bvalid_A   ),
-            .s_axi_bready_A    ( ICACHE_m_axi_bready     ),
+            .s_axi_bready_A    ( IFU_m_axi_bready     ),
             .s_axi_bid_A       ( ARB_s_axi_bid_A      ),
 
             .s_axi_araddr_B    ( LSU_m_axi_araddr     ),
