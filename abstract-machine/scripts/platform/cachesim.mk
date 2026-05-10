@@ -11,7 +11,7 @@ AM_SRCS := riscv/ysyxSoC/start.S \
            platform/dummy/mpe.c
 
 CFLAGS    += -fdata-sections -ffunction-sections
-LDSCRIPTS += $(AM_HOME)/scripts/ysyxSoC.ld
+LDSCRIPTS += $(AM_HOME)/scripts/cachesim.ld
 LDFLAGS   += --gc-sections -e _fsbl
 
 MAINARGS_MAX_LEN = 64
