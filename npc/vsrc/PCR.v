@@ -1,5 +1,7 @@
 `include "MACRO.v"
-import PKG::ftrace;
+`ifndef SYNTHESIS
+    import PKG::ftrace;
+`endif
 
 module PCR(
     input clk,
@@ -43,7 +45,9 @@ module PCR(
         else begin
             if(pc_en) begin
                 PC <= PC_next;
-                ftrace(PC, PC_next);
+                `ifndef SYNTHESIS
+                    ftrace(PC, PC_next);
+                `endif
             end
 
         end
