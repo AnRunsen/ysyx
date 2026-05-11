@@ -179,7 +179,10 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void itrace(int inst, int pc)
 {
-    instr_cnt ++;
+    if(!bootloader_stage)
+    {
+        instr_cnt ++;
+    }
 #ifdef ITRACE
     char buf[128];
     char *p = buf;
