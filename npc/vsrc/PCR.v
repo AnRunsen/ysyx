@@ -1,6 +1,7 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::ftrace;
+    import PKG::enter_userapp;
 `endif
 
 module PCR(
@@ -16,6 +17,7 @@ module PCR(
     input pc_en,
     output reg [31:0] PC
 );
+
 
     initial begin
         PC = 32'h3000_0000;
@@ -47,6 +49,7 @@ module PCR(
                 PC <= PC_next;
                 `ifndef SYNTHESIS
                     ftrace(PC, PC_next);
+                    enter_userapp(PC_next);
                 `endif
             end
 

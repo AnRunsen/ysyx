@@ -11,6 +11,7 @@ extern bool exit_flag;
 extern uint64_t cycle_cnt;
 extern uint8_t inst_type;
 extern uint8_t stage;
+extern bool bootloader_stage;
 
 typedef struct {
     uint64_t clk_branch;
@@ -71,6 +72,7 @@ void cpu_exec(uint64_t n)
         tfp->dump(cpu->contextp()->time());
 #endif
 
+    if(!bootloader_stage) {
         cycle_cnt++;
         switch(inst_type) {
             case BRANCH: itype_clk_cnt.clk_branch += 1;
@@ -107,7 +109,8 @@ void cpu_exec(uint64_t n)
             case WBU: stclk_cnt.clk_wbu += 1;
             break;
         }
-
+    }
+    
 #ifdef DIFFTEST
         difftest_exec(1);
         CPU_state dut_state;

@@ -8,4 +8,5 @@ package PKG;
     import "DPI-C" function void itype_cnt_update(input byte target);
     import "DPI-C" function void stage_update(input byte target);
     import "DPI-C" function void ihit_num();
+    import "DPI-C" function void enter_userapp(input int npc);
 endpackage
