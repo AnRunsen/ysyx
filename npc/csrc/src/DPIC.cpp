@@ -103,7 +103,10 @@ extern "C" void enter_userapp(uint32_t npc)
 
 extern "C" void ihit_num()
 {
-    ihit_cnt++;
+    if(!bootloader_stage)
+    {
+        ihit_cnt++;
+    }
 }
 
 extern "C" void stage_update(uint8_t target) {
