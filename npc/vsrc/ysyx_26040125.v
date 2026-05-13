@@ -669,7 +669,7 @@ module ysyx_26040125(
 
     ICACHE #(
         .LINE_NUM  	( 16  ),
-        .LINE_SIZE 	( 4   ))
+        .LINE_SIZE 	( 16  ))
     ysyx_26040125_ICACHE(
         .clk           	( clock          ),
         .reset         	( reset          ),
