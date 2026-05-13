@@ -128,7 +128,7 @@ module sdram(
     end
   end
 
-  wire o_en = (state == READ);
+  wire o_en = (state == READ) && (burst_cnt > 0);
 
   assign dq = o_en ? read_data : 16'bz;
 
