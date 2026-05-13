@@ -3,7 +3,7 @@
 `endif
 module ICACHE#(
     parameter LINE_NUM = 16,
-    parameter LINE_SIZE = 4
+    parameter LINE_SIZE = 16
 )(
     input clk,
     input reset,
@@ -93,6 +93,8 @@ module ICACHE#(
 
 
     localparam TAG_SIZE = 32 - $clog2(LINE_NUM) - $clog2(LINE_SIZE);
+    localparam WORDS_PER_LINE = LINE_SIZE / 4;
+    localparam WORDS_SEL_SIZE = $clog2(WORDS_PER_LINE);
     /*unused axi signal(write channel)*/
     assign s_axi_awready = 1'b0;
     assign s_axi_wready = 1'b0;
@@ -141,29 +143,26 @@ module ICACHE#(
         end
     end
 
+
+    /*logic to latch data*/
     reg [3:0] id_reg;
     reg [31:0] addr_reg;
-    reg [7:0] len_reg;
-    reg [2:0] size_reg;
-    reg [1:0] burst_reg;
+    wire [WORDS_SEL_SIZE-1:0] word_sel = s_axi_araddr[$clog2(LINE_SIZE)-1:2];
     always @(posedge clk) begin
         if(reset) begin
             id_reg <= 4'b0;
             addr_reg <= 32'b0;
-            len_reg <= 8'b0;
-            size_reg <= 3'b0;
-            burst_reg <= 2'b0;
         end
         else if(state == IDLE && s_axi_arvalid && s_axi_arready) begin
             id_reg <= s_axi_arid;
             addr_reg <= s_axi_araddr;
-            len_reg <= s_axi_arlen;
-            size_reg <= s_axi_arsize;
-            burst_reg <= s_axi_arburst;
         end
     end
 
+
+    /*logic to update cache*/
     integer i;
+    reg [3:0] recv_counter;
     always @(posedge clk) begin
         if(reset) begin
             for(i = 0; i < LINE_NUM; i = i + 1) begin
@@ -171,25 +170,33 @@ module ICACHE#(
                 tags[i] <= {TAG_SIZE{1'b0}};
                 cache[i] <= {(LINE_SIZE*8){1'b0}};
             end
+            recv_counter <= 4'b0;
         end
         else if(state == WAIT && m_axi_rvalid && m_axi_rready) begin
-            cache[index] <= m_axi_rdata;
+            cache[index][recv_counter*32 +: 32] <= m_axi_rdata;
             tags[index] <= tag;
             valid[index] <= 1'b1;
+            if(m_axi_rlast) begin
+                recv_counter <= 4'b0;
+            end
+            else begin
+                recv_counter <= recv_counter + 1;
+            end
         end
     end
 
     assign s_axi_arready = state == IDLE;
     assign s_axi_rid = id_reg;
-    assign s_axi_rdata = cache[index];
+    assign s_axi_rdata = cache[index][word_sel*32 +: 32];
     assign s_axi_rresp = 2'b00;
     assign s_axi_rlast = 1'b1;
     assign s_axi_rvalid = state == RESP;
+
     assign m_axi_araddr = addr_reg;
     assign m_axi_arvalid = state == REQ;
     assign m_axi_arid = id_reg;
-    assign m_axi_arlen = len_reg;
-    assign m_axi_arsize = size_reg;
-    assign m_axi_arburst = burst_reg;
+    assign m_axi_arlen = WORDS_PER_LINE-1;
+    assign m_axi_arsize = 3'd2;
+    assign m_axi_arburst = 2'b01; // INCR
     assign m_axi_rready = state == WAIT;
 endmodule
