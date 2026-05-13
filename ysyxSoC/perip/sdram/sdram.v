@@ -21,7 +21,6 @@ module sdram(
   reg [12:0] mode_reg;
   reg [ 1:0] bank_sel;
   reg [8:0] col_addr;
-  wire [2:0] CL = mode_reg[6:4];
   wire [3:0] BL = mode_reg[2:0] == 3'b000 ? 4'd1 : 
   mode_reg[2:0] == 3'b001 ? 4'd2 : 
   mode_reg[2:0] == 3'b010 ? 4'd4 : 4'd8;
@@ -56,9 +55,10 @@ module sdram(
   reg [3:0] burst_cnt;
   always @(posedge clk) begin
     if(cke) begin
-      if(state == READ) begin
+      if(state == READ && cmd != 4'b0101) begin
         burst_cnt <= burst_cnt + 4'd1;
-      end else begin
+      end
+      else begin
         burst_cnt <= 0;
       end
     end
@@ -79,11 +79,15 @@ module sdram(
   always @(*) begin
     case(state)
       IDLE: begin
-        next_state = (cmd == 4'b0101) ? (CL == 3'd2 ? READ : WAIT) : (cmd == 4'b0100 ? WRITE : IDLE);
+        next_state = (cmd == 4'b0101) ? READ : (cmd == 4'b0100 ? WRITE : IDLE);
       end
 
       READ: begin
         next_state = (burst_cnt == BL) ? IDLE : READ;
+      end
+
+      WRITE: begin
+        next_state = (write_cnt == BL) ? IDLE : WRITE;
       end
 
       WAIT: begin
