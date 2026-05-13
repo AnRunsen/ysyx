@@ -98,7 +98,8 @@ module LSU(
 `endif
 
     localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
-                READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110;
+                READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 
+                WRITE_REQ = 3'b111;
     reg [2:0] state, next_state;
 
     always @(*) begin
@@ -107,7 +108,7 @@ module LSU(
                 if(s_valid && s_ready) begin
                     if(s_mem_en) begin
                         if(s_mem_write_en) begin
-                            next_state = WRITE_ADDR_REQ;
+                            next_state = WRITE_REQ;
                         end
                         else begin
                             next_state = READ_REQ;
@@ -126,7 +127,7 @@ module LSU(
                 if(s_valid && s_ready) begin
                     if(s_mem_en) begin
                         if(s_mem_write_en) begin
-                            next_state = WRITE_ADDR_REQ;
+                            next_state = WRITE_REQ;
                         end
                         else begin
                             next_state = READ_REQ;
@@ -173,9 +174,27 @@ module LSU(
                 end
             end
 
+            WRITE_REQ: begin
+                if(m_axi_awvalid && m_axi_awready && m_axi_wvalid && m_axi_wready) begin
+                    next_state = WRITE_WAIT;
+                end
+
+                else if(m_axi_awvalid && m_axi_awready) begin
+                    next_state = WRITE_DATA_REQ;
+                end
+
+                else if(m_axi_wvalid && m_axi_wready) begin
+                    next_state = WRITE_ADDR_REQ;
+                end
+
+                else begin
+                    next_state = state;
+                end
+            end
+
             WRITE_ADDR_REQ: begin
                 if(m_axi_awvalid && m_axi_awready) begin
-                    next_state = WRITE_DATA_REQ;
+                    next_state = WRITE_WAIT;
                 end
 
                 else begin
@@ -295,7 +314,7 @@ module LSU(
 
     /*logic to send write addr*/
     assign m_axi_awaddr = result;
-    assign m_axi_awvalid = (state == WRITE_ADDR_REQ);
+    assign m_axi_awvalid = (state == WRITE_ADDR_REQ || state == WRITE_REQ);
     assign m_axi_awid = 4'b0;
     assign m_axi_awlen = 8'b0;
     assign m_axi_awsize = {1'b0, op_width}; //4 bytes
@@ -306,8 +325,8 @@ module LSU(
     assign m_axi_wdata = wdata_;
     assign m_axi_wstrb = (op_width == `OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
                          (op_width == `OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
-    assign m_axi_wvalid = (state == WRITE_DATA_REQ);
-    assign m_axi_wlast = (state == WRITE_DATA_REQ);
+    assign m_axi_wvalid = (state == WRITE_DATA_REQ || state == WRITE_REQ);
+    assign m_axi_wlast = (state == WRITE_DATA_REQ || state == WRITE_REQ);
 
     /*logic to recv read data*/
     assign m_axi_rready = (state == READ_WAIT);
