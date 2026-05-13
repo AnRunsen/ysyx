@@ -134,7 +134,7 @@ module ARB(
             end
 
             R_WORKINGA: begin
-                if(s_axi_rvalid_A && s_axi_rready_A) begin
+                if(s_axi_rvalid_A && s_axi_rready_A && s_axi_rlast_A) begin
                     r_next_state = R_POLLINGB;
                 end
                 else begin
@@ -143,7 +143,7 @@ module ARB(
             end
 
             R_WORKINGB: begin
-                if(s_axi_rvalid_B && s_axi_rready_B) begin
+                if(s_axi_rvalid_B && s_axi_rready_B && s_axi_rlast_B) begin
                     r_next_state = R_POLLINGA;
                 end
                 else begin
