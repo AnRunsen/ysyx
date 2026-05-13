@@ -188,9 +188,10 @@ module XBAR(
     localparam WRITE_IDLE      = 3'b000,
                WRITE_WAIT_ADDR = 3'b001,
                WRITE_WAIT_DATA = 3'b010,
-               WRITE_REQ_ADDR  = 3'b011,
-               WRITE_REQ_DATA  = 3'b100,
-               WRITE_RESP      = 3'b101;
+               WRITE_REQ       = 3'b011,
+               WRITE_REQ_ADDR  = 3'b100,
+               WRITE_REQ_DATA  = 3'b101,
+               WRITE_RESP      = 3'b110;
     reg [2:0] w_state, w_next_state;
     reg w_sel;
 
@@ -198,7 +199,7 @@ module XBAR(
         case (w_state)
             WRITE_IDLE: begin
                 if (s_axi_awvalid && s_axi_awready && s_axi_wvalid && s_axi_wready)
-                    w_next_state = WRITE_REQ_ADDR;
+                    w_next_state = WRITE_REQ;
                 else if (s_axi_awvalid && s_axi_awready)
                     w_next_state = WRITE_WAIT_DATA;
                 else if (s_axi_wvalid && s_axi_wready)
@@ -206,8 +207,30 @@ module XBAR(
                 else
                     w_next_state = WRITE_IDLE;
             end
-            WRITE_WAIT_DATA: w_next_state = (s_axi_wvalid  && s_axi_wready)  ? WRITE_REQ_ADDR : WRITE_WAIT_DATA;
-            WRITE_WAIT_ADDR: w_next_state = (s_axi_awvalid && s_axi_awready) ? WRITE_REQ_ADDR : WRITE_WAIT_ADDR;
+            WRITE_WAIT_DATA: w_next_state = (s_axi_wvalid  && s_axi_wready)  ? WRITE_REQ : WRITE_WAIT_DATA;
+            WRITE_WAIT_ADDR: w_next_state = (s_axi_awvalid && s_axi_awready) ? WRITE_REQ : WRITE_WAIT_ADDR;
+            WRITE_REQ      : begin
+                if (w_sel == 1'b0) begin
+                    if (m_axi_awready_A && m_axi_wready_A && m_axi_awvalid_A && m_axi_wvalid_A)
+                        w_next_state = WRITE_RESP;
+                    else if (m_axi_awready_A && m_axi_awvalid_A)
+                        w_next_state = WRITE_REQ_DATA;
+                    else if (m_axi_wready_A && m_axi_wvalid_A)
+                        w_next_state = WRITE_REQ_ADDR;
+                    else
+                        w_next_state = WRITE_REQ;
+                end
+                else begin
+                    if (m_axi_awready_B && m_axi_wready_B && m_axi_awvalid_B && m_axi_wvalid_B)
+                        w_next_state = WRITE_RESP;
+                    else if (m_axi_awready_B && m_axi_awvalid_B)
+                        w_next_state = WRITE_REQ_DATA;
+                    else if (m_axi_wready_B && m_axi_wvalid_B)
+                        w_next_state = WRITE_REQ_ADDR;
+                    else
+                        w_next_state = WRITE_REQ;
+                end
+            end
             WRITE_REQ_ADDR:  w_next_state = (w_sel == 1'b0 ? m_axi_awready_A : m_axi_awready_B) ? WRITE_REQ_DATA : WRITE_REQ_ADDR;
             WRITE_REQ_DATA:  w_next_state = (w_sel == 1'b0 ? m_axi_wready_A  : m_axi_wready_B)  ? WRITE_RESP     : WRITE_REQ_DATA;
             WRITE_RESP:      w_next_state = (s_axi_bvalid  && s_axi_bready)  ? WRITE_IDLE       : WRITE_RESP;
@@ -267,11 +290,11 @@ module XBAR(
     assign m_axi_awlen_A   = wlen;
     assign m_axi_awsize_A  = wsize;
     assign m_axi_awburst_A = wburst;
-    assign m_axi_awvalid_A = (w_state == WRITE_REQ_ADDR) && (w_sel == 1'b0);
+    assign m_axi_awvalid_A = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b0);
     assign m_axi_wdata_A   = wdata;
     assign m_axi_wstrb_A   = wstrb;
     assign m_axi_wlast_A   = wlast;
-    assign m_axi_wvalid_A  = (w_state == WRITE_REQ_DATA) && (w_sel == 1'b0);
+    assign m_axi_wvalid_A  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b0);
     assign m_axi_bready_A  = (w_state == WRITE_RESP)     && (w_sel == 1'b0) && s_axi_bready;
 
     assign m_axi_awid_B    = w_id;
@@ -279,11 +302,11 @@ module XBAR(
     assign m_axi_awlen_B   = wlen;
     assign m_axi_awsize_B  = wsize;
     assign m_axi_awburst_B = wburst;
-    assign m_axi_awvalid_B = (w_state == WRITE_REQ_ADDR) && (w_sel == 1'b1);
+    assign m_axi_awvalid_B = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b1);
     assign m_axi_wdata_B   = wdata;
     assign m_axi_wstrb_B   = wstrb;
     assign m_axi_wlast_B   = wlast;
-    assign m_axi_wvalid_B  = (w_state == WRITE_REQ_DATA) && (w_sel == 1'b1);
+    assign m_axi_wvalid_B  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b1);
     assign m_axi_bready_B  = (w_state == WRITE_RESP)     && (w_sel == 1'b1) && s_axi_bready;
 
     assign s_axi_bid    = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bid_A    : m_axi_bid_B)    : 4'b0;
