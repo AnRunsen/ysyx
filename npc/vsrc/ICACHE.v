@@ -128,7 +128,7 @@ module ICACHE#(
         case(state)
             IDLE: next_state = (s_axi_arvalid & s_axi_arready) ? (hit ? RESP : REQ) : state;
             REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
-            WAIT: next_state = m_axi_rvalid && m_axi_rready ? RESP : state;
+            WAIT: next_state = m_axi_rvalid && m_axi_rready && m_axi_rlast ? RESP : state;
             RESP: next_state = s_axi_rvalid && s_axi_rready ? IDLE : state;
             default: next_state = IDLE;
         endcase
