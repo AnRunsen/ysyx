@@ -192,7 +192,7 @@ module ICACHE#(
     assign s_axi_rlast = 1'b1;
     assign s_axi_rvalid = state == RESP;
 
-    assign m_axi_araddr = addr_reg;
+    assign m_axi_araddr = {addr_reg[31:4], 4'b0};
     assign m_axi_arvalid = state == REQ;
     assign m_axi_arid = id_reg;
     assign m_axi_arlen = WORDS_PER_LINE-1;
