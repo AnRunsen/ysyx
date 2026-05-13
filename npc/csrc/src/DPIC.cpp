@@ -15,6 +15,7 @@ extern uint8_t vbuf[640*480*4];
 extern uint64_t cycle_cnt;
 extern uint64_t instr_cnt;
 extern uint64_t ihit_cnt;
+extern bool bootloader_stage;
 
 typedef struct {
     uint64_t ifu;
@@ -93,9 +94,19 @@ void sdram_write_laddr(uint32_t addr, uint16_t data) {
     // printf("sdram write: addr=0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, data);
 }
 
+extern "C" void enter_userapp(uint32_t npc)
+{
+    if(npc >= 0xa0000000 && npc <=0xbfffffff) {
+        bootloader_stage = false;
+    }
+}
+
 extern "C" void ihit_num()
 {
-    ihit_cnt++;
+    if(!bootloader_stage)
+    {
+        ihit_cnt++;
+    }
 }
 
 extern "C" void stage_update(uint8_t target) {
@@ -114,41 +125,48 @@ extern "C" void stage_update(uint8_t target) {
 }
 
 extern "C" void itype_cnt_update(uint8_t target) {
-    switch (target) {
-        case 0: itype_cnt.branch++; inst_type = BRANCH;
-        break;
-        case 1: itype_cnt.jal++; inst_type = JAL;
-        break;
-        case 2: itype_cnt.jalr++; inst_type = JALR;
-        break;
-        case 3: itype_cnt.lui++; inst_type = LUI;
-        break;
-        case 4: itype_cnt.auipc++; inst_type = AUIPC;
-        break;
-        case 5: itype_cnt.op++; inst_type = OP;
-        break;
-        case 6: itype_cnt.op_imm++; inst_type = OP_IMM;
-        break;
-        case 7: itype_cnt.load++; inst_type = LOAD;
-        break;
-        case 8: itype_cnt.store++; inst_type = STORE;
-        break;
-        case 9: itype_cnt.system++; inst_type = SYSTEM;
-        break;
+    if(!bootloader_stage)
+    {
+        switch (target) {
+            case 0: itype_cnt.branch++; inst_type = BRANCH;
+            break;
+            case 1: itype_cnt.jal++; inst_type = JAL;
+            break;
+            case 2: itype_cnt.jalr++; inst_type = JALR;
+            break;
+            case 3: itype_cnt.lui++; inst_type = LUI;
+            break;
+            case 4: itype_cnt.auipc++; inst_type = AUIPC;
+            break;
+            case 5: itype_cnt.op++; inst_type = OP;
+            break;
+            case 6: itype_cnt.op_imm++; inst_type = OP_IMM;
+            break;
+            case 7: itype_cnt.load++; inst_type = LOAD;
+            break;
+            case 8: itype_cnt.store++; inst_type = STORE;
+            break;
+            case 9: itype_cnt.system++; inst_type = SYSTEM;
+            break;
+        }
     }
 }
 
 extern "C" void perf_cnt_update(uint8_t target) {
-    switch (target) {
-        case 0: perf_cnt.ifu++;
-        break;
-        case 1: perf_cnt.idu++;
-        break;
-        case 2: perf_cnt.exu++;
-        break;
-        case 3: perf_cnt.lsu++;
-        break;
+    if(!bootloader_stage)
+    {
+        switch (target) {
+            case 0: perf_cnt.ifu++;
+            break;
+            case 1: perf_cnt.idu++;
+            break;
+            case 2: perf_cnt.exu++;
+            break;
+            case 3: perf_cnt.lsu++;
+            break;
+        }
     }
+    
 }
 
 extern "C" void ftrace(int pc, int npc)
@@ -161,7 +179,10 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void itrace(int inst, int pc)
 {
-    instr_cnt ++;
+    if(!bootloader_stage)
+    {
+        instr_cnt ++;
+    }
 #ifdef ITRACE
     char buf[128];
     char *p = buf;
