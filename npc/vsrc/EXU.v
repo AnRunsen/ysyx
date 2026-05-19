@@ -35,6 +35,7 @@ module EXU(
     input s_ecall,
     input s_mret,
     input [31:0] s_PC,
+    input s_fencei,
 
     input s_valid,
     output s_ready,
@@ -61,6 +62,7 @@ module EXU(
     output [31:0] m_result,
     output [31:0] m_PC,
     output [31:0] m_imm,
+    output m_fencei,
 
     output m_valid,
     input m_ready
@@ -103,7 +105,7 @@ module EXU(
     reg ecall;
     reg mret;
     reg [31:0] PC_reg;
-
+    reg fencei;
 
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
@@ -136,6 +138,7 @@ module EXU(
             ecall <= 1'b0;
             mret <= 1'b0;
             PC_reg <= 32'b0;
+            fencei <= 1'b0;
         end
 
         else if(s_valid && s_ready) begin
@@ -166,6 +169,7 @@ module EXU(
             ecall <= s_ecall;
             mret <= s_mret;
             PC_reg <= s_PC;
+            fencei <= s_fencei;
         end
     end
 
@@ -189,6 +193,7 @@ module EXU(
     assign m_srcR2 = srcR2;
     assign m_PC = PC_reg;
     assign m_imm = imm;
+    assign m_fencei = fencei;
 
     reg m_valid_reg;
     assign m_valid = m_valid_reg;

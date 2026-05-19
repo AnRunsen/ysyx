@@ -135,6 +135,7 @@ module ysyx_26040125(
     wire        IDU_m_mret;
     wire [31:0] IDU_m_PC;
     wire        IDU_m_valid;
+    wire        IDU_m_fencei;
     wire [4:0]  IDU_rs1;
     wire [4:0]  IDU_rs2;
 
@@ -160,6 +161,7 @@ module ysyx_26040125(
     wire [31:0] EXU_m_PC;
     wire [31:0] EXU_m_imm;
     wire        EXU_m_valid;
+    wire        EXU_m_fencei;
 
     // LSU outputs
     wire        LSU_s_ready;
@@ -197,6 +199,7 @@ module ysyx_26040125(
     wire        LSU_m_axi_wvalid;
     wire        LSU_m_axi_wlast;
     wire        LSU_m_axi_bready;
+    wire        LSU_cache_flush;
 
     // WBU outputs
     wire        WBU_s_ready;
@@ -477,6 +480,7 @@ module ysyx_26040125(
             .m_ecall        (IDU_m_ecall),
             .m_mret         (IDU_m_mret),
             .m_PC           (IDU_m_PC),
+            .m_fencei       (IDU_m_fencei),
             .m_valid        (IDU_m_valid),
             .m_ready        (EXU_s_ready),
             .rs1            (IDU_rs1),
@@ -511,6 +515,7 @@ module ysyx_26040125(
             .s_ecall        (IDU_m_ecall),
             .s_mret         (IDU_m_mret),
             .s_PC           (IDU_m_PC),
+            .s_fencei       (IDU_m_fencei),
             .s_valid        (IDU_m_valid),
             .s_ready        (EXU_s_ready),
             .m_rd           (EXU_m_rd),
@@ -533,7 +538,8 @@ module ysyx_26040125(
             .m_PC           (EXU_m_PC),
             .m_imm          (EXU_m_imm),
             .m_valid        (EXU_m_valid),
-            .m_ready        (LSU_s_ready)
+            .m_ready        (LSU_s_ready),
+            .m_fencei       (EXU_m_fencei)
         );
 
     LSU ysyx_26040125_LSU(
@@ -558,6 +564,7 @@ module ysyx_26040125(
             .s_result       (EXU_m_result),
             .s_PC           (EXU_m_PC),
             .s_imm          (EXU_m_imm),
+            .s_fencei       (EXU_m_fencei),
             .s_valid        (EXU_m_valid),
             .s_ready        (LSU_s_ready),
             .m_rd           (LSU_m_rd),
@@ -605,7 +612,8 @@ module ysyx_26040125(
             .m_axi_bresp    (ARB_s_axi_bresp_B),
             .m_axi_bvalid   (ARB_s_axi_bvalid_B),
             .m_axi_bid      (ARB_s_axi_bid_B),
-            .m_axi_bready   (LSU_m_axi_bready)
+            .m_axi_bready   (LSU_m_axi_bready),
+            .cache_flush    (LSU_cache_flush)
         );
 
     WBU ysyx_26040125_WBU(
@@ -673,6 +681,9 @@ module ysyx_26040125(
     ysyx_26040125_ICACHE(
         .clk           	( clock          ),
         .reset         	( reset          ),
+
+        .cache_flush    ( LSU_cache_flush ),
+
         .s_axi_arid    	( IFU_m_axi_arid     ),
         .s_axi_araddr  	( IFU_m_axi_araddr   ),
         .s_axi_arlen   	( IFU_m_axi_arlen    ),

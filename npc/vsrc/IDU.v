@@ -44,6 +44,8 @@ module IDU(
     output reg m_mret,
     output [31:0] m_PC,
 
+    output m_fencei,
+
     output m_valid,
     input m_ready,
 
@@ -165,6 +167,7 @@ module IDU(
         m_ecall        = 0;
         m_mret         = 0;
         m_csr_addr     = 0;
+        m_fencei       = 0;
 
         case(opcode)
             7'b1100011: begin //branch  — all share immB / RS1 vs RS2 / PC_BRANCH
@@ -362,6 +365,10 @@ module IDU(
                         `endif
                     end
                 endcase
+            end
+
+            7'b0001111: begin //FENCE
+                m_fencei = (funct3 == 3'b001);
             end
 
             default:begin
