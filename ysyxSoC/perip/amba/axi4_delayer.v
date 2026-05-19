@@ -217,7 +217,7 @@ module axi4_delayer(
       b_delay_cnt <= 32'b0;
     end
     else begin
-      if(out_bready && !b_delay_flag) begin
+      if(out_bvalid && !b_delay_flag) begin
         b_delay_cnt <= b_delay_cnt + (DELAY_RATE - 1);
       end
 
