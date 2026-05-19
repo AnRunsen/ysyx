@@ -8,6 +8,8 @@ module ICACHE#(
     input clk,
     input reset,
 
+    input cache_flush,
+
     input  [3:0]  s_axi_arid,
     input  [31:0] s_axi_araddr,
     input  [7:0]  s_axi_arlen,
@@ -164,7 +166,7 @@ module ICACHE#(
     integer i;
     reg [3:0] recv_counter;
     always @(posedge clk) begin
-        if(reset) begin
+        if(reset || cache_flush) begin
             for(i = 0; i < LINE_NUM; i = i + 1) begin
                 valid[i] <= 1'b0;
                 tags[i] <= {TAG_SIZE{1'b0}};

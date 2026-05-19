@@ -27,6 +27,7 @@ module LSU(
     input [31:0] s_result,
     input [31:0] s_PC,
     input [31:0] s_imm,
+    input s_fencei,
 
     input s_valid,
     output s_ready,
@@ -86,7 +87,10 @@ module LSU(
     input [1:0] m_axi_bresp,
     input m_axi_bvalid,
     input [3:0] m_axi_bid,
-    output m_axi_bready
+    output m_axi_bready,
+
+    /*to interact with icache*/
+    output cache_flush
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -242,6 +246,7 @@ module LSU(
     reg [31:0] result;
     reg [31:0] PC;
     reg [31:0] imm;
+    reg fencei;
     
     /*logic to recv data*/
     assign s_ready = (state == IDLE) || (state == PASS && m_ready && m_valid);
@@ -264,6 +269,7 @@ module LSU(
             result <= 32'b0;
             PC <= 32'b0;
             imm <= 32'b0;
+            fencei <= 1'b0;
         end
 
         else if(s_valid && s_ready) begin
@@ -284,6 +290,7 @@ module LSU(
             result <= s_result;
             PC <= s_PC;
             imm <= s_imm;
+            fencei <= s_fencei;
         end
     end
 
@@ -303,6 +310,7 @@ module LSU(
     assign m_PC = PC;
     assign m_imm = imm;
     assign m_valid = (state == PASS);
+    assign cache_flush = (state == PASS) && fencei;
 
     /*logic to send read addr*/
     assign m_axi_araddr = result;
