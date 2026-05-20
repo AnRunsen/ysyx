@@ -2,7 +2,9 @@ module ysyx_26040125(
         input  clock,
         input  reset,
 
+        /*verilator lint_off UNUSEDSIGNAL*/
         input io_interrupt,
+        /*verilator lint_on UNUSEDSIGNAL*/
 
         // AXI4 Master port
         input         io_master_awready,
@@ -36,6 +38,8 @@ module ysyx_26040125(
         input  [3:0]  io_master_rid,
 
         // AXI4 Slave port
+
+        /*verilator lint_off UNUSEDSIGNAL*/
         output        io_slave_awready,
         input         io_slave_awvalid,
         input  [31:0] io_slave_awaddr,
@@ -65,6 +69,8 @@ module ysyx_26040125(
         output [31:0] io_slave_rdata,
         output        io_slave_rlast,
         output [3:0]  io_slave_rid
+
+        /*verilator lint_on UNUSEDSIGNAL*/
     );
 
     // Slave port: outputs = 0, inputs left unconnected
@@ -136,8 +142,11 @@ module ysyx_26040125(
     wire [31:0] IDU_m_PC;
     wire        IDU_m_valid;
     wire        IDU_m_fencei;
+
+    /*verilator lint_off UNUSEDSIGNAL*/
     wire [4:0]  IDU_rs1;
     wire [4:0]  IDU_rs2;
+    /*verilator lint_on UNUSEDSIGNAL*/
 
     // EXU outputs
     wire        EXU_s_ready;
@@ -162,6 +171,8 @@ module ysyx_26040125(
     wire [31:0] EXU_m_imm;
     wire        EXU_m_valid;
     wire        EXU_m_fencei;
+    wire [4:0]  EXU_rd_exu;
+    wire        EXU_working_exu;
 
     // LSU outputs
     wire        LSU_s_ready;
@@ -200,12 +211,16 @@ module ysyx_26040125(
     wire        LSU_m_axi_wlast;
     wire        LSU_m_axi_bready;
     wire        LSU_cache_flush;
+    wire [4:0]  LSU_rd_lsu;
+    wire        LSU_working_lsu;
 
     // WBU outputs
     wire        WBU_s_ready;
     wire        WBU_wen;
     wire [31:0] WBU_wdata;
+    /*verilator lint_off UNUSEDSIGNAL*/
     wire [4:0]  WBU_waddr;
+    /*verilator lint_on UNUSEDSIGNAL*/
     wire [11:0] WBU_csr_addr_;
     wire [31:0] WBU_csr_srcR1_;
     wire [31:0] WBU_csr_alu_res_;
@@ -223,6 +238,8 @@ module ysyx_26040125(
     wire [1:0]  WBU_pcr_behavior;
     wire        WBU_pcr_pc_en;
     wire        WBU_next_inst;
+    wire [4:0]  WBU_rd_wbu;
+    wire        WBU_working_wbu;
 
     // CSR outputs
     wire [31:0] CSR_rdata;
@@ -488,7 +505,13 @@ module ysyx_26040125(
             .srcR1_in       (GPR_rdata1),
             .srcR2_in       (GPR_rdata2),
             .csr_data       (CSR_rdata),
-            .csr_addr       (IDU_csr_addr)
+            .csr_addr       (IDU_csr_addr),
+            .rd_exu         (EXU_rd_exu),
+            .working_exu    (EXU_working_exu),
+            .rd_lsu         (LSU_rd_lsu),
+            .working_lsu    (LSU_working_lsu),
+            .rd_wbu         (WBU_rd_wbu),
+            .working_wbu    (WBU_working_wbu)
         );
 
     EXU ysyx_26040125_EXU(
@@ -539,7 +562,9 @@ module ysyx_26040125(
             .m_imm          (EXU_m_imm),
             .m_valid        (EXU_m_valid),
             .m_ready        (LSU_s_ready),
-            .m_fencei       (EXU_m_fencei)
+            .m_fencei       (EXU_m_fencei),
+            .rd_exu         (EXU_rd_exu),
+            .working_exu    (EXU_working_exu)
         );
 
     LSU ysyx_26040125_LSU(
@@ -613,7 +638,9 @@ module ysyx_26040125(
             .m_axi_bvalid   (ARB_s_axi_bvalid_B),
             .m_axi_bid      (ARB_s_axi_bid_B),
             .m_axi_bready   (LSU_m_axi_bready),
-            .cache_flush    (LSU_cache_flush)
+            .cache_flush    (LSU_cache_flush),
+            .rd_lsu         (LSU_rd_lsu),
+            .working_lsu    (LSU_working_lsu)
         );
 
     WBU ysyx_26040125_WBU(
@@ -655,7 +682,9 @@ module ysyx_26040125(
             .pcr_mepc       (WBU_pcr_mepc),
             .pcr_behavior   (WBU_pcr_behavior),
             .pcr_pc_en      (WBU_pcr_pc_en),
-            .next_inst      (WBU_next_inst)
+            .next_inst      (WBU_next_inst),
+            .rd_wbu         (WBU_rd_wbu),
+            .working_wbu    (WBU_working_wbu)
         );
 
     CSR ysyx_26040125_CSR(

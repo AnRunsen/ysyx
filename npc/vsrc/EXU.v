@@ -65,8 +65,12 @@ module EXU(
     output m_fencei,
 
     output m_valid,
-    input m_ready
+    input m_ready,
     /*send data end*/
+
+    /*To the RAW module*/
+    output [4:0] rd_exu,
+    output working_exu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -76,6 +80,22 @@ module EXU(
         end
     end
 `endif
+
+    reg working_reg;
+    always @(posedge clk) begin
+        if(reset) begin
+            working_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            working_reg <= 1'b1;
+        end
+        else if(m_ready && m_valid) begin
+            working_reg <= 1'b0;
+        end
+    end
+
+    assign rd_exu = rd;
+    assign working_exu = working_reg;
 
 
     reg [4:0] rd;

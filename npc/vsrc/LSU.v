@@ -90,7 +90,11 @@ module LSU(
     output m_axi_bready,
 
     /*to interact with icache*/
-    output cache_flush
+    output cache_flush,
+
+    /*To the RAW module*/
+    output [4:0] rd_lsu,
+    output working_lsu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -100,6 +104,24 @@ module LSU(
         end
     end
 `endif
+
+    reg working_reg;
+    always @(posedge clk) begin
+        if(reset) begin
+            working_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            working_reg <= 1'b1;
+        end
+        else if(m_ready && m_valid) begin
+            working_reg <= 1'b0;
+        end
+    end
+
+    assign rd_lsu = rd;
+    assign working_lsu = working_reg;
+
+
 
     localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
                 READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 

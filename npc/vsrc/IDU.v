@@ -55,7 +55,15 @@ module IDU(
     output [11:0] csr_addr,
     input [31:0] srcR1_in,
     input [31:0] srcR2_in,
-    input [31:0] csr_data
+    input [31:0] csr_data,
+
+    /*handle the RAW*/
+    input [4:0] rd_exu,
+    input working_exu,
+    input [4:0] rd_lsu,
+    input working_lsu,
+    input [4:0] rd_wbu,
+    input working_wbu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -79,10 +87,28 @@ module IDU(
     end
 `endif
 
+
+    /*handle the RAW*/
+    wire       	stall;
+    reg need_rs2;
+    RAW u_RAW(
+        .rs1         	( rs1          ),
+        .rs2         	( rs2          ),
+        .need_rs2    	( need_rs2     ),
+        .rd_exu      	( rd_exu       ),
+        .working_exu 	( working_exu  ),
+        .rd_lsu      	( rd_lsu       ),
+        .working_lsu 	( working_lsu  ),
+        .rd_wbu      	( rd_wbu       ),
+        .working_wbu 	( working_wbu  ),
+        .stall       	( stall       )
+    );
+
+
     /*logic to recv data*/
     reg [31:0] inst_reg;
     reg [31:0] pc_reg;
-    assign s_ready = !m_valid || (m_valid & m_ready);
+    assign s_ready = (!m_valid || (m_valid & m_ready)) && !stall;
     always @(posedge clk) begin
         if(reset) begin
             inst_reg <= 32'b0;
@@ -99,7 +125,7 @@ module IDU(
     /*logic to send data*/
     assign m_PC = pc_reg;
     reg valid_reg;
-    assign m_valid = valid_reg;
+    assign m_valid = valid_reg && !stall;
     always @(posedge clk) begin
         if(reset) begin
             valid_reg <= 1'b0;
@@ -168,6 +194,7 @@ module IDU(
         m_mret         = 0;
         m_csr_addr     = 0;
         m_fencei       = 0;
+        need_rs2       = 0;
 
         case(opcode)
             7'b1100011: begin //branch  — all share immB / RS1 vs RS2 / PC_BRANCH
@@ -175,6 +202,7 @@ module IDU(
                 m_alu_sel0 = `ALU_SEL_RS1;
                 m_alu_sel1 = `ALU_SEL_RS2;
                 m_brju     = `PC_BRANCH;
+                need_rs2   = 1;
                 case(funct3)
                     3'b000: m_alu_op = `ALU_OP_EQ;   //beq
                     3'b001: m_alu_op = `ALU_OP_NE;   //bne
@@ -184,7 +212,7 @@ module IDU(
                     3'b111: m_alu_op = `ALU_OP_GEU;  //bgeu
                     default:begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -210,7 +238,7 @@ module IDU(
                     end
                     default:begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -236,6 +264,7 @@ module IDU(
                 m_wb_sel   = `WB_SEL_ALU;
                 m_alu_sel0 = `ALU_SEL_RS1;
                 m_alu_sel1 = `ALU_SEL_RS2;
+                need_rs2   = 1;
                 case(funct3)
                     3'b000: m_alu_op = (funct7 == 7'b0100000) ? `ALU_OP_SUB : `ALU_OP_ADD; //add/sub
                     3'b001: m_alu_op = `ALU_OP_SLL;  //sll
@@ -247,7 +276,7 @@ module IDU(
                     3'b111: m_alu_op = `ALU_OP_AND;  //and
                     default:begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -270,7 +299,7 @@ module IDU(
                     3'b111: m_alu_op = `ALU_OP_AND;  //andi
                     default:begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -292,7 +321,7 @@ module IDU(
                     3'b101: begin m_op_width = `OP_WIDTH_HALF; m_mem_signext = 0; end //lhu
                     default:begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -305,13 +334,14 @@ module IDU(
                 m_alu_sel0     = `ALU_SEL_RS1;
                 m_alu_sel1     = `ALU_SEL_IMM;
                 m_mem_en       = 1;
+                need_rs2       = 1;
                 case(funct3)
                     3'b000: m_op_width = `OP_WIDTH_BYTE; //sb
                     3'b001: m_op_width = `OP_WIDTH_HALF; //sh
                     3'b010: m_op_width = `OP_WIDTH_WORD; //sw
                     default:begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -322,7 +352,7 @@ module IDU(
                     3'b000: begin
                         if(funct7 == 7'b0000000 && rs2 == 5'b00001) begin
                             `ifndef SYNTHESIS
-                                if(m_valid) sim_exit(m_srcR1); //ebreak
+                                if(valid_reg) sim_exit(m_srcR1); //ebreak
                             `endif
                         end
                         else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //m_ecall
@@ -335,7 +365,7 @@ module IDU(
                         end
                         else begin
                             `ifndef SYNTHESIS
-                                if(m_valid) sim_exit(inst_reg);
+                                if(valid_reg) sim_exit(inst_reg);
                             `endif
                         end
                         
@@ -361,7 +391,7 @@ module IDU(
                     end
                     default: begin
                         `ifndef SYNTHESIS
-                            if(m_valid) sim_exit(inst_reg);
+                            if(valid_reg) sim_exit(inst_reg);
                         `endif
                     end
                 endcase
@@ -373,7 +403,7 @@ module IDU(
 
             default:begin
                 `ifndef SYNTHESIS
-                    if(m_valid) sim_exit(inst_reg);
+                    if(valid_reg) sim_exit(inst_reg);
                 `endif
             end
         endcase 

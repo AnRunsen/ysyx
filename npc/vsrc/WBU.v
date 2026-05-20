@@ -54,8 +54,12 @@ module WBU(
     output pcr_pc_en,
 
     /*data to send*/
-    output next_inst
+    output next_inst,
     /*data to send end*/
+
+    /*To the RAW module*/
+    output [4:0] rd_wbu,
+    output working_wbu
 );
 
 `ifndef SYNTHESIS
@@ -65,6 +69,23 @@ module WBU(
         end
     end
 `endif
+
+    reg working_reg;
+    always @(posedge clk) begin
+        if(reset) begin
+            working_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            working_reg <= 1'b1;
+        end
+        else begin
+            working_reg <= 1'b0;
+        end
+    end
+
+    assign rd_wbu = rd;
+    assign working_wbu = working_reg;
+
 
     localparam IDLE = 1'b0, VALID = 1'b1;
     reg state, next_state;
