@@ -71,7 +71,7 @@ module EXU(
     output working_exu,
 
     /*handle the jmp or branch*/
-    output [1:0] brju_exu,
+    output ifu_stall,
 
     /*Interact with the PCR*/
     output [31:0] pcr_exu_result,
@@ -91,23 +91,9 @@ module EXU(
     end
 `endif
 
-    assign brju_exu = brju;
-
-    reg working_reg;
-    always @(posedge clk) begin
-        if(reset) begin
-            working_reg <= 1'b0;
-        end
-        else if(s_valid && s_ready) begin
-            working_reg <= 1'b1;
-        end
-        else if(m_ready && m_valid) begin
-            working_reg <= 1'b0;
-        end
-    end
-
+    assign ifu_stall = (brju != `PC_NORMAL || ecall || mret) && working_exu;
     assign rd_exu = rd;
-    assign working_exu = working_reg;
+    assign working_exu = m_valid;
 
 
     reg [4:0] rd;

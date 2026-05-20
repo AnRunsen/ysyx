@@ -53,10 +53,10 @@ module IFU(
     output m_axi_bready,
 
     /*handle the jmp or branch*/
-    input [1:0] brju_idu,
-    input working_idu,
-    input [1:0] brju_exu,
-    input working_exu
+    input stall_idu,
+    input stall_exu,
+
+    output pc_update
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -67,7 +67,8 @@ module IFU(
     end
 `endif
 
-    wire stall = (brju_idu != `PC_NORMAL && working_idu) || (brju_exu != `PC_NORMAL && working_exu);
+    wire stall = stall_idu || stall_exu;
+    assign pc_update = m_valid && m_ready;
 
     localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
     reg [1:0] state, next_state;
@@ -135,7 +136,7 @@ module IFU(
     /*logic to send data*/
     assign m_Inst = m_axi_rdata_reg;
     assign m_PC = PC;
-    assign m_valid = (state == PASS) && !stall;
+    assign m_valid = state == PASS;
 
 
 endmodule

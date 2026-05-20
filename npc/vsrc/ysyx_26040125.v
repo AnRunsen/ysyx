@@ -111,6 +111,7 @@ module ysyx_26040125(
     wire        IFU_m_axi_wvalid;
     wire        IFU_m_axi_wlast;
     wire        IFU_m_axi_bready;
+    wire        IFU_pc_update;
 
     // GPR outputs
     wire [31:0] GPR_rdata1;
@@ -142,11 +143,11 @@ module ysyx_26040125(
     wire [31:0] IDU_m_PC;
     wire        IDU_m_valid;
     wire        IDU_m_fencei;
-
     /*verilator lint_off UNUSEDSIGNAL*/
     wire [4:0]  IDU_rs1;
     wire [4:0]  IDU_rs2;
     /*verilator lint_on UNUSEDSIGNAL*/
+    wire        IDU_ifu_stall;
 
     // EXU outputs
     wire        EXU_s_ready;
@@ -156,14 +157,12 @@ module ysyx_26040125(
     wire        EXU_m_mem_write_en;
     wire [1:0]  EXU_m_op_width;
     wire [2:0]  EXU_m_wb_sel;
-    wire [1:0]  EXU_m_brju;
     wire        EXU_m_mem_signext;
     wire [11:0] EXU_m_csr_addr;
     wire [31:0] EXU_m_csr_data;
     wire        EXU_m_csr_wr_sel;
     wire        EXU_m_csr_wen;
     wire        EXU_m_ecall;
-    wire        EXU_m_mret;
     wire [31:0] EXU_m_srcR1;
     wire [31:0] EXU_m_srcR2;
     wire [31:0] EXU_m_result;
@@ -173,19 +172,26 @@ module ysyx_26040125(
     wire        EXU_m_fencei;
     wire [4:0]  EXU_rd_exu;
     wire        EXU_working_exu;
+    wire        EXU_ifu_stall;
+    wire [31:0] EXU_pcr_exu_result;
+    wire [31:0] EXU_pcr_imm;
+    wire        EXU_pcr_ecall;
+    wire        EXU_pcr_mret;
+    wire [31:0] EXU_pcr_mtvec;
+    wire [31:0] EXU_pcr_mepc;
+    wire [1:0]  EXU_pcr_behavior;
+
 
     // LSU outputs
     wire        LSU_s_ready;
     wire [4:0]  LSU_m_rd;
     wire        LSU_m_wb_en;
     wire [2:0]  LSU_m_wb_sel;
-    wire [1:0]  LSU_m_brju;
     wire [11:0] LSU_m_csr_addr;
     wire [31:0] LSU_m_csr_data;
     wire        LSU_m_csr_wr_sel;
     wire        LSU_m_csr_wen;
     wire        LSU_m_ecall;
-    wire        LSU_m_mret;
     wire [31:0] LSU_m_srcR1;
     wire [31:0] LSU_m_result;
     wire [31:0] LSU_m_rdata;
@@ -229,15 +235,6 @@ module ysyx_26040125(
     wire        WBU_csr_ecall_;
     wire [31:0] WBU_csr_epc_;
     wire [31:0] WBU_csr_cause_;
-    wire [31:0] WBU_pcr_exu_result;
-    wire [31:0] WBU_pcr_imm;
-    wire        WBU_pcr_ecall;
-    wire        WBU_pcr_mret;
-    wire [31:0] WBU_pcr_mtvec;
-    wire [31:0] WBU_pcr_mepc;
-    wire [1:0]  WBU_pcr_behavior;
-    wire        WBU_pcr_pc_en;
-    wire        WBU_next_inst;
     wire [4:0]  WBU_rd_wbu;
     wire        WBU_working_wbu;
 
@@ -406,21 +403,20 @@ module ysyx_26040125(
     PCR ysyx_26040125_PCR(
             .clk         (clock),
             .reset       (reset),
-            .exu_result  (WBU_pcr_exu_result),
-            .imm         (WBU_pcr_imm),
-            .ecall       (WBU_pcr_ecall),
-            .mret        (WBU_pcr_mret),
-            .mtvec       (WBU_pcr_mtvec),
-            .mepc        (WBU_pcr_mepc),
-            .behavior    (WBU_pcr_behavior),
-            .pc_en       (WBU_pcr_pc_en),
-            .PC          (PCR_PC)
+            .exu_result  (EXU_pcr_exu_result),
+            .imm         (EXU_pcr_imm),
+            .ecall       (EXU_pcr_ecall),
+            .mret        (EXU_pcr_mret),
+            .mtvec       (EXU_pcr_mtvec),
+            .mepc        (EXU_pcr_mepc),
+            .behavior    (EXU_pcr_behavior),
+            .PC          (PCR_PC),
+            .pc_update   (IFU_pc_update)
         );
 
     IFU ysyx_26040125_IFU(
             .clk            (clock),
             .reset          (reset),
-            .next_inst      (WBU_next_inst),
             .m_Inst         (IFU_m_Inst),
             .m_PC           (IFU_m_PC),
             .m_valid        (IFU_m_valid),
@@ -454,7 +450,10 @@ module ysyx_26040125(
             .m_axi_bresp    (ICACHE_s_axi_bresp),
             .m_axi_bvalid   (ICACHE_s_axi_bvalid),
             .m_axi_bid      (ICACHE_s_axi_bid),
-            .m_axi_bready   (IFU_m_axi_bready)
+            .m_axi_bready   (IFU_m_axi_bready),
+            .stall_idu      (IDU_ifu_stall),
+            .stall_exu      (EXU_ifu_stall),
+            .pc_update      (IFU_pc_update)
         );
 
     GPR ysyx_26040125_GPR(
@@ -511,7 +510,8 @@ module ysyx_26040125(
             .rd_lsu         (LSU_rd_lsu),
             .working_lsu    (LSU_working_lsu),
             .rd_wbu         (WBU_rd_wbu),
-            .working_wbu    (WBU_working_wbu)
+            .working_wbu    (WBU_working_wbu),
+            .ifu_stall      (IDU_ifu_stall)
         );
 
     EXU ysyx_26040125_EXU(
@@ -547,14 +547,12 @@ module ysyx_26040125(
             .m_mem_write_en (EXU_m_mem_write_en),
             .m_op_width     (EXU_m_op_width),
             .m_wb_sel       (EXU_m_wb_sel),
-            .m_brju         (EXU_m_brju),
             .m_mem_signext  (EXU_m_mem_signext),
             .m_csr_addr     (EXU_m_csr_addr),
             .m_csr_data     (EXU_m_csr_data),
             .m_csr_wr_sel   (EXU_m_csr_wr_sel),
             .m_csr_wen      (EXU_m_csr_wen),
             .m_ecall        (EXU_m_ecall),
-            .m_mret         (EXU_m_mret),
             .m_srcR1        (EXU_m_srcR1),
             .m_srcR2        (EXU_m_srcR2),
             .m_result       (EXU_m_result),
@@ -564,7 +562,15 @@ module ysyx_26040125(
             .m_ready        (LSU_s_ready),
             .m_fencei       (EXU_m_fencei),
             .rd_exu         (EXU_rd_exu),
-            .working_exu    (EXU_working_exu)
+            .working_exu    (EXU_working_exu),
+            .ifu_stall      (EXU_ifu_stall),
+            .pcr_exu_result (EXU_pcr_exu_result),
+            .pcr_imm        (EXU_pcr_imm),
+            .pcr_ecall      (EXU_pcr_ecall),
+            .pcr_mret       (EXU_pcr_mret),
+            .pcr_mtvec      (EXU_pcr_mtvec),
+            .pcr_mepc       (EXU_pcr_mepc),
+            .pcr_behavior   (EXU_pcr_behavior)
         );
 
     LSU ysyx_26040125_LSU(
@@ -576,14 +582,12 @@ module ysyx_26040125(
             .s_mem_write_en (EXU_m_mem_write_en),
             .s_op_width     (EXU_m_op_width),
             .s_wb_sel       (EXU_m_wb_sel),
-            .s_brju         (EXU_m_brju),
             .s_mem_signext  (EXU_m_mem_signext),
             .s_csr_addr     (EXU_m_csr_addr),
             .s_csr_data     (EXU_m_csr_data),
             .s_csr_wr_sel   (EXU_m_csr_wr_sel),
             .s_csr_wen      (EXU_m_csr_wen),
             .s_ecall        (EXU_m_ecall),
-            .s_mret         (EXU_m_mret),
             .s_srcR1        (EXU_m_srcR1),
             .s_srcR2        (EXU_m_srcR2),
             .s_result       (EXU_m_result),
@@ -595,13 +599,11 @@ module ysyx_26040125(
             .m_rd           (LSU_m_rd),
             .m_wb_en        (LSU_m_wb_en),
             .m_wb_sel       (LSU_m_wb_sel),
-            .m_brju         (LSU_m_brju),
             .m_csr_addr     (LSU_m_csr_addr),
             .m_csr_data     (LSU_m_csr_data),
             .m_csr_wr_sel   (LSU_m_csr_wr_sel),
             .m_csr_wen      (LSU_m_csr_wen),
             .m_ecall        (LSU_m_ecall),
-            .m_mret         (LSU_m_mret),
             .m_srcR1        (LSU_m_srcR1),
             .m_result       (LSU_m_result),
             .m_rdata        (LSU_m_rdata),
@@ -649,13 +651,11 @@ module ysyx_26040125(
             .s_rd           (LSU_m_rd),
             .s_wb_en        (LSU_m_wb_en),
             .s_wb_sel       (LSU_m_wb_sel),
-            .s_brju         (LSU_m_brju),
             .s_csr_addr     (LSU_m_csr_addr),
             .s_csr_data     (LSU_m_csr_data),
             .s_csr_wr_sel   (LSU_m_csr_wr_sel),
             .s_csr_wen      (LSU_m_csr_wen),
             .s_ecall        (LSU_m_ecall),
-            .s_mret         (LSU_m_mret),
             .s_srcR1        (LSU_m_srcR1),
             .s_result       (LSU_m_result),
             .s_rdata        (LSU_m_rdata),
@@ -674,15 +674,6 @@ module ysyx_26040125(
             .csr_ecall_     (WBU_csr_ecall_),
             .csr_epc_       (WBU_csr_epc_),
             .csr_cause_     (WBU_csr_cause_),
-            .pcr_exu_result (WBU_pcr_exu_result),
-            .pcr_imm        (WBU_pcr_imm),
-            .pcr_ecall      (WBU_pcr_ecall),
-            .pcr_mret       (WBU_pcr_mret),
-            .pcr_mtvec      (WBU_pcr_mtvec),
-            .pcr_mepc       (WBU_pcr_mepc),
-            .pcr_behavior   (WBU_pcr_behavior),
-            .pcr_pc_en      (WBU_pcr_pc_en),
-            .next_inst      (WBU_next_inst),
             .rd_wbu         (WBU_rd_wbu),
             .working_wbu    (WBU_working_wbu)
         );

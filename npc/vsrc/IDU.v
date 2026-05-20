@@ -66,8 +66,7 @@ module IDU(
     input working_wbu,
 
     /*handle the jmp or branch*/
-    output [1:0] brju_idu,
-    output working_idu
+    output ifu_stall
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -91,11 +90,10 @@ module IDU(
     end
 `endif
 
-    assign brju_idu = m_brju;
-    assign working_idu = valid_reg;
+    assign ifu_stall = (m_brju != `PC_NORMAL || m_ecall || m_mret) && valid_reg;
 
     /*handle the RAW*/
-    wire       	stall;
+    wire stall;
     reg need_rs2;
     RAW u_RAW(
         .rs1         	( rs1          ),
