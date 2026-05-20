@@ -3,11 +3,12 @@
     import PKG::perf_cnt_update;
     import PKG::stage_update;
 `endif
+
+`include "MACRO.v"
+
 module IFU(
     input clk,
     input reset,
-
-    input next_inst,
 
     output [31:0] m_Inst,
     output [31:0] m_PC,
@@ -49,7 +50,13 @@ module IFU(
     input [1:0] m_axi_bresp,
     input m_axi_bvalid,
     input [3:0] m_axi_bid,
-    output m_axi_bready
+    output m_axi_bready,
+
+    /*handle the jmp or branch*/
+    input [1:0] brju_idu,
+    input working_idu,
+    input [1:0] brju_exu,
+    input working_exu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -60,11 +67,13 @@ module IFU(
     end
 `endif
 
+    wire stall = (brju_idu != `PC_NORMAL && working_idu) || (brju_exu != `PC_NORMAL && working_exu);
+
     localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
     reg [1:0] state, next_state;
     always @(*) begin
         case(state)
-            IDLE: next_state = next_inst ? REQ : state;
+            IDLE: next_state = !stall ? REQ : state;
             REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
             WAIT: next_state = m_axi_rvalid && m_axi_rready ? PASS : state;
             PASS: next_state = m_valid && m_ready ? IDLE : state;
@@ -126,7 +135,7 @@ module IFU(
     /*logic to send data*/
     assign m_Inst = m_axi_rdata_reg;
     assign m_PC = PC;
-    assign m_valid = state == PASS;
+    assign m_valid = (state == PASS) && !stall;
 
 
 endmodule

@@ -49,14 +49,12 @@ module EXU(
     output m_mem_write_en,
     output [1:0] m_op_width,
     output [2:0] m_wb_sel,
-    output [1:0] m_brju,
     output m_mem_signext,
     output [11:0] m_csr_addr,
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
     output m_ecall,
-    output m_mret,
     output [31:0] m_srcR1,
     output [31:0] m_srcR2,
     output [31:0] m_result,
@@ -65,8 +63,24 @@ module EXU(
     output m_fencei,
 
     output m_valid,
-    input m_ready
+    input m_ready,
     /*send data end*/
+
+    /*To the RAW module*/
+    output [4:0] rd_exu,
+    output working_exu,
+
+    /*handle the jmp or branch*/
+    output [1:0] brju_exu,
+
+    /*Interact with the PCR*/
+    output [31:0] pcr_exu_result,
+    output [31:0] pcr_imm,
+    output pcr_ecall,
+    output pcr_mret,
+    output [31:0] pcr_mtvec,
+    output [31:0] pcr_mepc,
+    output [1:0] pcr_behavior
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -76,6 +90,24 @@ module EXU(
         end
     end
 `endif
+
+    assign brju_exu = brju;
+
+    reg working_reg;
+    always @(posedge clk) begin
+        if(reset) begin
+            working_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            working_reg <= 1'b1;
+        end
+        else if(m_ready && m_valid) begin
+            working_reg <= 1'b0;
+        end
+    end
+
+    assign rd_exu = rd;
+    assign working_exu = working_reg;
 
 
     reg [4:0] rd;
@@ -181,14 +213,12 @@ module EXU(
     assign m_mem_write_en = mem_write_en;
     assign m_op_width = op_width;
     assign m_wb_sel = wb_sel;
-    assign m_brju = brju;
     assign m_mem_signext = mem_signext;
     assign m_csr_addr = csr_addr;
     assign m_csr_data = csr_data;
     assign m_csr_wr_sel = csr_wr_sel;
     assign m_csr_wen = csr_wen;
     assign m_ecall = ecall;
-    assign m_mret = mret;
     assign m_srcR1 = srcR1;
     assign m_srcR2 = srcR2;
     assign m_PC = PC_reg;
@@ -228,5 +258,13 @@ module EXU(
         .Opcode(alu_op),
         .Result(m_result)
     );
+
+    assign pcr_exu_result = m_result;
+    assign pcr_imm = imm;
+    assign pcr_ecall = ecall;
+    assign pcr_mret = mret;
+    assign pcr_mtvec = csr_data;
+    assign pcr_mepc = csr_data;
+    assign pcr_behavior = brju;
 
 endmodule

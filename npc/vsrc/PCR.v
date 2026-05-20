@@ -14,7 +14,6 @@ module PCR(
     input [31:0] mtvec,
     input [31:0] mepc,
     input [1:0] behavior,
-    input pc_en,
     output reg [31:0] PC
 );
 
@@ -45,13 +44,11 @@ module PCR(
         end
 
         else begin
-            if(pc_en) begin
-                PC <= PC_next;
-                `ifndef SYNTHESIS
-                    ftrace(PC, PC_next);
-                    enter_userapp(PC_next);
-                `endif
-            end
+            PC <= PC_next;
+            `ifndef SYNTHESIS
+                ftrace(PC, PC_next);
+                enter_userapp(PC_next);
+            `endif
 
         end
     end

@@ -14,14 +14,12 @@ module LSU(
     input s_mem_write_en,
     input [1:0] s_op_width,
     input [2:0] s_wb_sel,
-    input [1:0] s_brju,
     input s_mem_signext,
     input [11:0] s_csr_addr,
     input [31:0] s_csr_data,
     input s_csr_wr_sel,
     input s_csr_wen,
     input s_ecall,
-    input s_mret,
     input [31:0] s_srcR1,
     input [31:0] s_srcR2,
     input [31:0] s_result,
@@ -37,13 +35,11 @@ module LSU(
     output [4:0] m_rd,
     output m_wb_en,
     output [2:0] m_wb_sel,
-    output [1:0] m_brju,
     output [11:0] m_csr_addr,
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
     output m_ecall,
-    output m_mret,
     output [31:0] m_srcR1,
     output [31:0] m_result,
     output [31:0] m_rdata,
@@ -90,7 +86,11 @@ module LSU(
     output m_axi_bready,
 
     /*to interact with icache*/
-    output cache_flush
+    output cache_flush,
+
+    /*To the RAW module*/
+    output [4:0] rd_lsu,
+    output working_lsu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -100,6 +100,24 @@ module LSU(
         end
     end
 `endif
+
+    reg working_reg;
+    always @(posedge clk) begin
+        if(reset) begin
+            working_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            working_reg <= 1'b1;
+        end
+        else if(m_ready && m_valid) begin
+            working_reg <= 1'b0;
+        end
+    end
+
+    assign rd_lsu = rd;
+    assign working_lsu = working_reg;
+
+
 
     localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
                 READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 
@@ -233,14 +251,12 @@ module LSU(
     reg wb_en;
     reg [1:0] op_width;
     reg [2:0] wb_sel;
-    reg [1:0] brju;
     reg mem_signext;
     reg [11:0] csr_addr;
     reg [31:0] csr_data;
     reg csr_wr_sel;
     reg csr_wen;
     reg ecall;
-    reg mret;
     reg [31:0] srcR1;
     reg [31:0] srcR2;
     reg [31:0] result;
@@ -256,7 +272,6 @@ module LSU(
             wb_en <= 1'b0;
             op_width <= 2'b0;
             wb_sel <= 3'b0;
-            brju <= 2'b0;
             mem_signext <= 1'b0;
             csr_addr <= 12'b0;
             csr_data <= 32'b0;
@@ -265,7 +280,6 @@ module LSU(
             ecall <= 1'b0;
             srcR1 <= 32'b0;
             srcR2 <= 32'b0;
-            mret <= 1'b0;
             result <= 32'b0;
             PC <= 32'b0;
             imm <= 32'b0;
@@ -277,7 +291,6 @@ module LSU(
             wb_en <= s_wb_en;
             op_width <= s_op_width;
             wb_sel <= s_wb_sel;
-            brju <= s_brju;
             mem_signext <= s_mem_signext;
             csr_addr <= s_csr_addr;
             csr_data <= s_csr_data;
@@ -285,7 +298,6 @@ module LSU(
             csr_wen <= s_csr_wen;
             srcR1 <= s_srcR1;
             ecall <= s_ecall;
-            mret <= s_mret;
             srcR2 <= s_srcR2;
             result <= s_result;
             PC <= s_PC;
@@ -298,13 +310,11 @@ module LSU(
     assign m_rd = rd;
     assign m_wb_en = wb_en;
     assign m_wb_sel = wb_sel;
-    assign m_brju = brju;
     assign m_csr_addr = csr_addr;
     assign m_csr_data = csr_data;
     assign m_csr_wr_sel = csr_wr_sel;
     assign m_csr_wen = csr_wen;
     assign m_ecall = ecall;
-    assign m_mret = mret;
     assign m_srcR1 = srcR1;
     assign m_result = result;
     assign m_PC = PC;

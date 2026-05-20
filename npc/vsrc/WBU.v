@@ -11,13 +11,11 @@ module WBU(
     input [4:0] s_rd,
     input s_wb_en,
     input [2:0] s_wb_sel,
-    input [1:0] s_brju,
     input [11:0] s_csr_addr,
     input [31:0] s_csr_data,
     input s_csr_wr_sel,
     input s_csr_wen,
     input s_ecall,
-    input s_mret,
     input [31:0] s_srcR1,
     input [31:0] s_result,
     input [31:0] s_rdata,
@@ -43,28 +41,27 @@ module WBU(
     output [31:0] csr_epc_,
     output [31:0] csr_cause_,
 
-    /*To PCR*/
-    output [31:0] pcr_exu_result,
-    output [31:0] pcr_imm,
-    output pcr_ecall,
-    output pcr_mret,
-    output [31:0] pcr_mtvec,
-    output [31:0] pcr_mepc,
-    output [1:0] pcr_behavior,
-    output pcr_pc_en,
-
-    /*data to send*/
-    output next_inst
-    /*data to send end*/
+    /*To the RAW module*/
+    output [4:0] rd_wbu,
+    output working_wbu
 );
 
-`ifndef SYNTHESIS
+    reg working_reg;
     always @(posedge clk) begin
-        if(next_inst) begin
-            stage_update(0);
+        if(reset) begin
+            working_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            working_reg <= 1'b1;
+        end
+        else begin
+            working_reg <= 1'b0;
         end
     end
-`endif
+
+    assign rd_wbu = rd;
+    assign working_wbu = working_reg;
+
 
     localparam IDLE = 1'b0, VALID = 1'b1;
     reg state, next_state;
@@ -89,13 +86,11 @@ module WBU(
     reg [4:0] rd;
     reg wb_en;
     reg [2:0] wb_sel;
-    reg [1:0] brju;
     reg [11:0] csr_addr;
     reg [31:0] csr_data;
     reg csr_wr_sel;
     reg csr_wen;
     reg csr_ecall;
-    reg mret;
     reg [31:0] srcR1;
     reg [31:0] result;
     reg [31:0] rdata;
@@ -107,13 +102,11 @@ module WBU(
             rd <= 5'b0;
             wb_en <= 1'b0;
             wb_sel <= 3'b0;
-            brju <= 2'b0;
             csr_addr <= 12'b0;
             csr_data <= 32'b0;
             csr_wr_sel <= 1'b0;
             csr_wen <= 1'b0;
             csr_ecall <= 1'b0;
-            mret <= 1'b0;
             srcR1 <= 32'b0;
             result <= 32'b0;
             rdata <= 32'b0;
@@ -125,13 +118,11 @@ module WBU(
             rd <= s_rd;
             wb_en <= s_wb_en;
             wb_sel <= s_wb_sel;
-            brju <= s_brju;
             csr_addr <= s_csr_addr;
             csr_data <= s_csr_data;
             csr_wr_sel <= s_csr_wr_sel;
             csr_wen <= s_csr_wen;
             csr_ecall <= s_ecall;
-            mret <= s_mret;
             srcR1 <= s_srcR1;
             result <= s_result;
             rdata <= s_rdata;
@@ -139,8 +130,6 @@ module WBU(
             imm <= s_imm;
         end
     end
-
-    assign next_inst = state == VALID;
 
     /*interact with GPR*/
     assign wen = wb_en & (state == VALID);
@@ -166,17 +155,6 @@ module WBU(
     assign csr_ecall_ = csr_ecall;
     assign csr_epc_ = PC;
     assign csr_cause_ = srcR1;
-
-
-    /*interact with PCR*/
-    assign pcr_exu_result = result;
-    assign pcr_imm = imm;
-    assign pcr_ecall = csr_ecall;
-    assign pcr_mret = mret;
-    assign pcr_mtvec = csr_data;
-    assign pcr_mepc = csr_data;
-    assign pcr_behavior = brju;
-    assign pcr_pc_en = (state == VALID);
 
 
 endmodule
