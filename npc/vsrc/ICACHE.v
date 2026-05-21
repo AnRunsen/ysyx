@@ -149,7 +149,7 @@ module ICACHE#(
     /*logic to latch data*/
     reg [3:0] id_reg;
     reg [31:0] addr_reg;
-    wire [WORDS_SEL_SIZE-1:0] word_sel = s_axi_araddr[$clog2(LINE_SIZE)-1:2];
+    wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
     always @(posedge clk) begin
         if(reset) begin
             id_reg <= 4'b0;
