@@ -1,7 +1,6 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
-    import PKG::stage_update;
 `endif
 module EXU(
     input clk,
@@ -49,14 +48,12 @@ module EXU(
     output m_mem_write_en,
     output [1:0] m_op_width,
     output [2:0] m_wb_sel,
-    output [1:0] m_brju,
     output m_mem_signext,
     output [11:0] m_csr_addr,
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
     output m_ecall,
-    output m_mret,
     output [31:0] m_srcR1,
     output [31:0] m_srcR2,
     output [31:0] m_result,
@@ -70,32 +67,39 @@ module EXU(
 
     /*To the RAW module*/
     output [4:0] rd_exu,
-    output working_exu
+    output working_exu,
+
+
+    /*To PCR*/
+    output [31:0] pcr_exu_result,
+    output [31:0] pcr_imm,
+    output pcr_ecall,
+    output pcr_mret,
+    output [31:0] pcr_mtvec,
+    output [31:0] pcr_mepc,
+    output [1:0] pcr_behavior,
+    output [31:0] pcr_pc_now,
+    output flush
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
-            stage_update(3);
         end
     end
 `endif
 
-    reg working_reg;
-    always @(posedge clk) begin
-        if(reset) begin
-            working_reg <= 1'b0;
-        end
-        else if(s_valid && s_ready) begin
-            working_reg <= 1'b1;
-        end
-        else if(m_ready && m_valid) begin
-            working_reg <= 1'b0;
-        end
-    end
-
+    assign flush = working_exu && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret);
+    assign pcr_exu_result = m_result;
+    assign pcr_imm = imm;
+    assign pcr_ecall = ecall;
+    assign pcr_mret = mret;
+    assign pcr_mtvec = csr_data;
+    assign pcr_mepc = csr_data;
+    assign pcr_behavior = brju;
+    assign pcr_pc_now = PC_reg;
     assign rd_exu = rd;
-    assign working_exu = working_reg;
+    assign working_exu = valid_reg;
 
 
     reg [4:0] rd;
@@ -201,33 +205,31 @@ module EXU(
     assign m_mem_write_en = mem_write_en;
     assign m_op_width = op_width;
     assign m_wb_sel = wb_sel;
-    assign m_brju = brju;
     assign m_mem_signext = mem_signext;
     assign m_csr_addr = csr_addr;
     assign m_csr_data = csr_data;
     assign m_csr_wr_sel = csr_wr_sel;
     assign m_csr_wen = csr_wen;
     assign m_ecall = ecall;
-    assign m_mret = mret;
     assign m_srcR1 = srcR1;
     assign m_srcR2 = srcR2;
     assign m_PC = PC_reg;
     assign m_imm = imm;
     assign m_fencei = fencei;
 
-    reg m_valid_reg;
-    assign m_valid = m_valid_reg;
+    reg valid_reg;
+    assign m_valid = valid_reg;
 
     always @(posedge clk) begin
         if(reset) begin
-            m_valid_reg <= 1'b0;
+            valid_reg <= 1'b0;
         end
         else begin
             if(s_valid && s_ready) begin
-                m_valid_reg <= 1'b1;
+                valid_reg <= 1'b1;
             end
             else if(m_ready && m_valid) begin
-                m_valid_reg <= 1'b0;
+                valid_reg <= 1'b0;
             end
         end
 

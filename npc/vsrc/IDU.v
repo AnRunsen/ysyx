@@ -2,12 +2,12 @@
 `ifndef SYNTHESIS
     import PKG::sim_exit;
     import PKG::perf_cnt_update;
-    import PKG::itype_cnt_update;
-    import PKG::stage_update;
 `endif
 module IDU(
     input clk,
     input reset,
+
+    input flush,
 
     /* explict ports*/
     input [31:0] s_Inst,
@@ -69,20 +69,6 @@ module IDU(
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(1);
-            stage_update(2);
-            case(opcode)
-                7'b1100011: itype_cnt_update(0); //branch
-                7'b1101111: itype_cnt_update(1); //jal
-                7'b1100111: itype_cnt_update(2); //jalr
-                7'b0110111: itype_cnt_update(3); //lui
-                7'b0010111: itype_cnt_update(4); //auipc
-                7'b0110011: itype_cnt_update(5); //OP
-                7'b0010011: itype_cnt_update(6); //OP-IMM
-                7'b0000011: itype_cnt_update(7); //LOAD
-                7'b0100011: itype_cnt_update(8); //STORE
-                7'b1110011: itype_cnt_update(9); //SYSTEM
-                default: itype_cnt_update(10); //OTHER
-            endcase
         end
     end
 `endif
@@ -125,14 +111,17 @@ module IDU(
     /*logic to send data*/
     assign m_PC = pc_reg;
     reg valid_reg;
-    assign m_valid = valid_reg && !stall;
+    assign m_valid = valid_reg && !stall && !flush;
     always @(posedge clk) begin
         if(reset) begin
             valid_reg <= 1'b0;
         end
 
         else begin
-            if(s_valid & s_ready) begin
+            if(flush) begin
+                valid_reg <= 1'b0;
+            end
+            else if(s_valid & s_ready) begin
                 valid_reg <= 1'b1;
             end
             else if(m_valid & m_ready) begin
@@ -160,7 +149,7 @@ module IDU(
     assign m_srcR2 = srcR2_in;
 
 
-    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd15) : s_Inst[19:15];
+    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd15) : inst_reg[19:15];
     assign rs2 = inst_reg[24:20];
     assign m_rd = inst_reg[11:7];
     assign opcode = inst_reg[6:0];

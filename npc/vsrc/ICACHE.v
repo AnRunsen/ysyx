@@ -1,5 +1,6 @@
 `ifndef SYNTHESIS
     import PKG::ihit_num;
+    import PKG::ifetch_num;
 `endif
 module ICACHE#(
     parameter LINE_NUM = 16,
@@ -87,8 +88,11 @@ module ICACHE#(
 
     `ifndef SYNTHESIS
         always @(posedge clk) begin
-            if(state == IDLE && s_axi_arvalid && s_axi_arready && hit) begin
-                ihit_num();
+            if(state == IDLE && s_axi_arvalid && s_axi_arready) begin
+                if(hit) begin
+                    ihit_num();
+                end
+                ifetch_num();
             end
         end
     `endif
@@ -149,15 +153,21 @@ module ICACHE#(
     /*logic to latch data*/
     reg [3:0] id_reg;
     reg [31:0] addr_reg;
-    wire [WORDS_SEL_SIZE-1:0] word_sel = s_axi_araddr[$clog2(LINE_SIZE)-1:2];
+    reg [$clog2(LINE_NUM)-1:0] index_reg;
+    reg [TAG_SIZE-1:0] tag_reg;
+    wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
     always @(posedge clk) begin
         if(reset) begin
             id_reg <= 4'b0;
             addr_reg <= 32'b0;
+            index_reg <= 0;
+            tag_reg <= 0;
         end
         else if(state == IDLE && s_axi_arvalid && s_axi_arready) begin
             id_reg <= s_axi_arid;
             addr_reg <= s_axi_araddr;
+            index_reg <= index;
+            tag_reg <= tag;
         end
     end
 
@@ -175,9 +185,9 @@ module ICACHE#(
             recv_counter <= 4'b0;
         end
         else if(state == WAIT && m_axi_rvalid && m_axi_rready) begin
-            cache[index][recv_counter*32 +: 32] <= m_axi_rdata;
-            tags[index] <= tag;
-            valid[index] <= 1'b1;
+            cache[index_reg][recv_counter*32 +: 32] <= m_axi_rdata;
+            tags[index_reg] <= tag_reg;
+            valid[index_reg] <= 1'b1;
             if(m_axi_rlast) begin
                 recv_counter <= 4'b0;
             end
@@ -189,7 +199,7 @@ module ICACHE#(
 
     assign s_axi_arready = state == IDLE;
     assign s_axi_rid = id_reg;
-    assign s_axi_rdata = cache[index][word_sel*32 +: 32];
+    assign s_axi_rdata = cache[index_reg][word_sel*32 +: 32];
     assign s_axi_rresp = 2'b00;
     assign s_axi_rlast = 1'b1;
     assign s_axi_rvalid = state == RESP;

@@ -18,6 +18,7 @@ uint8_t vbuf[640*480*4]; // 640*480 vga buffer
 uint64_t cycle_cnt = 0;
 uint64_t instr_cnt = 0;
 uint64_t ihit_cnt = 0;
+uint64_t ifetch_cnt = 0;
 bool bootloader_stage = true;
 
 bool exit_flag = false;
