@@ -63,9 +63,11 @@ module IFU(
         if(m_valid && m_ready) begin
             perf_cnt_update(0);
             stage_update(1);
+            itrace(m_axi_rdata, m_PC);
         end
     end
 `endif
+
 
     assign pc_en = m_valid && m_ready;
 
@@ -116,9 +118,6 @@ module IFU(
         else begin
             if(m_axi_rready && m_axi_rvalid) begin
                 m_axi_rdata_reg <= m_axi_rdata;
-                `ifndef SYNTHESIS
-                    itrace(m_axi_rdata, PC);
-                `endif
             end
         end
     end
