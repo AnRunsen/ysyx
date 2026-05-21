@@ -91,7 +91,7 @@ module EXU(
     end
 `endif
 
-    assign flush = (brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret;
+    assign flush = working_exu && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret);
     assign pcr_exu_result = m_result;
     assign pcr_imm = imm;
     assign pcr_ecall = ecall;
