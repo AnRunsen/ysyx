@@ -127,7 +127,7 @@ module IDU(
     /*logic to send data*/
     assign m_PC = pc_reg;
     reg valid_reg;
-    assign m_valid = valid_reg && !stall;
+    assign m_valid = valid_reg && !stall && !flush;
     always @(posedge clk) begin
         if(reset) begin
             valid_reg <= 1'b0;
