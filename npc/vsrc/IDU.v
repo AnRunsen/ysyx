@@ -9,6 +9,8 @@ module IDU(
     input clk,
     input reset,
 
+    input flush,
+
     /* explict ports*/
     input [31:0] s_Inst,
     input [31:0] s_PC,
@@ -63,10 +65,7 @@ module IDU(
     input [4:0] rd_lsu,
     input working_lsu,
     input [4:0] rd_wbu,
-    input working_wbu,
-
-    /*handle the jmp or branch*/
-    output ifu_stall
+    input working_wbu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -90,10 +89,9 @@ module IDU(
     end
 `endif
 
-    assign ifu_stall = (m_brju != `PC_NORMAL || m_ecall || m_mret) && valid_reg;
 
     /*handle the RAW*/
-    wire stall;
+    wire       	stall;
     reg need_rs2;
     RAW u_RAW(
         .rs1         	( rs1          ),
@@ -136,7 +134,10 @@ module IDU(
         end
 
         else begin
-            if(s_valid & s_ready) begin
+            if(flush) begin
+                valid_reg <= 1'b0;
+            end
+            else if(s_valid & s_ready) begin
                 valid_reg <= 1'b1;
             end
             else if(m_valid & m_ready) begin

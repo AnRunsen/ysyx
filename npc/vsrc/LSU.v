@@ -406,7 +406,9 @@ module LSU(
 
 endmodule
 
+/* verilator lint_off DECLFILENAME */
 module ext8(
+/* verilator lint_on DECLFILENAME */
     input [7:0] data_i,
     input sign,
     output [31:0] data_o

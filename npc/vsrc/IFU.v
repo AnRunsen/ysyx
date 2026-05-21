@@ -3,9 +3,6 @@
     import PKG::perf_cnt_update;
     import PKG::stage_update;
 `endif
-
-`include "MACRO.v"
-
 module IFU(
     input clk,
     input reset,
@@ -17,6 +14,8 @@ module IFU(
 
     input [31:0] PC,
 
+    input flush,
+
     //axi interface to RAM
     output [31:0] m_axi_araddr,
     output m_axi_arvalid,
@@ -27,11 +26,15 @@ module IFU(
     output [1:0] m_axi_arburst,
 
     input [31:0] m_axi_rdata,
+    /*verilator lint_off UNUSED*/
     input [1:0] m_axi_rresp,
     input [3:0] m_axi_rid,
     input m_axi_rlast,
+    /*verilator lint_on UNUSED*/
     input m_axi_rvalid,
     output m_axi_rready,
+
+    /*verilator lint_off UNUSED*/
 
     output [31:0] m_axi_awaddr,
     output m_axi_awvalid,
@@ -51,12 +54,9 @@ module IFU(
     input m_axi_bvalid,
     input [3:0] m_axi_bid,
     output m_axi_bready,
+    /*verilator lint_on UNUSED*/
 
-    /*handle the jmp or branch*/
-    input stall_idu,
-    input stall_exu,
-
-    output pc_update
+    output pc_en
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -67,17 +67,17 @@ module IFU(
     end
 `endif
 
-    wire stall = stall_idu || stall_exu;
-    assign pc_update = m_valid && m_ready;
+    assign pc_en = m_valid && m_ready;
 
-    localparam IDLE = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
+
+    localparam FLUSH = 2'b00, REQ = 2'b01, WAIT = 2'b10, PASS = 2'b11;
     reg [1:0] state, next_state;
     always @(*) begin
         case(state)
-            IDLE: next_state = !stall ? REQ : state;
-            REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
-            WAIT: next_state = m_axi_rvalid && m_axi_rready ? PASS : state;
-            PASS: next_state = m_valid && m_ready ? IDLE : state;
+            FLUSH: next_state = m_axi_rvalid && m_axi_rready ? REQ : state;
+            REQ: next_state = m_axi_arvalid && m_axi_arready ? (flush ? FLUSH : WAIT) : state;
+            WAIT: next_state = m_axi_rvalid && m_axi_rready ? (flush ? REQ : PASS) : (flush ? FLUSH : state);
+            PASS: next_state = m_valid && m_ready ? REQ : state;
             default: next_state = REQ;
         endcase
     end
@@ -107,7 +107,7 @@ module IFU(
 
     /*logic to recv rdata*/
     reg [31:0] m_axi_rdata_reg;
-    assign m_axi_rready = state == WAIT;
+    assign m_axi_rready = state == WAIT || state == FLUSH;
     always @(posedge clk) begin
         if(reset) begin
             m_axi_rdata_reg <= 32'b0;

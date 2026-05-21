@@ -111,7 +111,7 @@ module ysyx_26040125(
     wire        IFU_m_axi_wvalid;
     wire        IFU_m_axi_wlast;
     wire        IFU_m_axi_bready;
-    wire        IFU_pc_update;
+    wire        IFU_pc_en;
 
     // GPR outputs
     wire [31:0] GPR_rdata1;
@@ -143,11 +143,11 @@ module ysyx_26040125(
     wire [31:0] IDU_m_PC;
     wire        IDU_m_valid;
     wire        IDU_m_fencei;
+
     /*verilator lint_off UNUSEDSIGNAL*/
     wire [4:0]  IDU_rs1;
     wire [4:0]  IDU_rs2;
     /*verilator lint_on UNUSEDSIGNAL*/
-    wire        IDU_ifu_stall;
 
     // EXU outputs
     wire        EXU_s_ready;
@@ -172,7 +172,6 @@ module ysyx_26040125(
     wire        EXU_m_fencei;
     wire [4:0]  EXU_rd_exu;
     wire        EXU_working_exu;
-    wire        EXU_ifu_stall;
     wire [31:0] EXU_pcr_exu_result;
     wire [31:0] EXU_pcr_imm;
     wire        EXU_pcr_ecall;
@@ -180,7 +179,7 @@ module ysyx_26040125(
     wire [31:0] EXU_pcr_mtvec;
     wire [31:0] EXU_pcr_mepc;
     wire [1:0]  EXU_pcr_behavior;
-
+    wire        EXU_flush;
 
     // LSU outputs
     wire        LSU_s_ready;
@@ -410,8 +409,9 @@ module ysyx_26040125(
             .mtvec       (EXU_pcr_mtvec),
             .mepc        (EXU_pcr_mepc),
             .behavior    (EXU_pcr_behavior),
+            .pc_en       (IFU_pc_en),
             .PC          (PCR_PC),
-            .pc_update   (IFU_pc_update)
+            .flush       (EXU_flush)
         );
 
     IFU ysyx_26040125_IFU(
@@ -451,9 +451,8 @@ module ysyx_26040125(
             .m_axi_bvalid   (ICACHE_s_axi_bvalid),
             .m_axi_bid      (ICACHE_s_axi_bid),
             .m_axi_bready   (IFU_m_axi_bready),
-            .stall_idu      (IDU_ifu_stall),
-            .stall_exu      (EXU_ifu_stall),
-            .pc_update      (IFU_pc_update)
+            .flush          (EXU_flush),
+            .pc_en          (IFU_pc_en)
         );
 
     GPR ysyx_26040125_GPR(
@@ -511,7 +510,7 @@ module ysyx_26040125(
             .working_lsu    (LSU_working_lsu),
             .rd_wbu         (WBU_rd_wbu),
             .working_wbu    (WBU_working_wbu),
-            .ifu_stall      (IDU_ifu_stall)
+            .flush          (EXU_flush)
         );
 
     EXU ysyx_26040125_EXU(
@@ -563,14 +562,14 @@ module ysyx_26040125(
             .m_fencei       (EXU_m_fencei),
             .rd_exu         (EXU_rd_exu),
             .working_exu    (EXU_working_exu),
-            .ifu_stall      (EXU_ifu_stall),
             .pcr_exu_result (EXU_pcr_exu_result),
-            .pcr_imm        (EXU_pcr_imm),
-            .pcr_ecall      (EXU_pcr_ecall),
-            .pcr_mret       (EXU_pcr_mret),
-            .pcr_mtvec      (EXU_pcr_mtvec),
-            .pcr_mepc       (EXU_pcr_mepc),
-            .pcr_behavior   (EXU_pcr_behavior)
+            .pcr_imm        (EXU_pcr_imm       ),
+            .pcr_ecall      (EXU_pcr_ecall     ),
+            .pcr_mret       (EXU_pcr_mret      ),
+            .pcr_mtvec      (EXU_pcr_mtvec     ),
+            .pcr_mepc       (EXU_pcr_mepc      ),
+            .pcr_behavior   (EXU_pcr_behavior  ),
+            .flush          (EXU_flush         )
         );
 
     LSU ysyx_26040125_LSU(
