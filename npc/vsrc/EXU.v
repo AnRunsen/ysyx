@@ -227,10 +227,7 @@ module EXU(
             valid_reg <= 1'b0;
         end
         else begin
-            if(flush) begin
-                valid_reg <= 1'b0;
-            end
-            else if(s_valid && s_ready) begin
+            if(s_valid && s_ready) begin
                 valid_reg <= 1'b1;
             end
             else if(m_ready && m_valid) begin
