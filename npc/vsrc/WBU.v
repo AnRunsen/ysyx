@@ -1,7 +1,4 @@
 `include "MACRO.v"
-`ifndef SYNTHESIS
-    import PKG::stage_update;
-`endif
 
 module WBU(
     input clk,

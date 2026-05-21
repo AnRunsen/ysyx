@@ -1,7 +1,6 @@
 `ifndef SYNTHESIS
     import PKG::itrace;
     import PKG::perf_cnt_update;
-    import PKG::stage_update;
 `endif
 module IFU(
     input clk,
@@ -62,7 +61,6 @@ module IFU(
     always @(posedge clk) begin
         if(m_valid && m_ready) begin
             perf_cnt_update(0);
-            stage_update(1);
             itrace(m_axi_rdata, m_PC);
         end
     end

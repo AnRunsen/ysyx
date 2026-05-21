@@ -1,7 +1,6 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
-    import PKG::stage_update;
 `endif
 module EXU(
     input clk,
@@ -86,7 +85,6 @@ module EXU(
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
-            stage_update(3);
         end
     end
 `endif
