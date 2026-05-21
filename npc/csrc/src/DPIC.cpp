@@ -200,7 +200,7 @@ extern "C" void itrace(int inst, int pc)
 
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
-    printf("Inst to be exe:%s\n", buf);
+    printf("Inst to be exe:%s\n\n", buf);
 #endif
 }
 
