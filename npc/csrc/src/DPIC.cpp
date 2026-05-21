@@ -184,6 +184,8 @@ extern "C" void itrace(int inst, int pc)
         instr_cnt ++;
     }
 #ifdef ITRACE
+    printf("PC: 0x%08x, Instruction: 0x%08x\n", pc, inst);
+
     char buf[128];
     char *p = buf;
     p += snprintf(p, sizeof(buf), "%08x:", pc);
