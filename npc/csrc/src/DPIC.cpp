@@ -15,6 +15,7 @@ extern uint8_t vbuf[640*480*4];
 extern uint64_t cycle_cnt;
 extern uint64_t instr_cnt;
 extern uint64_t ihit_cnt;
+extern uint64_t ifetch_cnt;
 extern bool bootloader_stage;
 
 typedef struct {
@@ -64,7 +65,13 @@ extern "C" void ihit_num()
     }
 }
 
-
+extern "C" void ifetch_num()
+{
+    if(!bootloader_stage)
+    {
+        ifetch_cnt++;
+    }
+}
 
 extern "C" void perf_cnt_update(uint8_t target) {
     if(!bootloader_stage)
@@ -170,7 +177,7 @@ extern "C" void sim_exit(int code)
     printf("  EXU: \t%lu\n", perf_cnt.exu);
     printf("  LSU: \t%lu\n", perf_cnt.lsu);
     printf("============================\n");
-    printf("  Num of iCache hit: %lu\t%f%%\033[0m\n", ihit_cnt, (double)ihit_cnt / (double)instr_cnt * 100);
+    printf("  Num of iCache hit: %lu\t%f%%\033[0m\n", ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
 
     if (code == 0)
     {

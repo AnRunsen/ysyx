@@ -1,5 +1,6 @@
 `ifndef SYNTHESIS
     import PKG::ihit_num;
+    import PKG::ifetch_num;
 `endif
 module ICACHE#(
     parameter LINE_NUM = 16,
@@ -87,8 +88,11 @@ module ICACHE#(
 
     `ifndef SYNTHESIS
         always @(posedge clk) begin
-            if(state == IDLE && s_axi_arvalid && s_axi_arready && hit) begin
-                ihit_num();
+            if(state == IDLE && s_axi_arvalid && s_axi_arready) begin
+                if(hit) begin
+                    ihit_num();
+                end
+                ifetch_num();
             end
         end
     `endif
