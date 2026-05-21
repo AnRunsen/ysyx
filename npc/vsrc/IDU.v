@@ -97,6 +97,7 @@ module IDU(
         .rs1         	( rs1          ),
         .rs2         	( rs2          ),
         .need_rs2    	( need_rs2     ),
+        .working_idu 	( valid_reg    ),
         .rd_exu      	( rd_exu       ),
         .working_exu 	( working_exu  ),
         .rd_lsu      	( rd_lsu       ),
