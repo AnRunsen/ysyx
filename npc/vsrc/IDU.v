@@ -165,7 +165,7 @@ module IDU(
     assign m_srcR2 = srcR2_in;
 
 
-    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd15) : s_Inst[19:15];
+    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd15) : inst_reg[19:15];
     assign rs2 = inst_reg[24:20];
     assign m_rd = inst_reg[11:7];
     assign opcode = inst_reg[6:0];
