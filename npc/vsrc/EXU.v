@@ -79,6 +79,7 @@ module EXU(
     output [31:0] pcr_mtvec,
     output [31:0] pcr_mepc,
     output [1:0] pcr_behavior,
+    output [31:0] pcr_pc_now,
     output flush
 );
 `ifndef SYNTHESIS
@@ -98,7 +99,7 @@ module EXU(
     assign pcr_mtvec = csr_data;
     assign pcr_mepc = csr_data;
     assign pcr_behavior = brju;
-
+    assign pcr_pc_now = PC_reg;
     assign rd_exu = rd;
     assign working_exu = valid_reg;
 

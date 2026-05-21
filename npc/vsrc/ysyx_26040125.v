@@ -180,6 +180,7 @@ module ysyx_26040125(
     wire [31:0] EXU_pcr_mepc;
     wire [1:0]  EXU_pcr_behavior;
     wire        EXU_flush;
+    wire [31:0] EXU_pcr_pc_now;
 
     // LSU outputs
     wire        LSU_s_ready;
@@ -411,6 +412,7 @@ module ysyx_26040125(
             .behavior    (EXU_pcr_behavior),
             .pc_en       (IFU_pc_en),
             .PC          (PCR_PC),
+            .pc_now      (EXU_pcr_pc_now),
             .flush       (EXU_flush)
         );
 
@@ -569,6 +571,7 @@ module ysyx_26040125(
             .pcr_mtvec      (EXU_pcr_mtvec     ),
             .pcr_mepc       (EXU_pcr_mepc      ),
             .pcr_behavior   (EXU_pcr_behavior  ),
+            .pcr_pc_now     (EXU_pcr_pc_now    ),
             .flush          (EXU_flush         )
         );
 
