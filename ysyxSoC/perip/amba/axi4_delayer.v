@@ -1,4 +1,4 @@
-`define DELAYER_ENABLE
+// `define DELAYER_ENABLE
 module axi4_delayer(
   input         clock,
   input         reset,
