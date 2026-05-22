@@ -49,21 +49,21 @@ void cpu_exec(uint64_t n)
 
         if(!bootloader_stage) {
             cycle_cnt++;
+
+            uint8_t ifu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IFU__DOT__state == 0b11;
+            uint8_t idu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__s_valid;
+            uint8_t exu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__valid_reg;
+            uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__state == 0b01;
+            uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__state == 0b01;
+
+            printf("| %s | %s | %s | %s | %s |\n",
+                ifu_valid ? "\033[32mIFU\033[0m" : "   ",
+                idu_valid ? "\033[32mIDU\033[0m" : "   ",
+                exu_valid ? "\033[32mEXU\033[0m" : "   ",
+                lsu_valid ? "\033[32mLSU\033[0m" : "   ",
+                wbu_valid ? "\033[32mWBU\033[0m" : "   ");
+            fflush(stdout);
         }
-
-        uint8_t ifu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IFU__DOT__state == 0b11;
-        uint8_t idu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__s_valid;
-        uint8_t exu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__valid_reg;
-        uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__state == 0b01;
-        uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__state == 0b01;
-
-        printf("| %s | %s | %s | %s | %s |\n",
-            ifu_valid ? "\033[32mIFU\033[0m" : "   ",
-            idu_valid ? "\033[32mIDU\033[0m" : "   ",
-            exu_valid ? "\033[32mEXU\033[0m" : "   ",
-            lsu_valid ? "\033[32mLSU\033[0m" : "   ",
-            wbu_valid ? "\033[32mWBU\033[0m" : "   ");
-        fflush(stdout);
     
 #ifdef DIFFTEST
         difftest_exec(1);
