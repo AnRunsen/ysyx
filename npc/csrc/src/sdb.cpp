@@ -6,6 +6,8 @@
 #include "cpu-exe.hpp"
 #include "DPIC.hpp"
 #include "reg.hpp"
+#include "VysyxSoCFull.h"
+#include "VysyxSoCFull___024root.h"
 
 static int is_batch_mode = false;
 extern VysyxSoCFull* cpu;
