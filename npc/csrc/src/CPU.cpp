@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     #endif
     }
 
-    // sdb_set_batch_mode();
+    sdb_set_batch_mode();
 
     sdb_mainloop();
 

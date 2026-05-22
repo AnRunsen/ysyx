@@ -6,11 +6,8 @@
 #include "cpu-exe.hpp"
 #include "DPIC.hpp"
 #include "reg.hpp"
-#include "VysyxSoCFull.h"
-#include "VysyxSoCFull___024root.h"
 
 static int is_batch_mode = false;
-extern VysyxSoCFull* cpu;
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -53,25 +50,6 @@ static int cmd_si(char *args) {
       cpu_exec(num);
     }
   }
-
-
-  uint8_t ifu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IFU__DOT__state == 0b11;
-  putchar(" *"[ifu_valid]);
-
-  uint8_t idu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__s_valid;
-  putchar(" *"[idu_valid]);
-
-  uint8_t exu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__valid_reg;
-  putchar(" *"[exu_valid]);
-
-  uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__state == 0b01;
-  putchar(" *"[lsu_valid]);
-
-  uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__state == 0b01;
-  putchar(" *"[wbu_valid]);
-
-  putchar('\n');
-
   return 0;
 }
 
