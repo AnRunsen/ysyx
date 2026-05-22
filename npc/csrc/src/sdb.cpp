@@ -8,6 +8,7 @@
 #include "reg.hpp"
 
 static int is_batch_mode = false;
+extern VysyxSoCFull* cpu;
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -51,7 +52,9 @@ static int cmd_si(char *args) {
     }
   }
 
-  printf("%3s: 0x%08x ", regs[idx], cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[idx]);
+
+  bool ifu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IFU__DOT__state == 0b11;
+  putchar(" *"[ifu_valid]);
 
   return 0;
 }
