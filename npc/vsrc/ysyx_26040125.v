@@ -171,7 +171,9 @@ module ysyx_26040125(
     wire        EXU_m_valid;
     wire        EXU_m_fencei;
     wire [4:0]  EXU_rd_exu;
-    wire        EXU_working_exu;
+    wire [11:0] EXU_csr_exu;
+    wire        EXU_rd_valid_exu;
+    wire        EXU_csr_valid_exu;
     wire [31:0] EXU_pcr_exu_result;
     wire [31:0] EXU_pcr_imm;
     wire        EXU_pcr_ecall;
@@ -218,7 +220,9 @@ module ysyx_26040125(
     wire        LSU_m_axi_bready;
     wire        LSU_cache_flush;
     wire [4:0]  LSU_rd_lsu;
-    wire        LSU_working_lsu;
+    wire [11:0] LSU_csr_lsu;
+    wire        LSU_rd_valid_lsu;
+    wire        LSU_csr_valid_lsu;
 
     // WBU outputs
     wire        WBU_s_ready;
@@ -236,7 +240,9 @@ module ysyx_26040125(
     wire [31:0] WBU_csr_epc_;
     wire [31:0] WBU_csr_cause_;
     wire [4:0]  WBU_rd_wbu;
-    wire        WBU_working_wbu;
+    wire [11:0] WBU_csr_wbu;
+    wire        WBU_rd_valid_wbu;
+    wire        WBU_csr_valid_wbu;
 
     // CSR outputs
     wire [31:0] CSR_rdata;
@@ -507,11 +513,17 @@ module ysyx_26040125(
             .csr_data       (CSR_rdata),
             .csr_addr       (IDU_csr_addr),
             .rd_exu         (EXU_rd_exu),
-            .working_exu    (EXU_working_exu),
+            .csr_exu        (EXU_csr_exu),
+            .rd_valid_exu   (EXU_rd_valid_exu),
+            .csr_valid_exu  (EXU_csr_valid_exu),
             .rd_lsu         (LSU_rd_lsu),
-            .working_lsu    (LSU_working_lsu),
+            .csr_lsu        (LSU_csr_lsu),
+            .rd_valid_lsu   (LSU_rd_valid_lsu),
+            .csr_valid_lsu  (LSU_csr_valid_lsu),
             .rd_wbu         (WBU_rd_wbu),
-            .working_wbu    (WBU_working_wbu),
+            .csr_wbu        (WBU_csr_wbu),
+            .rd_valid_wbu   (WBU_rd_valid_wbu),
+            .csr_valid_wbu  (WBU_csr_valid_wbu),
             .flush          (EXU_flush)
         );
 
@@ -563,7 +575,9 @@ module ysyx_26040125(
             .m_ready        (LSU_s_ready),
             .m_fencei       (EXU_m_fencei),
             .rd_exu         (EXU_rd_exu),
-            .working_exu    (EXU_working_exu),
+            .csr_exu        (EXU_csr_exu),
+            .rd_valid_exu   (EXU_rd_valid_exu),
+            .csr_valid_exu  (EXU_csr_valid_exu),
             .pcr_exu_result (EXU_pcr_exu_result),
             .pcr_imm        (EXU_pcr_imm       ),
             .pcr_ecall      (EXU_pcr_ecall     ),
@@ -644,7 +658,9 @@ module ysyx_26040125(
             .m_axi_bready   (LSU_m_axi_bready),
             .cache_flush    (LSU_cache_flush),
             .rd_lsu         (LSU_rd_lsu),
-            .working_lsu    (LSU_working_lsu)
+            .csr_lsu        (LSU_csr_lsu),
+            .rd_valid_lsu   (LSU_rd_valid_lsu),
+            .csr_valid_lsu  (LSU_csr_valid_lsu)
         );
 
     WBU ysyx_26040125_WBU(
@@ -677,7 +693,9 @@ module ysyx_26040125(
             .csr_epc_       (WBU_csr_epc_),
             .csr_cause_     (WBU_csr_cause_),
             .rd_wbu         (WBU_rd_wbu),
-            .working_wbu    (WBU_working_wbu)
+            .csr_wbu        (WBU_csr_wbu),
+            .rd_valid_wbu   (WBU_rd_valid_wbu),
+            .csr_valid_wbu  (WBU_csr_valid_wbu)
         );
 
     CSR ysyx_26040125_CSR(

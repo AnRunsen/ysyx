@@ -67,8 +67,9 @@ module EXU(
 
     /*To the RAW module*/
     output [4:0] rd_exu,
-    output working_exu,
-
+    output rd_valid_exu,
+    output [11:0] csr_exu,
+    output csr_valid_exu,
 
     /*To PCR*/
     output [31:0] pcr_exu_result,
@@ -89,7 +90,7 @@ module EXU(
     end
 `endif
 
-    assign flush = working_exu && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret);
+    assign flush = valid_reg && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret);
     assign pcr_exu_result = m_result;
     assign pcr_imm = imm;
     assign pcr_ecall = ecall;
@@ -99,7 +100,9 @@ module EXU(
     assign pcr_behavior = brju;
     assign pcr_pc_now = PC_reg;
     assign rd_exu = rd;
-    assign working_exu = valid_reg;
+    assign rd_valid_exu = valid_reg && wb_en;
+    assign csr_exu = csr_addr;
+    assign csr_valid_exu = valid_reg && csr_wen;
 
 
     reg [4:0] rd;

@@ -49,7 +49,7 @@ module IDU(
     output m_valid,
     input m_ready,
 
-    /*implict ports for read GPRs*/
+    /*implict ports for read GPRs and CSRs*/
     output [4:0] rs1,
     output [4:0] rs2,
     output [11:0] csr_addr,
@@ -59,11 +59,17 @@ module IDU(
 
     /*handle the RAW*/
     input [4:0] rd_exu,
-    input working_exu,
+    input [11:0] csr_exu,
+    input rd_valid_exu,
+    input csr_valid_exu,
     input [4:0] rd_lsu,
-    input working_lsu,
+    input [11:0] csr_lsu,
+    input rd_valid_lsu,
+    input csr_valid_lsu,
     input [4:0] rd_wbu,
-    input working_wbu
+    input [11:0] csr_wbu,
+    input rd_valid_wbu,
+    input csr_valid_wbu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -81,12 +87,19 @@ module IDU(
         .rs1         	( rs1          ),
         .rs2         	( rs2          ),
         .need_rs2    	( need_rs2     ),
+        .csr_addr    	( csr_addr     ),
         .rd_exu      	( rd_exu       ),
-        .working_exu 	( working_exu  ),
+        .rd_valid_exu 	( rd_valid_exu  ),
         .rd_lsu      	( rd_lsu       ),
-        .working_lsu 	( working_lsu  ),
+        .rd_valid_lsu 	( rd_valid_lsu  ),
         .rd_wbu      	( rd_wbu       ),
-        .working_wbu 	( working_wbu  ),
+        .rd_valid_wbu 	( rd_valid_wbu  ),
+        .csr_exu      	( csr_exu       ),
+        .csr_valid_exu 	( csr_valid_exu  ),
+        .csr_lsu      	( csr_lsu       ),
+        .csr_valid_lsu 	( csr_valid_lsu  ),
+        .csr_wbu      	( csr_wbu       ),
+        .csr_valid_wbu 	( csr_valid_wbu  ),
         .stall       	( stall       )
     );
 

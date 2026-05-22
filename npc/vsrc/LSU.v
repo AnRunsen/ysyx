@@ -89,7 +89,9 @@ module LSU(
 
     /*To the RAW module*/
     output [4:0] rd_lsu,
-    output working_lsu
+    output rd_valid_lsu,
+    output [11:0] csr_lsu,
+    output csr_valid_lsu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -113,7 +115,9 @@ module LSU(
     end
 
     assign rd_lsu = rd;
-    assign working_lsu = working_reg;
+    assign rd_valid_lsu = working_reg && wb_en;
+    assign csr_lsu = csr_addr;
+    assign csr_valid_lsu = working_reg && csr_wen;
 
 
 
