@@ -57,11 +57,11 @@ void cpu_exec(uint64_t n)
             uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__state == 0b01;
 
             printf("| %s | %s | %s | %s | %s |\n",
-                ifu_valid ? "\033[32mIFU\033[0m" : "   ",
-                idu_valid ? "\033[32mIDU\033[0m" : "   ",
-                exu_valid ? "\033[32mEXU\033[0m" : "   ",
-                lsu_valid ? "\033[32mLSU\033[0m" : "   ",
-                wbu_valid ? "\033[32mWBU\033[0m" : "   ");
+                ifu_valid ? "IFU" : "   ",
+                idu_valid ? "IDU" : "   ",
+                exu_valid ? "EXU" : "   ",
+                lsu_valid ? "LSU" : "   ",
+                wbu_valid ? "WBU" : "   ");
             fflush(stdout);
         }
     
