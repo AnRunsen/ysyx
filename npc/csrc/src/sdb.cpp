@@ -50,6 +50,9 @@ static int cmd_si(char *args) {
       cpu_exec(num);
     }
   }
+
+  printf("%3s: 0x%08x ", regs[idx], cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[idx]);
+
   return 0;
 }
 
