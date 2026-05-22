@@ -1,4 +1,4 @@
-// `define DELAYER_ENABLE
+`define DELAYER_ENABLE
 module apb_delayer(
   input         clock,
   input         reset,
