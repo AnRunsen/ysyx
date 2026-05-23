@@ -354,9 +354,6 @@ module IDU(
                         if(funct7 == 7'b0000000 && rs2 == 5'b00001) begin
                             m_has_exception = 1;
                             m_exception_code = 4'd3; // breakpoint
-                            // `ifndef SYNTHESIS
-                            //     if(valid_reg) sim_exit(m_srcR1); //ebreak
-                            // `endif
                         end
                         else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //m_ecall
                             m_csr_addr = 12'h305; //mtvec
