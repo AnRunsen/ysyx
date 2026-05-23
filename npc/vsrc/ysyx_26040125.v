@@ -141,6 +141,8 @@ module ysyx_26040125(
     wire [31:0] IDU_m_PC;
     wire        IDU_m_valid;
     wire        IDU_m_fencei;
+    wire        IDU_m_has_exception;
+    wire [3:0]  IDU_m_exception_code;
 
     /*verilator lint_off UNUSEDSIGNAL*/
     wire [4:0]  IDU_rs1;
@@ -472,6 +474,8 @@ module ysyx_26040125(
             .m_mret         (IDU_m_mret),
             .m_PC           (IDU_m_PC),
             .m_fencei       (IDU_m_fencei),
+            .m_has_exception(IDU_m_has_exception),
+            .m_exception_code(IDU_m_exception_code),
             .m_valid        (IDU_m_valid),
             .m_ready        (EXU_s_ready),
             .rs1            (IDU_rs1),
@@ -520,6 +524,8 @@ module ysyx_26040125(
             .s_mret         (IDU_m_mret),
             .s_PC           (IDU_m_PC),
             .s_fencei       (IDU_m_fencei),
+            .s_has_exception(IDU_m_has_exception),
+            .s_exception_code(IDU_m_exception_code),
             .s_valid        (IDU_m_valid),
             .s_ready        (EXU_s_ready),
             .m_rd           (EXU_m_rd),
