@@ -123,7 +123,7 @@ module IFU(
 
     /*logic to send ardata*/
     assign m_axi_araddr = PC;
-    assign m_axi_arvalid = state == REQ;
+    assign m_axi_arvalid = (state == REQ) && PC[1:0] == 2'b00;
     assign m_axi_arid = 4'b0;
     assign m_axi_arlen = 8'b0;
     assign m_axi_arsize = 3'b010; //4 bytes

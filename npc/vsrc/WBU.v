@@ -40,7 +40,9 @@ module WBU(
 
     /*To the RAW module*/
     output [4:0] rd_wbu,
-    output working_wbu
+    output rd_valid_wbu,
+    output [11:0] csr_wbu,
+    output csr_valid_wbu
 );
 
 
@@ -58,8 +60,10 @@ module WBU(
     end
 
     assign rd_wbu = rd;
-    assign working_wbu = working_reg;
-
+    assign rd_valid_wbu = working_reg && wb_en;
+    assign csr_wbu = csr_addr;
+    assign csr_valid_wbu = working_reg && csr_wen;
+    
 
     localparam IDLE = 1'b0, VALID = 1'b1;
     reg state, next_state;
