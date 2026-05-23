@@ -10,43 +10,17 @@ module ICACHE#(
     input reset,
 
     input cache_flush,
+    input flush,
 
-    input  [3:0]  s_axi_arid,
-    input  [31:0] s_axi_araddr,
-    input  [7:0]  s_axi_arlen,
-    input  [2:0]  s_axi_arsize,
-    input  [1:0]  s_axi_arburst,
-    input         s_axi_arvalid,
-    output        s_axi_arready,
+    /*axi stream bus*/
+    input  [31:0] s_raddr,
+    input         s_valid,
+    output        s_ready,
 
-    output [3:0]  s_axi_rid,
-    output [31:0] s_axi_rdata,
-    output [1:0]  s_axi_rresp,
-    output        s_axi_rlast,
-    output        s_axi_rvalid,
-    input         s_axi_rready,
-
-
-    /*verilator lint_off UNUSED */
-    input  [3:0] s_axi_awid,
-    input  [31:0] s_axi_awaddr,
-    input  [7:0]  s_axi_awlen,
-    input  [2:0]  s_axi_awsize,
-    input  [1:0]  s_axi_awburst,
-    input         s_axi_awvalid,
-    output        s_axi_awready,
-
-    input  [31:0] s_axi_wdata,
-    input  [3:0]  s_axi_wstrb,
-    input         s_axi_wlast,
-    input         s_axi_wvalid,
-    output        s_axi_wready,
-
-    output [3:0]  s_axi_bid,
-    output [1:0]  s_axi_bresp,
-    output        s_axi_bvalid,
-    input         s_axi_bready,
-    /*verilator lint_on UNUSED */
+    output [31:0] m_data,
+    output [31:0] m_user_pc,
+    output        m_valid,
+    input         m_ready,
 
 
     output [31:0] m_axi_araddr,
@@ -88,7 +62,7 @@ module ICACHE#(
 
     `ifndef SYNTHESIS
         always @(posedge clk) begin
-            if(state == IDLE && s_axi_arvalid && s_axi_arready) begin
+            if(s_valid && s_ready) begin
                 if(hit) begin
                     ihit_num();
                 end
@@ -102,11 +76,6 @@ module ICACHE#(
     localparam WORDS_PER_LINE = LINE_SIZE / 4;
     localparam WORDS_SEL_SIZE = $clog2(WORDS_PER_LINE);
     /*unused axi signal(write channel)*/
-    assign s_axi_awready = 1'b0;
-    assign s_axi_wready = 1'b0;
-    assign s_axi_bresp = 2'b00;
-    assign s_axi_bvalid = 1'b0;
-    assign s_axi_bid = 4'b0000;
     assign m_axi_awaddr = 32'b0;
     assign m_axi_awvalid = 1'b0;
     assign m_axi_awid = 4'b0000;
@@ -123,26 +92,25 @@ module ICACHE#(
     reg [TAG_SIZE-1:0] tags [LINE_NUM-1:0];
     reg valid [LINE_NUM-1:0];
 
-    wire [$clog2(LINE_NUM)-1:0] index = s_axi_araddr[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
-    wire [TAG_SIZE-1:0] tag = s_axi_araddr[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
+    wire [$clog2(LINE_NUM)-1:0] index = s_raddr[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
+    wire [TAG_SIZE-1:0] tag = s_raddr[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
     wire hit = valid[index] && tags[index] == tag;
 
-    localparam IDLE = 2'd0, REQ = 2'd1, WAIT = 2'd2, RESP = 2'd3;
+    localparam HIT = 2'd0, REQ = 2'd1, WAIT = 2'd2;
     reg [1:0] state, next_state;
 
     always @(*) begin
         case(state)
-            IDLE: next_state = (s_axi_arvalid & s_axi_arready) ? (hit ? RESP : REQ) : state;
+            HIT: next_state = (s_valid & s_ready) ? (hit ? HIT : REQ) : state;
             REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
-            WAIT: next_state = m_axi_rvalid && m_axi_rready && m_axi_rlast ? RESP : state;
-            RESP: next_state = s_axi_rvalid && s_axi_rready ? IDLE : state;
-            default: next_state = IDLE;
+            WAIT: next_state = m_axi_rvalid && m_axi_rready && m_axi_rlast ? HIT : state;
+            default: next_state = HIT;
         endcase
     end
 
     always @(posedge clk) begin
         if(reset) begin
-            state <= IDLE;
+            state <= HIT;
         end
         else begin
             state <= next_state;
@@ -151,21 +119,38 @@ module ICACHE#(
 
 
     /*logic to latch data*/
-    reg [3:0] id_reg;
+    reg valid_reg;
+
+    always @(posedge clk) begin
+        if(reset) begin
+            valid_reg <= 1'b0;
+        end
+
+        else if(flush) begin
+            valid_reg <= 1'b0;
+        end
+
+        else if(s_valid && s_ready) begin
+            valid_reg <= 1'b1;
+        end
+
+        else if(m_valid && m_ready) begin
+            valid_reg <= 1'b0;
+        end
+    end
+
     reg [31:0] addr_reg;
     reg [$clog2(LINE_NUM)-1:0] index_reg;
     reg [TAG_SIZE-1:0] tag_reg;
     wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
     always @(posedge clk) begin
         if(reset) begin
-            id_reg <= 4'b0;
             addr_reg <= 32'b0;
             index_reg <= 0;
             tag_reg <= 0;
         end
-        else if(state == IDLE && s_axi_arvalid && s_axi_arready) begin
-            id_reg <= s_axi_arid;
-            addr_reg <= s_axi_araddr;
+        else if(s_valid && s_ready) begin
+            addr_reg <= s_raddr;
             index_reg <= index;
             tag_reg <= tag;
         end
@@ -184,7 +169,7 @@ module ICACHE#(
             end
             recv_counter <= 4'b0;
         end
-        else if(state == WAIT && m_axi_rvalid && m_axi_rready) begin
+        else if(m_axi_rvalid && m_axi_rready) begin
             cache[index_reg][recv_counter*32 +: 32] <= m_axi_rdata;
             tags[index_reg] <= tag_reg;
             valid[index_reg] <= 1'b1;
@@ -197,16 +182,14 @@ module ICACHE#(
         end
     end
 
-    assign s_axi_arready = state == IDLE;
-    assign s_axi_rid = id_reg;
-    assign s_axi_rdata = cache[index_reg][word_sel*32 +: 32];
-    assign s_axi_rresp = 2'b00;
-    assign s_axi_rlast = 1'b1;
-    assign s_axi_rvalid = state == RESP;
+    assign s_ready = state == HIT && (!valid_reg || (m_valid && m_ready));
+    assign m_data = cache[index_reg][word_sel*32 +: 32];
+    assign m_valid = state == HIT && valid_reg;
+    assign m_user_pc = addr_reg;
 
     assign m_axi_araddr = {addr_reg[31:4], 4'b0};
     assign m_axi_arvalid = state == REQ;
-    assign m_axi_arid = id_reg;
+    assign m_axi_arid = 4'b0;
     assign m_axi_arlen = WORDS_PER_LINE-1;
     assign m_axi_arsize = 3'd2;
     assign m_axi_arburst = 2'b01; // INCR
