@@ -45,6 +45,8 @@ module IDU(
     output [31:0] m_PC,
 
     output m_fencei,
+    output reg m_has_exception,
+    output reg [3:0] m_exception_code,
 
     output m_valid,
     input m_ready,
@@ -197,6 +199,8 @@ module IDU(
         m_csr_addr     = 0;
         m_fencei       = 0;
         need_rs2       = 0;
+        m_has_exception  = 0;
+        m_exception_code = 0;
 
         case(opcode)
             7'b1100011: begin //branch  — all share immB / RS1 vs RS2 / PC_BRANCH
@@ -213,9 +217,8 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_LTU;  //bltu
                     3'b111: m_alu_op = `ALU_OP_GEU;  //bgeu
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -239,9 +242,8 @@ module IDU(
                         m_brju     = `PC_FAR;
                     end
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -277,9 +279,8 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_OR;   //or
                     3'b111: m_alu_op = `ALU_OP_AND;  //and
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -300,9 +301,8 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_OR;   //ori
                     3'b111: m_alu_op = `ALU_OP_AND;  //andi
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -322,9 +322,8 @@ module IDU(
                     3'b100: begin m_op_width = `OP_WIDTH_BYTE; m_mem_signext = 0; end //lbu
                     3'b101: begin m_op_width = `OP_WIDTH_HALF; m_mem_signext = 0; end //lhu
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -342,9 +341,8 @@ module IDU(
                     3'b001: m_op_width = `OP_WIDTH_HALF; //sh
                     3'b010: m_op_width = `OP_WIDTH_WORD; //sw
                     default:begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -353,9 +351,11 @@ module IDU(
                 case(funct3)
                     3'b000: begin
                         if(funct7 == 7'b0000000 && rs2 == 5'b00001) begin
-                            `ifndef SYNTHESIS
-                                if(valid_reg) sim_exit(m_srcR1); //ebreak
-                            `endif
+                            m_has_exception = 1;
+                            m_exception_code = 4'd3; // breakpoint
+                            // `ifndef SYNTHESIS
+                            //     if(valid_reg) sim_exit(m_srcR1); //ebreak
+                            // `endif
                         end
                         else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //m_ecall
                             m_csr_addr = 12'h305; //mtvec
@@ -366,9 +366,8 @@ module IDU(
                             m_mret = 1;
                         end
                         else begin
-                            `ifndef SYNTHESIS
-                                if(valid_reg) sim_exit(inst_reg);
-                            `endif
+                            m_has_exception = 1;
+                            m_exception_code = 4'd2; // illegal instruction
                         end
                         
                     end
@@ -392,9 +391,8 @@ module IDU(
                         m_csr_addr = inst_reg[31:20];
                     end
                     default: begin
-                        `ifndef SYNTHESIS
-                            if(valid_reg) sim_exit(inst_reg);
-                        `endif
+                        m_has_exception = 1;
+                        m_exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -404,9 +402,8 @@ module IDU(
             end
 
             default:begin
-                `ifndef SYNTHESIS
-                    if(valid_reg) sim_exit(inst_reg);
-                `endif
+                m_has_exception = 1;
+                m_exception_code = 4'd2; // illegal instruction
             end
         endcase 
     end

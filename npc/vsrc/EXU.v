@@ -1,6 +1,7 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
+    import PKG::sim_exit;
 `endif
 module EXU(
     input clk,
@@ -35,6 +36,8 @@ module EXU(
     input s_mret,
     input [31:0] s_PC,
     input s_fencei,
+    input s_has_exception,
+    input [3:0] s_exception_code,
 
     input s_valid,
     output s_ready,
@@ -88,6 +91,18 @@ module EXU(
             perf_cnt_update(2);
         end
     end
+
+    always @(*) begin
+        if(has_exception_reg) begin
+            if(exception_code_reg == 4'd2) begin
+                sim_exit(PC_reg);
+            end
+
+            else if(exception_code_reg == 4'd3) begin
+                sim_exit(srcR1);
+            end
+        end
+    end
 `endif
 
     assign flush = valid_reg && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret);
@@ -133,6 +148,8 @@ module EXU(
     reg mret;
     reg [31:0] PC_reg;
     reg fencei;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
 
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
@@ -166,6 +183,8 @@ module EXU(
             mret <= 1'b0;
             PC_reg <= 32'b0;
             fencei <= 1'b0;
+            has_exception_reg <= 1'b0;
+            exception_code_reg <= 4'b0;
         end
 
         else if(s_valid && s_ready) begin
@@ -197,6 +216,8 @@ module EXU(
             mret <= s_mret;
             PC_reg <= s_PC;
             fencei <= s_fencei;
+            has_exception_reg <= s_has_exception;
+            exception_code_reg <= s_exception_code;
         end
     end
 
