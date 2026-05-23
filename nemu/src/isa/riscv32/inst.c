@@ -24,6 +24,7 @@
 
 enum {
   TYPE_I, TYPE_U, TYPE_S, TYPE_J, TYPE_R_,TYPE_B,
+  TYPE_C,
   TYPE_N, // none
 };
 
@@ -34,6 +35,7 @@ enum {
 #define immS() do { *imm = (SEXT(BITS(i, 31, 25), 7) << 5) | BITS(i, 11, 7); } while(0)
 #define immB() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 12) | (BITS(i, 7, 7) << 11) | (BITS(i, 30, 25) << 5) | (BITS(i, 11, 8) << 1); } while(0)
 #define immJ() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 20) | (BITS(i, 19, 12) << 12) | (BITS(i, 20, 20) << 11) | (BITS(i, 30, 21) << 1); } while(0)
+#define immC() do { *imm = BITS(i, 31, 20); } while(0)
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type) {
   uint32_t i = s->isa.inst;
   int rs1 = BITS(i, 19, 15);
@@ -47,6 +49,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
     case TYPE_J:                   immJ(); break;
     case TYPE_R_: src1R(); src2R(); break;
     case TYPE_B: src1R(); src2R(); immB(); break;
+    case TYPE_C: src1R();          immC(); break;
     default: panic("unsupported type = %d", type);
   }
 }
@@ -111,8 +114,8 @@ static int decode_exec(Decode *s) {
 
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
   INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, s->dnpc = isa_raise_intr(R(17), s->pc)); // R(17) is $a7(see yield func)
-  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, R(rd)= csr[imm]; csr[imm] = src1);
-  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd)= csr[imm]; csr[imm] |= src1);
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , C, R(rd)= csr[imm]; csr[imm] = src1);
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , C, R(rd)= csr[imm]; csr[imm] |= src1);
   INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , I, s->dnpc = csr[0x341];);
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
