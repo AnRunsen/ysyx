@@ -1,7 +1,7 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
-    import PKG::sim_exit;
     import PKG::perf_cnt_update;
+    import PKG::itrace;
 `endif
 module IDU(
     input clk,
@@ -77,6 +77,7 @@ module IDU(
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(1);
+            itrace(inst_reg, pc_reg);
         end
     end
 `endif
