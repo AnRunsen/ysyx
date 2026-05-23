@@ -58,7 +58,7 @@ module IFU(
     always @(posedge clk) begin
         if(m_valid && m_ready) begin
             perf_cnt_update(0);
-            itrace(m_axi_rdata, m_PC);
+            itrace(m_Inst, m_PC);
         end
     end
 `endif
