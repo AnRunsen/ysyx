@@ -8,6 +8,7 @@
 #include "reg.hpp"
 
 static int is_batch_mode = false;
+bool itrace_enable = true;
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -28,6 +29,7 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
+  itrace_enable = false;
   cpu_exec(-1);
   return 0;
 }
@@ -39,6 +41,7 @@ static int cmd_q(char *args) {
 
 static int cmd_si(char *args) {
   if(args == NULL) {
+    itrace_enable = true;
     cpu_exec(1);
   }
   else {
@@ -47,6 +50,12 @@ static int cmd_si(char *args) {
       printf("Invalid number of instructions: %d\n", num);
     }
     else {
+      if(num <= 10) {
+        itrace_enable = true;
+      }
+      else {
+        itrace_enable = false;
+      }
       cpu_exec(num);
     }
   }
@@ -116,35 +125,35 @@ static int cmd_help(char *args) {
 }
 
 static int cmd_x(char *args) {
-  // /* extract the first argument */
-  // char *arg = strtok(NULL, " ");
+  /* extract the first argument */
+  char *arg = strtok(NULL, " ");
 
-  // if (arg == NULL) {
-  //   printf("Hint: Try x <num> <addr>\n");
-  // }
+  if (arg == NULL) {
+    printf("Hint: Try x <num> <addr>\n");
+  }
 
-  // else{
-  //   int scannum = atoi(arg);
+  else{
+    int scannum = atoi(arg);
 
-  //   arg = strtok(NULL, " ");
-  //   if(arg == NULL) {
-  //     printf("Hint: Try x <num> <addr>\n");
-  //   }
-  //   else {
-  //     int startaddr = (int)strtol(arg, NULL, 0);
+    arg = strtok(NULL, " ");
+    if(arg == NULL) {
+      printf("Hint: Try x <num> <addr>\n");
+    }
+    else {
+      int startaddr = (int)strtol(arg, NULL, 0);
 
-  //     if(startaddr % 4 != 0) {
-  //       printf("Address should be aligned to 4 bytes.\n");
-  //       return 0;
-  //     }
+      if(startaddr % 4 != 0) {
+        printf("Address should be aligned to 4 bytes.\n");
+        return 0;
+      }
       
-  //     for(int i=0; i<scannum; i++)
-  //     {
-  //       printf("0x%08x: 0x%08x\n", startaddr + i*4, pmem_read(startaddr + i*4));
-  //     }
-  //   }
+      for(int i=0; i<scannum; i++)
+      {
+        printf("0x%08x: 0x%08x\n", startaddr + i*4, pmem_read(startaddr + i*4));
+      }
+    }
     
-  // }
+  }
   return 0;
 }
 

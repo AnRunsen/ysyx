@@ -1,19 +1,12 @@
-#include "VysyxSoCFull.h"
+#include "VCPU.h"
 #include "verilated_vcd_c.h"
-#include "VysyxSoCFull___024root.h"
+#include "VCPU___024root.h"
 #include <stdint.h>
 #include "config.hpp"
-#include <nvboard.h>
 
-extern VysyxSoCFull* cpu;
+extern VCPU* cpu;
 extern VerilatedVcdC* tfp;
 extern bool exit_flag;
-extern uint64_t cycle_cnt;
-extern bool bootloader_stage;
-
-enum { BRANCH=0, JAL, JALR, LUI, AUIPC, OP, OP_IMM, LOAD, STORE, SYSTEM };
-enum { IFU, IDU, EXU, LSU, WBU };
-
 extern "C" {
 void difftest_exec(uint64_t n);
 void difftest_regcpy(void *dut, bool direction);
@@ -33,49 +26,26 @@ void cpu_exec(uint64_t n)
     }
     while(n-- > 0) {
         cpu->contextp()->timeInc(1);
-        cpu->clock = 0;
-        cpu->reset = 0;
+        cpu->clk = 0;
         cpu->eval();
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
 #endif
         cpu->contextp()->timeInc(1);
-        cpu->clock = 1;
-        cpu->reset = 0;
+        cpu->clk = 1;
         cpu->eval();
 #ifdef WAVEON
         tfp->dump(cpu->contextp()->time());
 #endif
-
-        if(!bootloader_stage) {
-            cycle_cnt++;
-
-#ifdef PIPELINE_VIEW
-            uint8_t ifu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IFU__DOT__state == 0b11;
-            uint8_t idu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__s_valid;
-            uint8_t exu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__valid_reg;
-            uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__state == 0b01;
-            uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__state == 0b01;
-
-            printf("\r| %s | %s | %s | %s | %s |",
-                ifu_valid ? "IFU" : "   ",
-                idu_valid ? "IDU" : "   ",
-                exu_valid ? "EXU" : "   ",
-                lsu_valid ? "LSU" : "   ",
-                wbu_valid ? "WBU" : "   ");
-            fflush(stdout);
-#endif
-        }
-    
 #ifdef DIFFTEST
         difftest_exec(1);
         CPU_state dut_state;
         difftest_regcpy(&dut_state, DIFFTEST_TO_DUT);
         
         for(uint32_t i = 0; i < 16; i++) {
-            if(dut_state.gpr[i] != cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[i]) {
+            if(dut_state.gpr[i] != cpu->rootp->CPU__DOT__u_GPR__DOT__gpr[i]) {
                 printf("Difftest failed at time %lu: gpr[%u] = 0x%08x, expected 0x%08x\n",
-                    cpu->contextp()->time(), i, cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[i], dut_state.gpr[i]);
+                    cpu->contextp()->time(), i, cpu->rootp->CPU__DOT__u_GPR__DOT__gpr[i], dut_state.gpr[i]);
                 exit_flag = true;
                 break;
             }
@@ -84,8 +54,6 @@ void cpu_exec(uint64_t n)
         if(exit_flag) {
             break;
         }
-
-        nvboard_update();
     }
     return;
 }

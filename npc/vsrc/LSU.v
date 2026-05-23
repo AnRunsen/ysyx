@@ -1,382 +1,45 @@
 `include "MACRO.v"
-`ifndef SYNTHESIS
-    import PKG::perf_cnt_update;
-`endif
+import PKG::pmem_read;
+import PKG::pmem_write;
 module LSU(
-    input clk,
-    input reset,
-
-    /*data to recv*/
-    input [4:0] s_rd,
-    input s_wb_en,
-    input s_mem_en,
-    input s_mem_write_en,
-    input [1:0] s_op_width,
-    input [2:0] s_wb_sel,
-    input s_mem_signext,
-    input [11:0] s_csr_addr,
-    input [31:0] s_csr_data,
-    input s_csr_wr_sel,
-    input s_csr_wen,
-    input s_ecall,
-    input [31:0] s_srcR1,
-    input [31:0] s_srcR2,
-    input [31:0] s_result,
-    input [31:0] s_PC,
-    input [31:0] s_imm,
-    input s_fencei,
-
-    input s_valid,
-    output s_ready,
-    /*data to recv end*/
-
-    /*data to send*/
-    output [4:0] m_rd,
-    output m_wb_en,
-    output [2:0] m_wb_sel,
-    output [11:0] m_csr_addr,
-    output [31:0] m_csr_data,
-    output m_csr_wr_sel,
-    output m_csr_wen,
-    output m_ecall,
-    output [31:0] m_srcR1,
-    output [31:0] m_result,
-    output [31:0] m_rdata,
-    output [31:0] m_PC,
-    output [31:0] m_imm,
-
-    output m_valid,
-    input m_ready,
-    /*data to send end*/
-
-    //bus to interact with RAM
-    output [31:0] m_axi_araddr,
-    output m_axi_arvalid,
-    input m_axi_arready,
-    output [3:0] m_axi_arid,
-    output [7:0] m_axi_arlen,
-    output [2:0] m_axi_arsize,
-    output [1:0] m_axi_arburst,
-
-    input [31:0] m_axi_rdata,
-    input [1:0] m_axi_rresp,
-    input [3:0] m_axi_rid,
-    input m_axi_rlast,
-    input m_axi_rvalid,
-    output m_axi_rready,
-
-    output [31:0] m_axi_awaddr,
-    output m_axi_awvalid,
-    input m_axi_awready,
-    output [3:0] m_axi_awid,
-    output [7:0] m_axi_awlen,
-    output [2:0] m_axi_awsize,
-    output [1:0] m_axi_awburst,
-
-    output [31:0] m_axi_wdata,
-    output [3:0] m_axi_wstrb,
-    output m_axi_wvalid,
-    output m_axi_wlast,
-    input m_axi_wready,
-
-    input [1:0] m_axi_bresp,
-    input m_axi_bvalid,
-    input [3:0] m_axi_bid,
-    output m_axi_bready,
-
-    /*to interact with icache*/
-    output cache_flush,
-
-    /*To the RAW module*/
-    output [4:0] rd_lsu,
-    output rd_valid_lsu,
-    output [11:0] csr_lsu,
-    output csr_valid_lsu
+    input mem_en,
+    input mem_write_en,
+    input [1:0] op_width,
+    input sign_ext_en,
+    input [31:0] addr,
+    input [31:0] wdata,
+    output [31:0] rdata
 );
-`ifndef SYNTHESIS
-    always @(posedge clk) begin
-        if(m_valid & m_ready) begin
-            perf_cnt_update(3);
-        end
-    end
-`endif
 
-    reg working_reg;
-    always @(posedge clk) begin
-        if(reset) begin
-            working_reg <= 1'b0;
-        end
-        else if(s_valid && s_ready) begin
-            working_reg <= 1'b1;
-        end
-        else if(m_ready && m_valid) begin
-            working_reg <= 1'b0;
-        end
-    end
-
-    assign rd_lsu = rd;
-    assign rd_valid_lsu = working_reg && wb_en;
-    assign csr_lsu = csr_addr;
-    assign csr_valid_lsu = working_reg && csr_wen;
-
-
-
-    localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
-                READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 
-                WRITE_REQ = 3'b111;
-    reg [2:0] state, next_state;
+    reg [31:0] rdata_;
+    wire [31:0] wdata_ = wdata << (addr[1:0]*8);
 
     always @(*) begin
-        case(state)
-            IDLE: begin
-                if(s_valid && s_ready) begin
-                    if(s_mem_en) begin
-                        if(s_mem_write_en) begin
-                            next_state = WRITE_REQ;
-                        end
-                        else begin
-                            next_state = READ_REQ;
-                        end
-                    end
-                    else begin
-                        next_state = PASS;
-                    end
-                end
-                else begin
-                    next_state = state;
-                end
-            end
+        if(mem_en) begin
+            rdata_ = pmem_read(addr);
+            if(mem_write_en) pmem_write(addr, wdata_, (op_width == `OP_WIDTH_BYTE) ? 8'b0000_0001 << addr[1:0] :
+                                    (op_width == `OP_WIDTH_HALF) ? 8'b0000_0011 << addr[1:0] : 8'b0000_1111);
+        end
 
-            PASS: begin
-                if(s_valid && s_ready) begin
-                    if(s_mem_en) begin
-                        if(s_mem_write_en) begin
-                            next_state = WRITE_REQ;
-                        end
-                        else begin
-                            next_state = READ_REQ;
-                        end
-                    end
-                    else begin
-                        next_state = PASS;
-                    end
-                end
-
-                else if(m_valid && m_ready) begin
-                    next_state = IDLE;
-                end
-                
-                else begin
-                    next_state = state;
-                end
-            end
-
-            READ_WAIT: begin
-                if(m_axi_rvalid && m_axi_rready) begin
-                    next_state = PASS;
-                end
-                else begin
-                    next_state = READ_WAIT;
-                end
-            end
-
-            WRITE_WAIT: begin
-                if(m_axi_bvalid && m_axi_bready) begin
-                    next_state = PASS;
-                end
-                else begin
-                    next_state = WRITE_WAIT;
-                end
-            end
-
-            READ_REQ: begin
-                if(m_axi_arvalid && m_axi_arready) begin
-                    next_state = READ_WAIT;
-                end
-                else begin
-                    next_state = state;
-                end
-            end
-
-            WRITE_REQ: begin
-                if(m_axi_awvalid && m_axi_awready && m_axi_wvalid && m_axi_wready) begin
-                    next_state = WRITE_WAIT;
-                end
-
-                else if(m_axi_awvalid && m_axi_awready) begin
-                    next_state = WRITE_DATA_REQ;
-                end
-
-                else if(m_axi_wvalid && m_axi_wready) begin
-                    next_state = WRITE_ADDR_REQ;
-                end
-
-                else begin
-                    next_state = state;
-                end
-            end
-
-            WRITE_ADDR_REQ: begin
-                if(m_axi_awvalid && m_axi_awready) begin
-                    next_state = WRITE_WAIT;
-                end
-
-                else begin
-                    next_state = state;
-                end
-            end
-
-            WRITE_DATA_REQ: begin
-                if(m_axi_wvalid && m_axi_wready) begin
-                    next_state = WRITE_WAIT;
-                end
-
-                else begin
-                    next_state = state;
-                end
-            end
-
-            default: next_state = IDLE;
-        endcase
+        else rdata_ = 32'b0;
     end
-
-    always @(posedge clk) begin
-        if(reset) begin
-            state <= IDLE;
-        end
-        else begin
-            state <= next_state;
-        end
-    end
-
-    reg [4:0] rd;
-    reg wb_en;
-    reg [1:0] op_width;
-    reg [2:0] wb_sel;
-    reg mem_signext;
-    reg [11:0] csr_addr;
-    reg [31:0] csr_data;
-    reg csr_wr_sel;
-    reg csr_wen;
-    reg ecall;
-    reg [31:0] srcR1;
-    reg [31:0] srcR2;
-    reg [31:0] result;
-    reg [31:0] PC;
-    reg [31:0] imm;
-    reg fencei;
-    
-    /*logic to recv data*/
-    assign s_ready = (state == IDLE) || (state == PASS && m_ready && m_valid);
-    always @(posedge clk) begin
-        if(reset) begin
-            rd <= 5'b0;
-            wb_en <= 1'b0;
-            op_width <= 2'b0;
-            wb_sel <= 3'b0;
-            mem_signext <= 1'b0;
-            csr_addr <= 12'b0;
-            csr_data <= 32'b0;
-            csr_wr_sel <= 1'b0;
-            csr_wen <= 1'b0;
-            ecall <= 1'b0;
-            srcR1 <= 32'b0;
-            srcR2 <= 32'b0;
-            result <= 32'b0;
-            PC <= 32'b0;
-            imm <= 32'b0;
-            fencei <= 1'b0;
-        end
-
-        else if(s_valid && s_ready) begin
-            rd <= s_rd;
-            wb_en <= s_wb_en;
-            op_width <= s_op_width;
-            wb_sel <= s_wb_sel;
-            mem_signext <= s_mem_signext;
-            csr_addr <= s_csr_addr;
-            csr_data <= s_csr_data;
-            csr_wr_sel <= s_csr_wr_sel;
-            csr_wen <= s_csr_wen;
-            srcR1 <= s_srcR1;
-            ecall <= s_ecall;
-            srcR2 <= s_srcR2;
-            result <= s_result;
-            PC <= s_PC;
-            imm <= s_imm;
-            fencei <= s_fencei;
-        end
-    end
-
-    /*logic to send data*/
-    assign m_rd = rd;
-    assign m_wb_en = wb_en;
-    assign m_wb_sel = wb_sel;
-    assign m_csr_addr = csr_addr;
-    assign m_csr_data = csr_data;
-    assign m_csr_wr_sel = csr_wr_sel;
-    assign m_csr_wen = csr_wen;
-    assign m_ecall = ecall;
-    assign m_srcR1 = srcR1;
-    assign m_result = result;
-    assign m_PC = PC;
-    assign m_imm = imm;
-    assign m_valid = (state == PASS);
-    assign cache_flush = (state == PASS) && fencei;
-
-    /*logic to send read addr*/
-    assign m_axi_araddr = result;
-    assign m_axi_arvalid = (state == READ_REQ);
-    assign m_axi_arid = 4'b0;
-    assign m_axi_arlen = 8'b0;
-    assign m_axi_arsize = {1'b0, op_width}; //4 bytes
-    assign m_axi_arburst = 2'b01; //INCR
-
-    /*logic to send write addr*/
-    assign m_axi_awaddr = result;
-    assign m_axi_awvalid = (state == WRITE_ADDR_REQ || state == WRITE_REQ);
-    assign m_axi_awid = 4'b0;
-    assign m_axi_awlen = 8'b0;
-    assign m_axi_awsize = {1'b0, op_width}; //4 bytes
-    assign m_axi_awburst = 2'b01; //INCR
-
-    /*logic to send write data*/
-    wire [31:0] wdata_ = srcR2 << (result[1:0]*8);
-    assign m_axi_wdata = wdata_;
-    assign m_axi_wstrb = (op_width == `OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
-                         (op_width == `OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
-    assign m_axi_wvalid = (state == WRITE_DATA_REQ || state == WRITE_REQ);
-    assign m_axi_wlast = (state == WRITE_DATA_REQ || state == WRITE_REQ);
-
-    /*logic to recv read data*/
-    assign m_axi_rready = (state == READ_WAIT);
-    reg [31:0] rdata_reg;
-    always @(posedge clk) begin
-        if(reset) begin
-            rdata_reg <= 32'b0;
-        end
-        else if(m_axi_rvalid && m_axi_rready) begin
-            rdata_reg <= m_axi_rdata;
-        end
-    end
-
 
     reg [7:0] data8;
     reg [15:0] data16;
 
     always @(*) begin
-        case(result[1:0])
-            2'b00: data8 = rdata_reg[7:0];
-            2'b01: data8 = rdata_reg[15:8];
-            2'b10: data8 = rdata_reg[23:16];
-            2'b11: data8 = rdata_reg[31:24];
+        case(addr[1:0])
+            2'b00: data8 = rdata_[7:0];
+            2'b01: data8 = rdata_[15:8];
+            2'b10: data8 = rdata_[23:16];
+            2'b11: data8 = rdata_[31:24];
         endcase
     end
 
     always @(*) begin
-        case(result[1])
-            1'b0: data16 = rdata_reg[15:0];
-            1'b1: data16 = rdata_reg[31:16];
+        case(addr[1])
+            1'b0: data16 = rdata_[15:0];
+            1'b1: data16 = rdata_[31:16];
         endcase
     end
 
@@ -386,31 +49,29 @@ module LSU(
 
     ext8 u_ext8(
         .data_i 	( data8  ),
-        .sign   	( mem_signext    ),
+        .sign   	( sign_ext_en    ),
         .data_o 	( rdata_ext8  )
     );
 
     ext16 u_ext16(
         .data_i 	( data16  ),
-        .sign   	( mem_signext    ),
+        .sign   	( sign_ext_en    ),
         .data_o 	( rdata_ext16  )
     );
     wire [31:0] rdata_ext;
     assign rdata_ext = (op_width == `OP_WIDTH_BYTE) ? rdata_ext8 :
                        (op_width == `OP_WIDTH_HALF) ? rdata_ext16 :
-                       (op_width == `OP_WIDTH_WORD) ? rdata_reg :
+                       (op_width == `OP_WIDTH_WORD) ? rdata_ :
                        32'b0;
 
-    assign m_rdata = rdata_ext;
+    assign rdata = rdata_ext;
 
-    /*logic to recv write response*/
-    assign m_axi_bready = (state == WRITE_WAIT);
+    /*store logic*/
+    //we sim it in c++
 
 endmodule
 
-/* verilator lint_off DECLFILENAME */
 module ext8(
-/* verilator lint_on DECLFILENAME */
     input [7:0] data_i,
     input sign,
     output [31:0] data_o
