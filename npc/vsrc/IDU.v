@@ -8,10 +8,13 @@ module IDU(
     input reset,
 
     input flush,
+    input exception_flush,
 
     /* explict ports*/
     input [31:0] s_Inst,
     input [31:0] s_PC,
+    input s_has_exception,
+    input [3:0] s_exception_code,
     input s_valid,
     output s_ready,
 
@@ -32,7 +35,7 @@ module IDU(
     output [1:0] m_op_width,
     output [2:0] m_wb_sel, //m_imm, alu, mem, PC+4
 
-    output reg [1:0] m_brju,
+    output reg [2:0] m_brju,
     output reg m_mem_signext,
 
     output reg [11:0] m_csr_addr,
@@ -40,12 +43,10 @@ module IDU(
     output reg m_csr_wr_sel, //0: write m_srcR1, 1: write alu_res
     output reg m_csr_wen,
 
-    output reg m_ecall,
-    output reg m_mret,
     output [31:0] m_PC,
 
     output m_fencei,
-    output reg m_has_exception,
+    output m_has_exception,
     output reg [3:0] m_exception_code,
 
     output m_valid,
@@ -110,22 +111,38 @@ module IDU(
     /*logic to recv data*/
     reg [31:0] inst_reg;
     reg [31:0] pc_reg;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
     assign s_ready = (!m_valid || (m_valid & m_ready)) && !stall;
     always @(posedge clk) begin
         if(reset) begin
             inst_reg <= 32'b0;
             pc_reg <= 32'b0;
+            has_exception_reg <= 1'b0;
+            exception_code_reg <= 4'b0;
         end
         else begin
             if(s_ready & s_valid) begin
                 inst_reg <= s_Inst;
                 pc_reg <= s_PC;
+                has_exception_reg <= s_has_exception;
+                exception_code_reg <= s_exception_code;
             end
         end
     end
 
     /*logic to send data*/
     assign m_PC = pc_reg;
+    //***_reg is to the value recv from last module, and *** is this module's exception
+    assign m_has_exception = has_exception_reg || has_exception;
+    always @(*) begin
+        if(has_exception_reg) begin
+            m_exception_code = exception_code_reg;
+        end
+        else begin
+            m_exception_code = exception_code;
+        end
+    end
     reg valid_reg;
     assign m_valid = valid_reg && !stall && !flush;
     always @(posedge clk) begin
@@ -134,7 +151,7 @@ module IDU(
         end
 
         else begin
-            if(flush) begin
+            if(flush || exception_flush) begin
                 valid_reg <= 1'b0;
             end
             else if(s_valid & s_ready) begin
@@ -165,7 +182,7 @@ module IDU(
     assign m_srcR2 = srcR2_in;
 
 
-    assign rs1 = (opcode == 7'b1110011 && funct3 == 3'b000) ? (rs2 == 5'b1 ? 5'd10 : 5'd15) : inst_reg[19:15];
+    assign rs1 = inst_reg[19:15];
     assign rs2 = inst_reg[24:20];
     assign m_rd = inst_reg[11:7];
     assign opcode = inst_reg[6:0];
@@ -179,6 +196,9 @@ module IDU(
     assign immU = { inst_reg[31:12], 12'b0 };
     assign immJ = { {11{inst_reg[31]}}, inst_reg[31], inst_reg[19:12], inst_reg[20], inst_reg[30:21], 1'b0 };
 
+
+    reg has_exception;
+    reg [3:0] exception_code;
 
     always @(*) begin
         // --- safe defaults (all zeros, which map to PC_NORMAL / ALU_SEL_RS1 / ALU_SEL_RS2) ---
@@ -195,13 +215,11 @@ module IDU(
         m_mem_en       = 0;
         m_csr_wr_sel   = 0;
         m_csr_wen      = 0;
-        m_ecall        = 0;
-        m_mret         = 0;
         m_csr_addr     = 0;
         m_fencei       = 0;
         need_rs2       = 0;
-        m_has_exception  = 0;
-        m_exception_code = 0;
+        has_exception  = 0;
+        exception_code = 0;
 
         case(opcode)
             7'b1100011: begin //branch  — all share immB / RS1 vs RS2 / PC_BRANCH
@@ -218,8 +236,8 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_LTU;  //bltu
                     3'b111: m_alu_op = `ALU_OP_GEU;  //bgeu
                     default:begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -243,8 +261,8 @@ module IDU(
                         m_brju     = `PC_FAR;
                     end
                     default:begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -280,8 +298,8 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_OR;   //or
                     3'b111: m_alu_op = `ALU_OP_AND;  //and
                     default:begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -302,8 +320,8 @@ module IDU(
                     3'b110: m_alu_op = `ALU_OP_OR;   //ori
                     3'b111: m_alu_op = `ALU_OP_AND;  //andi
                     default:begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -323,8 +341,8 @@ module IDU(
                     3'b100: begin m_op_width = `OP_WIDTH_BYTE; m_mem_signext = 0; end //lbu
                     3'b101: begin m_op_width = `OP_WIDTH_HALF; m_mem_signext = 0; end //lhu
                     default:begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -342,8 +360,8 @@ module IDU(
                     3'b001: m_op_width = `OP_WIDTH_HALF; //sh
                     3'b010: m_op_width = `OP_WIDTH_WORD; //sw
                     default:begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -352,20 +370,19 @@ module IDU(
                 case(funct3)
                     3'b000: begin
                         if(funct7 == 7'b0000000 && rs2 == 5'b00001) begin
-                            m_has_exception = 1;
-                            m_exception_code = 4'd3; // breakpoint
+                            has_exception = 1;
+                            exception_code = 4'd3; // breakpoint
                         end
                         else if(funct7 == 7'b0000000 && rs2 == 5'b00000) begin //m_ecall
-                            m_csr_addr = 12'h305; //mtvec
-                            m_ecall = 1;
+                            has_exception = 1;
+                            exception_code = 4'd11; // ecall from M-mode
                         end
                         else if(funct7 == 7'b0011000 && rs2 == 5'b00010) begin //m_mret
-                            m_csr_addr = 12'h341; //mepc
-                            m_mret = 1;
+                            m_brju = `PC_MRET;
                         end
                         else begin
-                            m_has_exception = 1;
-                            m_exception_code = 4'd2; // illegal instruction
+                            has_exception = 1;
+                            exception_code = 4'd2; // illegal instruction
                         end
                         
                     end
@@ -389,8 +406,8 @@ module IDU(
                         m_csr_addr = inst_reg[31:20];
                     end
                     default: begin
-                        m_has_exception = 1;
-                        m_exception_code = 4'd2; // illegal instruction
+                        has_exception = 1;
+                        exception_code = 4'd2; // illegal instruction
                     end
                 endcase
             end
@@ -400,8 +417,8 @@ module IDU(
             end
 
             default:begin
-                m_has_exception = 1;
-                m_exception_code = 4'd2; // illegal instruction
+                has_exception = 1;
+                exception_code = 4'd2; // illegal instruction
             end
         endcase 
     end

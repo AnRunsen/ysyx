@@ -12,12 +12,13 @@ module WBU(
     input [31:0] s_csr_data,
     input s_csr_wr_sel,
     input s_csr_wen,
-    input s_ecall,
     input [31:0] s_srcR1,
     input [31:0] s_result,
     input [31:0] s_rdata,
     input [31:0] s_PC,
     input [31:0] s_imm,
+    input s_has_exception,
+    input [3:0] s_exception_code,
 
     input s_valid,
     output s_ready,
@@ -34,7 +35,7 @@ module WBU(
     output [31:0] csr_alu_res_,
     output csr_wr_sel_,
     output csr_wen_,
-    output csr_ecall_,
+    output csr_exception,
     output [31:0] csr_epc_,
     output [31:0] csr_cause_,
 
@@ -42,47 +43,35 @@ module WBU(
     output [4:0] rd_wbu,
     output rd_valid_wbu,
     output [11:0] csr_wbu,
-    output csr_valid_wbu
+    output csr_valid_wbu,
+
+    output exception_flush
 );
 
 
-    reg working_reg;
+    reg valid_reg;
     always @(posedge clk) begin
         if(reset) begin
-            working_reg <= 1'b0;
+            valid_reg <= 1'b0;
         end
+        
+        else if(exception_flush) begin
+            valid_reg <= 1'b0;
+        end
+
         else if(s_valid && s_ready) begin
-            working_reg <= 1'b1;
+            valid_reg <= 1'b1;
         end
         else begin
-            working_reg <= 1'b0;
+            valid_reg <= 1'b0;
         end
     end
 
     assign rd_wbu = rd;
-    assign rd_valid_wbu = working_reg && wb_en;
+    assign rd_valid_wbu = valid_reg && wb_en;
     assign csr_wbu = csr_addr;
-    assign csr_valid_wbu = working_reg && csr_wen;
-    
+    assign csr_valid_wbu = valid_reg && csr_wen;
 
-    localparam IDLE = 1'b0, VALID = 1'b1;
-    reg state, next_state;
-    always @(*) begin
-        case(state)
-            IDLE: next_state = s_valid && s_ready ? VALID : IDLE;
-            VALID: next_state = s_valid && s_ready ? VALID : IDLE;
-            default: next_state = IDLE;
-        endcase
-    end
-
-    always @(posedge clk) begin
-        if(reset) begin
-            state <= IDLE;
-        end
-        else begin
-            state <= next_state;
-        end
-    end
 
     /*logic to recv data*/
     reg [4:0] rd;
@@ -92,12 +81,13 @@ module WBU(
     reg [31:0] csr_data;
     reg csr_wr_sel;
     reg csr_wen;
-    reg csr_ecall;
     reg [31:0] srcR1;
     reg [31:0] result;
     reg [31:0] rdata;
     reg [31:0] PC;
     reg [31:0] imm;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
     assign s_ready = 1'b1;
     always @(posedge clk) begin
         if(reset) begin
@@ -108,12 +98,13 @@ module WBU(
             csr_data <= 32'b0;
             csr_wr_sel <= 1'b0;
             csr_wen <= 1'b0;
-            csr_ecall <= 1'b0;
             srcR1 <= 32'b0;
             result <= 32'b0;
             rdata <= 32'b0;
             PC <= 32'b0;
             imm <= 32'b0;
+            has_exception_reg <= 1'b0;
+            exception_code_reg <= 4'b0;
         end
 
         else if(s_valid && s_ready) begin
@@ -124,17 +115,18 @@ module WBU(
             csr_data <= s_csr_data;
             csr_wr_sel <= s_csr_wr_sel;
             csr_wen <= s_csr_wen;
-            csr_ecall <= s_ecall;
             srcR1 <= s_srcR1;
             result <= s_result;
             rdata <= s_rdata;
             PC <= s_PC;
             imm <= s_imm;
+            has_exception_reg <= s_has_exception;
+            exception_code_reg <= s_exception_code;
         end
     end
 
     /*interact with GPR*/
-    assign wen = wb_en & (state == VALID);
+    assign wen = wb_en & valid_reg & !has_exception_reg;
     assign waddr = rd;
     always @(*) begin
         case(wb_sel)
@@ -153,10 +145,13 @@ module WBU(
     assign csr_srcR1_ = srcR1;
     assign csr_alu_res_ = result;
     assign csr_wr_sel_ = csr_wr_sel;
-    assign csr_wen_ = csr_wen & (state == VALID);
-    assign csr_ecall_ = csr_ecall;
+    assign csr_wen_ = csr_wen & valid_reg & !has_exception_reg;
+
+    assign csr_exception = has_exception_reg;
     assign csr_epc_ = PC;
-    assign csr_cause_ = srcR1;
+    assign csr_cause_ = {28'b0, exception_code_reg};
+
+    assign exception_flush = has_exception_reg;
 
 
 endmodule

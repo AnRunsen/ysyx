@@ -1,7 +1,6 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
-    import PKG::sim_exit;
 `endif
 module EXU(
     input clk,
@@ -24,7 +23,7 @@ module EXU(
     input [1:0] s_op_width,
     input [2:0] s_wb_sel, //imm, alu, mem, PC+4
 
-    input [1:0] s_brju,
+    input [2:0] s_brju,
     input s_mem_signext,
 
     input [11:0] s_csr_addr,
@@ -32,8 +31,6 @@ module EXU(
     input s_csr_wr_sel, //0: write srcR1, 1: write alu_res
     input s_csr_wen,
 
-    input s_ecall,
-    input s_mret,
     input [31:0] s_PC,
     input s_fencei,
     input s_has_exception,
@@ -56,13 +53,14 @@ module EXU(
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
-    output m_ecall,
     output [31:0] m_srcR1,
     output [31:0] m_srcR2,
     output [31:0] m_result,
     output [31:0] m_PC,
     output [31:0] m_imm,
     output m_fencei,
+    output m_has_exception,
+    output [3:0] m_exception_code,
 
     output m_valid,
     input m_ready,
@@ -77,13 +75,11 @@ module EXU(
     /*To PCR*/
     output [31:0] pcr_exu_result,
     output [31:0] pcr_imm,
-    output pcr_ecall,
-    output pcr_mret,
-    output [31:0] pcr_mtvec,
-    output [31:0] pcr_mepc,
-    output [1:0] pcr_behavior,
+    output [2:0] pcr_behavior,
     output [31:0] pcr_pc_now,
-    output flush
+    output flush,
+
+    input exception_flush
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -91,27 +87,11 @@ module EXU(
             perf_cnt_update(2);
         end
     end
-
-    always @(*) begin
-        if(has_exception_reg) begin
-            if(exception_code_reg == 4'd2) begin
-                sim_exit(PC_reg);
-            end
-
-            else if(exception_code_reg == 4'd3) begin
-                sim_exit(srcR1);
-            end
-        end
-    end
 `endif
 
-    assign flush = valid_reg && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || ecall || mret);
+    assign flush = valid_reg && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || (brju == `PC_MRET));
     assign pcr_exu_result = m_result;
     assign pcr_imm = imm;
-    assign pcr_ecall = ecall;
-    assign pcr_mret = mret;
-    assign pcr_mtvec = csr_data;
-    assign pcr_mepc = csr_data;
     assign pcr_behavior = brju;
     assign pcr_pc_now = PC_reg;
     assign rd_exu = rd;
@@ -136,7 +116,7 @@ module EXU(
     reg [1:0] op_width;
     reg [2:0] wb_sel; //imm; alu; mem; PC+4
 
-    reg [1:0] brju;
+    reg [2:0] brju;
     reg mem_signext;
 
     reg [11:0] csr_addr;
@@ -144,8 +124,6 @@ module EXU(
     reg csr_wr_sel; //0: write srcR1; 1: write alu_res
     reg csr_wen;
 
-    reg ecall;
-    reg mret;
     reg [31:0] PC_reg;
     reg fencei;
     reg has_exception_reg;
@@ -171,7 +149,7 @@ module EXU(
             op_width <= 2'b0;
             wb_sel <= 3'b0; //imm; alu; mem; PC+4
 
-            brju <= 2'b0;
+            brju <= 3'b0;
             mem_signext <= 1'b0;
 
             csr_addr <= 12'b0;
@@ -179,8 +157,6 @@ module EXU(
             csr_wr_sel <= 1'b0; //0: write srcR1; 1: write alu_res
             csr_wen <= 1'b0;
 
-            ecall <= 1'b0;
-            mret <= 1'b0;
             PC_reg <= 32'b0;
             fencei <= 1'b0;
             has_exception_reg <= 1'b0;
@@ -212,8 +188,6 @@ module EXU(
             csr_wr_sel <= s_csr_wr_sel;
             csr_wen <= s_csr_wen;
 
-            ecall <= s_ecall;
-            mret <= s_mret;
             PC_reg <= s_PC;
             fencei <= s_fencei;
             has_exception_reg <= s_has_exception;
@@ -234,12 +208,13 @@ module EXU(
     assign m_csr_data = csr_data;
     assign m_csr_wr_sel = csr_wr_sel;
     assign m_csr_wen = csr_wen;
-    assign m_ecall = ecall;
     assign m_srcR1 = srcR1;
     assign m_srcR2 = srcR2;
     assign m_PC = PC_reg;
     assign m_imm = imm;
     assign m_fencei = fencei;
+    assign m_exception_code = exception_code_reg;
+    assign m_has_exception = has_exception_reg;
 
     reg valid_reg;
     assign m_valid = valid_reg;
@@ -248,13 +223,14 @@ module EXU(
         if(reset) begin
             valid_reg <= 1'b0;
         end
-        else begin
-            if(s_valid && s_ready) begin
-                valid_reg <= 1'b1;
-            end
-            else if(m_ready && m_valid) begin
-                valid_reg <= 1'b0;
-            end
+        else if(exception_flush) begin
+            valid_reg <= 1'b0;
+        end
+        else if(s_valid && s_ready) begin
+            valid_reg <= 1'b1;
+        end
+        else if(m_ready && m_valid) begin
+            valid_reg <= 1'b0;
         end
 
     end

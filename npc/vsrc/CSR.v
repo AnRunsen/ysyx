@@ -8,12 +8,14 @@ module CSR(
     input wr_sel, //0: write srcR1, 1: write alu_res
     input wen,
 
-    input ecall,
+    input exception,
 
     input [31:0] w_epc,
     input [31:0] w_cause,
 
-    output reg [31:0] rdata
+    output reg [31:0] rdata,
+    output [31:0] mtvec_out,
+    output [31:0] mepc_out
 );
 
     reg [31:0] mcycle;
@@ -43,13 +45,13 @@ module CSR(
 
     always @(posedge clk) begin
         if(reset) mepc <= 32'b0;
-        else if(ecall) mepc <= w_epc; //write mepc with the current PC when ecall happens
+        else if(exception) mepc <= w_epc; //write mepc with the current PC when exception happens
         else if(wen && waddr == 12'h341) mepc <= (wr_sel) ? alu_res : srcR1; //mepc
     end
 
     always @(posedge clk) begin
         if(reset) mcause <= 32'b0;
-        else if(ecall) mcause <= w_cause; //write mcause with the current cause when ecall happens
+        else if(exception) mcause <= w_cause; //write mcause with the current cause when exception happens
         else if(wen && waddr == 12'h342) mcause <= (wr_sel) ? alu_res : srcR1; //mcause
     end
 
@@ -72,5 +74,8 @@ module CSR(
         if(reset) marchid <= 32'b0;
         else marchid <= 32'h018D573D; //26040125 in hex
     end
+
+    assign mtvec_out = mtvec;
+    assign mepc_out = mepc;
 
 endmodule

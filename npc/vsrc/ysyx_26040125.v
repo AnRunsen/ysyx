@@ -2,7 +2,9 @@ module ysyx_26040125(
         input  clock,
         input  reset,
 
+        /*verilator lint_off UNUSED*/
         input io_interrupt,
+        /*verilator lint_on UNUSED*/
 
         // AXI4 Master port
         input         io_master_awready,
@@ -36,8 +38,7 @@ module ysyx_26040125(
         input  [3:0]  io_master_rid,
 
         // AXI4 Slave port
-
-        /*verilator lint_off UNUSEDSIGNAL*/
+        /*verilator lint_off UNUSED */
         output        io_slave_awready,
         input         io_slave_awvalid,
         input  [31:0] io_slave_awaddr,
@@ -67,8 +68,7 @@ module ysyx_26040125(
         output [31:0] io_slave_rdata,
         output        io_slave_rlast,
         output [3:0]  io_slave_rid
-
-        /*verilator lint_on UNUSEDSIGNAL*/
+        /*verilator lint_on UNUSED */
     );
 
     // Slave port: outputs = 0, inputs left unconnected
@@ -110,6 +110,8 @@ module ysyx_26040125(
     wire        IFU_m_axi_wlast;
     wire        IFU_m_axi_bready;
     wire        IFU_pc_en;
+    wire        IFU_m_has_exception;
+    wire [3:0]  IFU_m_exception_code;
 
     // GPR outputs
     wire [31:0] GPR_rdata1;
@@ -129,25 +131,23 @@ module ysyx_26040125(
     wire        IDU_m_mem_write_en;
     wire [1:0]  IDU_m_op_width;
     wire [2:0]  IDU_m_wb_sel;
-    wire [1:0]  IDU_m_brju;
+    wire [2:0]  IDU_m_brju;
     wire        IDU_m_mem_signext;
     wire [11:0] IDU_m_csr_addr;
     wire [11:0] IDU_csr_addr;
     wire [31:0] IDU_m_csr_data;
     wire        IDU_m_csr_wr_sel;
     wire        IDU_m_csr_wen;
-    wire        IDU_m_ecall;
-    wire        IDU_m_mret;
     wire [31:0] IDU_m_PC;
     wire        IDU_m_valid;
     wire        IDU_m_fencei;
     wire        IDU_m_has_exception;
     wire [3:0]  IDU_m_exception_code;
 
-    /*verilator lint_off UNUSEDSIGNAL*/
+    /*verilator lint_off UNUSED */
     wire [4:0]  IDU_rs1;
     wire [4:0]  IDU_rs2;
-    /*verilator lint_on UNUSEDSIGNAL*/
+    /*verilator lint_on UNUSED */
 
     // EXU outputs
     wire        EXU_s_ready;
@@ -162,7 +162,6 @@ module ysyx_26040125(
     wire [31:0] EXU_m_csr_data;
     wire        EXU_m_csr_wr_sel;
     wire        EXU_m_csr_wen;
-    wire        EXU_m_ecall;
     wire [31:0] EXU_m_srcR1;
     wire [31:0] EXU_m_srcR2;
     wire [31:0] EXU_m_result;
@@ -170,17 +169,15 @@ module ysyx_26040125(
     wire [31:0] EXU_m_imm;
     wire        EXU_m_valid;
     wire        EXU_m_fencei;
+    wire        EXU_m_has_exception;
+    wire [3:0]  EXU_m_exception_code;
     wire [4:0]  EXU_rd_exu;
     wire [11:0] EXU_csr_exu;
     wire        EXU_rd_valid_exu;
     wire        EXU_csr_valid_exu;
     wire [31:0] EXU_pcr_exu_result;
     wire [31:0] EXU_pcr_imm;
-    wire        EXU_pcr_ecall;
-    wire        EXU_pcr_mret;
-    wire [31:0] EXU_pcr_mtvec;
-    wire [31:0] EXU_pcr_mepc;
-    wire [1:0]  EXU_pcr_behavior;
+    wire [2:0]  EXU_pcr_behavior;
     wire        EXU_flush;
     wire [31:0] EXU_pcr_pc_now;
 
@@ -193,7 +190,6 @@ module ysyx_26040125(
     wire [31:0] LSU_m_csr_data;
     wire        LSU_m_csr_wr_sel;
     wire        LSU_m_csr_wen;
-    wire        LSU_m_ecall;
     wire [31:0] LSU_m_srcR1;
     wire [31:0] LSU_m_result;
     wire [31:0] LSU_m_rdata;
@@ -223,29 +219,34 @@ module ysyx_26040125(
     wire [11:0] LSU_csr_lsu;
     wire        LSU_rd_valid_lsu;
     wire        LSU_csr_valid_lsu;
+    wire        LSU_m_has_exception;
+    wire [3:0]  LSU_m_exception_code;
 
     // WBU outputs
     wire        WBU_s_ready;
     wire        WBU_wen;
     wire [31:0] WBU_wdata;
-    /*verilator lint_off UNUSEDSIGNAL*/
+    /*verilator lint_off UNUSED */
     wire [4:0]  WBU_waddr;
-    /*verilator lint_on UNUSEDSIGNAL*/
+    /*verilator lint_on UNUSED */
     wire [11:0] WBU_csr_addr_;
     wire [31:0] WBU_csr_srcR1_;
     wire [31:0] WBU_csr_alu_res_;
     wire        WBU_csr_wr_sel_;
     wire        WBU_csr_wen_;
-    wire        WBU_csr_ecall_;
     wire [31:0] WBU_csr_epc_;
     wire [31:0] WBU_csr_cause_;
     wire [4:0]  WBU_rd_wbu;
     wire [11:0] WBU_csr_wbu;
     wire        WBU_rd_valid_wbu;
     wire        WBU_csr_valid_wbu;
+    wire        WBU_csr_exception;
+    wire        WBU_exception_flush;
 
     // CSR outputs
     wire [31:0] CSR_rdata;
+    wire [31:0] CSR_mtvec_out;
+    wire [31:0] CSR_mepc_out;
 
     // ARB outputs (slave side, responses back to IFU/LSU)
     wire        ARB_s_axi_arready_A;
@@ -380,15 +381,14 @@ module ysyx_26040125(
             .reset       (reset),
             .exu_result  (EXU_pcr_exu_result),
             .imm         (EXU_pcr_imm),
-            .ecall       (EXU_pcr_ecall),
-            .mret        (EXU_pcr_mret),
-            .mtvec       (EXU_pcr_mtvec),
-            .mepc        (EXU_pcr_mepc),
+            .mtvec       (CSR_mtvec_out),
+            .mepc        (CSR_mepc_out),
             .behavior    (EXU_pcr_behavior),
             .pc_en       (IFU_pc_en),
             .PC          (PCR_PC),
             .pc_now      (EXU_pcr_pc_now),
-            .flush       (EXU_flush)
+            .flush       (EXU_flush),
+            .exception   (WBU_exception_flush)
         );
 
     IFU ysyx_26040125_IFU(
@@ -396,10 +396,13 @@ module ysyx_26040125(
             .reset          (reset),
             .m_Inst         (IFU_m_Inst),
             .m_PC           (IFU_m_PC),
+            .m_has_exception (IFU_m_has_exception),
+            .m_exception_code (IFU_m_exception_code),
             .m_valid        (IFU_m_valid),
             .m_ready        (IDU_s_ready),
             .PC             (PCR_PC),
             .cache_flush    (LSU_cache_flush),
+            .exception_flush(WBU_exception_flush),
             .m_axi_araddr   (IFU_m_axi_araddr),
             .m_axi_arvalid  (IFU_m_axi_arvalid),
             .m_axi_arready  (ARB_s_axi_arready_A),
@@ -450,6 +453,8 @@ module ysyx_26040125(
             .reset          (reset),
             .s_Inst         (IFU_m_Inst),
             .s_PC           (IFU_m_PC),
+            .s_has_exception (IFU_m_has_exception),
+            .s_exception_code (IFU_m_exception_code),
             .s_valid        (IFU_m_valid),
             .s_ready        (IDU_s_ready),
             .m_rd           (IDU_m_rd),
@@ -470,12 +475,10 @@ module ysyx_26040125(
             .m_csr_data     (IDU_m_csr_data),
             .m_csr_wr_sel   (IDU_m_csr_wr_sel),
             .m_csr_wen      (IDU_m_csr_wen),
-            .m_ecall        (IDU_m_ecall),
-            .m_mret         (IDU_m_mret),
             .m_PC           (IDU_m_PC),
             .m_fencei       (IDU_m_fencei),
-            .m_has_exception(IDU_m_has_exception),
-            .m_exception_code(IDU_m_exception_code),
+            .m_has_exception (IDU_m_has_exception),
+            .m_exception_code (IDU_m_exception_code),
             .m_valid        (IDU_m_valid),
             .m_ready        (EXU_s_ready),
             .rs1            (IDU_rs1),
@@ -496,7 +499,8 @@ module ysyx_26040125(
             .csr_wbu        (WBU_csr_wbu),
             .rd_valid_wbu   (WBU_rd_valid_wbu),
             .csr_valid_wbu  (WBU_csr_valid_wbu),
-            .flush          (EXU_flush)
+            .flush          (EXU_flush),
+            .exception_flush  (WBU_exception_flush)
         );
 
     EXU ysyx_26040125_EXU(
@@ -520,8 +524,6 @@ module ysyx_26040125(
             .s_csr_data     (IDU_m_csr_data),
             .s_csr_wr_sel   (IDU_m_csr_wr_sel),
             .s_csr_wen      (IDU_m_csr_wen),
-            .s_ecall        (IDU_m_ecall),
-            .s_mret         (IDU_m_mret),
             .s_PC           (IDU_m_PC),
             .s_fencei       (IDU_m_fencei),
             .s_has_exception(IDU_m_has_exception),
@@ -539,7 +541,6 @@ module ysyx_26040125(
             .m_csr_data     (EXU_m_csr_data),
             .m_csr_wr_sel   (EXU_m_csr_wr_sel),
             .m_csr_wen      (EXU_m_csr_wen),
-            .m_ecall        (EXU_m_ecall),
             .m_srcR1        (EXU_m_srcR1),
             .m_srcR2        (EXU_m_srcR2),
             .m_result       (EXU_m_result),
@@ -548,19 +549,18 @@ module ysyx_26040125(
             .m_valid        (EXU_m_valid),
             .m_ready        (LSU_s_ready),
             .m_fencei       (EXU_m_fencei),
+            .m_has_exception (EXU_m_has_exception),
+            .m_exception_code (EXU_m_exception_code),
             .rd_exu         (EXU_rd_exu),
             .csr_exu        (EXU_csr_exu),
             .rd_valid_exu   (EXU_rd_valid_exu),
             .csr_valid_exu  (EXU_csr_valid_exu),
             .pcr_exu_result (EXU_pcr_exu_result),
             .pcr_imm        (EXU_pcr_imm       ),
-            .pcr_ecall      (EXU_pcr_ecall     ),
-            .pcr_mret       (EXU_pcr_mret      ),
-            .pcr_mtvec      (EXU_pcr_mtvec     ),
-            .pcr_mepc       (EXU_pcr_mepc      ),
             .pcr_behavior   (EXU_pcr_behavior  ),
             .pcr_pc_now     (EXU_pcr_pc_now    ),
-            .flush          (EXU_flush         )
+            .flush          (EXU_flush         ),
+            .exception_flush  (WBU_exception_flush)
         );
 
     LSU ysyx_26040125_LSU(
@@ -577,13 +577,14 @@ module ysyx_26040125(
             .s_csr_data     (EXU_m_csr_data),
             .s_csr_wr_sel   (EXU_m_csr_wr_sel),
             .s_csr_wen      (EXU_m_csr_wen),
-            .s_ecall        (EXU_m_ecall),
             .s_srcR1        (EXU_m_srcR1),
             .s_srcR2        (EXU_m_srcR2),
             .s_result       (EXU_m_result),
             .s_PC           (EXU_m_PC),
             .s_imm          (EXU_m_imm),
             .s_fencei       (EXU_m_fencei),
+            .s_has_exception (EXU_m_has_exception),
+            .s_exception_code (EXU_m_exception_code),
             .s_valid        (EXU_m_valid),
             .s_ready        (LSU_s_ready),
             .m_rd           (LSU_m_rd),
@@ -593,12 +594,13 @@ module ysyx_26040125(
             .m_csr_data     (LSU_m_csr_data),
             .m_csr_wr_sel   (LSU_m_csr_wr_sel),
             .m_csr_wen      (LSU_m_csr_wen),
-            .m_ecall        (LSU_m_ecall),
             .m_srcR1        (LSU_m_srcR1),
             .m_result       (LSU_m_result),
             .m_rdata        (LSU_m_rdata),
             .m_PC           (LSU_m_PC),
             .m_imm          (LSU_m_imm),
+            .m_has_exception (LSU_m_has_exception),
+            .m_exception_code (LSU_m_exception_code),
             .m_valid        (LSU_m_valid),
             .m_ready        (WBU_s_ready),
             .m_axi_araddr   (LSU_m_axi_araddr),
@@ -634,7 +636,8 @@ module ysyx_26040125(
             .rd_lsu         (LSU_rd_lsu),
             .csr_lsu        (LSU_csr_lsu),
             .rd_valid_lsu   (LSU_rd_valid_lsu),
-            .csr_valid_lsu  (LSU_csr_valid_lsu)
+            .csr_valid_lsu  (LSU_csr_valid_lsu),
+            .exception_flush  (WBU_exception_flush)
         );
 
     WBU ysyx_26040125_WBU(
@@ -647,12 +650,13 @@ module ysyx_26040125(
             .s_csr_data     (LSU_m_csr_data),
             .s_csr_wr_sel   (LSU_m_csr_wr_sel),
             .s_csr_wen      (LSU_m_csr_wen),
-            .s_ecall        (LSU_m_ecall),
             .s_srcR1        (LSU_m_srcR1),
             .s_result       (LSU_m_result),
             .s_rdata        (LSU_m_rdata),
             .s_PC           (LSU_m_PC),
             .s_imm          (LSU_m_imm),
+            .s_has_exception (LSU_m_has_exception),
+            .s_exception_code (LSU_m_exception_code),
             .s_valid        (LSU_m_valid),
             .s_ready        (WBU_s_ready),
             .wen            (WBU_wen),
@@ -663,13 +667,14 @@ module ysyx_26040125(
             .csr_alu_res_   (WBU_csr_alu_res_),
             .csr_wr_sel_    (WBU_csr_wr_sel_),
             .csr_wen_       (WBU_csr_wen_),
-            .csr_ecall_     (WBU_csr_ecall_),
+            .csr_exception   (WBU_csr_exception),
             .csr_epc_       (WBU_csr_epc_),
             .csr_cause_     (WBU_csr_cause_),
             .rd_wbu         (WBU_rd_wbu),
             .csr_wbu        (WBU_csr_wbu),
             .rd_valid_wbu   (WBU_rd_valid_wbu),
-            .csr_valid_wbu  (WBU_csr_valid_wbu)
+            .csr_valid_wbu  (WBU_csr_valid_wbu),
+            .exception_flush  (WBU_exception_flush)
         );
 
     CSR ysyx_26040125_CSR(
@@ -681,10 +686,12 @@ module ysyx_26040125(
             .alu_res (WBU_csr_alu_res_),
             .wr_sel  (WBU_csr_wr_sel_),
             .wen     (WBU_csr_wen_),
-            .ecall   (WBU_csr_ecall_),
+            .exception (WBU_csr_exception),
             .w_epc   (WBU_csr_epc_),
             .w_cause (WBU_csr_cause_),
-            .rdata   (CSR_rdata)
+            .rdata   (CSR_rdata),
+            .mtvec_out (CSR_mtvec_out),
+            .mepc_out (CSR_mepc_out)
         );
 
 

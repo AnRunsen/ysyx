@@ -1,6 +1,6 @@
 `ifndef SYNTHESIS
-    import PKG::ihit_num;
-    import PKG::ifetch_num;
+    import "DPI-C" function void ihit_num();
+    import "DPI-C" function void ifetch_num();
 `endif
 module ICACHE#(
     parameter LINE_NUM = 16,
@@ -11,6 +11,7 @@ module ICACHE#(
 
     input cache_flush,
     input flush,
+    input exception_flush,
 
     /*axi stream bus*/
     input  [31:0] s_raddr,
@@ -19,6 +20,8 @@ module ICACHE#(
 
     output [31:0] m_data,
     output [31:0] m_user_pc,
+    output        m_has_exception,
+    output reg [3:0] m_exception_code,
     output        m_valid,
     input         m_ready,
 
@@ -33,7 +36,9 @@ module ICACHE#(
 
     input [31:0] m_axi_rdata,
     input [1:0] m_axi_rresp,
+    /*verilator lint_off UNUSED */
     input [3:0] m_axi_rid,
+    /*verilator lint_on UNUSED */
     input m_axi_rlast,
     input m_axi_rvalid,
     output m_axi_rready,
@@ -95,15 +100,64 @@ module ICACHE#(
     wire [$clog2(LINE_NUM)-1:0] index = s_raddr[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
     wire [TAG_SIZE-1:0] tag = s_raddr[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
     wire hit = valid[index] && tags[index] == tag;
+    wire misaligned = s_raddr[1:0] != 2'b00;
 
-    localparam HIT = 2'd0, REQ = 2'd1, WAIT = 2'd2;
+    localparam HIT = 2'd0, REQ = 2'd1, WAIT = 2'd2, EXCEPTION = 2'd3;
     reg [1:0] state, next_state;
 
     always @(*) begin
         case(state)
-            HIT: next_state = (s_valid & s_ready) ? (hit ? HIT : REQ) : state;
+            HIT: begin
+                if(s_valid & s_ready) begin
+                    if(misaligned) begin
+                        next_state = EXCEPTION;
+                    end
+                    else if(hit) begin
+                        next_state = HIT;
+                    end
+                    else begin
+                        next_state = REQ;
+                    end
+                end
+                else begin
+                    next_state = state;
+                end
+            end
+            
             REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
-            WAIT: next_state = m_axi_rvalid && m_axi_rready && m_axi_rlast ? HIT : state;
+            WAIT: begin
+                if(m_axi_rvalid && m_axi_rready) begin
+                    if(m_axi_rresp != 2'b00) begin
+                        next_state = EXCEPTION;
+                    end
+                    else if(m_axi_rlast) begin
+                        next_state = HIT;
+                    end
+                    else begin
+                        next_state = state;
+                    end
+                end
+                else begin
+                    next_state = state;
+                end
+            end
+            
+            EXCEPTION: begin
+                if(s_valid & s_ready) begin
+                    if(misaligned) begin
+                        next_state = EXCEPTION;
+                    end
+                    else if(hit) begin
+                        next_state = HIT;
+                    end
+                    else begin
+                        next_state = REQ;
+                    end
+                end
+                else begin
+                    next_state = state;
+                end
+            end
             default: next_state = HIT;
         endcase
     end
@@ -117,6 +171,21 @@ module ICACHE#(
         end
     end
 
+    /*handle the exception*/
+    always @(posedge clk) begin
+        if(reset) begin
+            m_exception_code <= 4'b0;
+        end
+        
+        else if(s_valid && s_ready && misaligned) begin
+            m_exception_code <= 4'd0; // fetch address misaligned
+        end
+
+        else if(m_axi_rvalid && m_axi_rready && m_axi_rresp != 2'b00) begin
+            m_exception_code <= 4'd1; // fetch access fault
+        end
+    end
+
 
     /*logic to latch data*/
     reg valid_reg;
@@ -126,7 +195,7 @@ module ICACHE#(
             valid_reg <= 1'b0;
         end
 
-        else if(flush) begin
+        else if(flush || exception_flush) begin
             valid_reg <= 1'b0;
         end
 
@@ -182,9 +251,10 @@ module ICACHE#(
         end
     end
 
-    assign s_ready = state == HIT && (!valid_reg || (m_valid && m_ready));
+    assign s_ready = (state == HIT || state == EXCEPTION) && (!valid_reg || (m_valid && m_ready));
     assign m_data = cache[index_reg][word_sel*32 +: 32];
-    assign m_valid = state == HIT && valid_reg;
+    assign m_has_exception = state == EXCEPTION;
+    assign m_valid = (state == HIT || state == EXCEPTION) && valid_reg;
     assign m_user_pc = addr_reg;
 
     assign m_axi_araddr = {addr_reg[31:4], 4'b0};
