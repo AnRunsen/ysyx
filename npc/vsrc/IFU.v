@@ -1,5 +1,6 @@
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
+    import PKG::sim_exit;
 `endif
 module IFU(
     input clk,
@@ -60,6 +61,12 @@ module IFU(
     always @(posedge clk) begin
         if(m_valid && m_ready) begin
             perf_cnt_update(0);
+        end
+    end
+
+    always @(*) begin
+        if(PC==32'h00000010) begin
+            sim_exit();
         end
     end
 `endif
