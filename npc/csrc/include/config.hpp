@@ -2,7 +2,7 @@
 #define __CONFIG_HPP__
 
 // #define ITRACE
-#define FTRACE
+// #define FTRACE
 // #define DIFFTEST
 // #define MTRACE
 #define WAVEON
