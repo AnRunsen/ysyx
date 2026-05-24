@@ -147,11 +147,11 @@ module WBU(
     assign csr_wr_sel_ = csr_wr_sel;
     assign csr_wen_ = csr_wen & valid_reg & !has_exception_reg;
 
-    assign csr_exception = has_exception_reg;
+    assign csr_exception = has_exception_reg & valid_reg;
     assign csr_epc_ = PC;
     assign csr_cause_ = {28'b0, exception_code_reg};
 
-    assign exception_flush = has_exception_reg;
+    assign exception_flush = has_exception_reg & valid_reg;
 
 
 endmodule

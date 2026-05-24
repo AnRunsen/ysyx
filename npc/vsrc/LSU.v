@@ -169,7 +169,7 @@ module LSU(
                         next_state = EXCEPTION;
                     end
                     else if(s_mem_en) begin
-                        if((s_op_width == `OP_WIDTH_HALF && !s_result[0]) || 
+                        if((s_op_width == `OP_WIDTH_HALF && s_result[0] != 1'b0) || 
                         (s_op_width == `OP_WIDTH_WORD && s_result[1:0] != 2'b00)) begin
                             next_state = EXCEPTION;
                         end
@@ -195,7 +195,7 @@ module LSU(
                         next_state = EXCEPTION;
                     end
                     else if(s_mem_en) begin
-                        if((s_op_width == `OP_WIDTH_HALF && !s_result[0]) || 
+                        if((s_op_width == `OP_WIDTH_HALF && s_result[0] != 1'b0) || 
                         (s_op_width == `OP_WIDTH_WORD && s_result[1:0] != 2'b00)) begin
                             next_state = EXCEPTION;
                         end
