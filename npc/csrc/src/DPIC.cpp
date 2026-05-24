@@ -165,7 +165,7 @@ extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
 }
 
 
-extern "C" void sim_exit(int code)
+extern "C" void sim_exit()
 {
     printf("\033[34mTotal Cycles: \t\t%lu\n", cycle_cnt);
     printf("Total Instructions: \t%lu\n", instr_cnt);
@@ -179,19 +179,6 @@ extern "C" void sim_exit(int code)
     printf("============================\n");
     printf("  Num of iCache hit: %lu\t%f%%\033[0m\n", ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
 
-    if (code == 0)
-    {
-        printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);
-    }
-    else if (code == 1)
-    {
-        printf("Code:%d \033[31;1mHit Bad Trap\033[0m\n", code);
-    }
-
-    else
-    {
-        printf("\033[31;1mUnknown Opcode At PC:%08x\033[0m\n", code);
-    }
     exit_flag = true;
 }
 

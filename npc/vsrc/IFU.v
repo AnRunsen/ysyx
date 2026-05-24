@@ -1,5 +1,6 @@
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
+    import PKG::sim_exit;
 `endif
 module IFU(
     input clk,
@@ -7,6 +8,8 @@ module IFU(
 
     output [31:0] m_Inst,
     output [31:0] m_PC,
+    output m_has_exception,
+    output [3:0] m_exception_code,
     output m_valid,
     input m_ready,
 
@@ -14,6 +17,7 @@ module IFU(
 
     input flush,
     input cache_flush,
+    input exception_flush,
 
     //axi interface to RAM
     output [31:0] m_axi_araddr,
@@ -59,6 +63,12 @@ module IFU(
             perf_cnt_update(0);
         end
     end
+
+    always @(*) begin
+        if(PC==32'h00000010) begin
+            sim_exit();
+        end
+    end
 `endif
 
 
@@ -73,12 +83,15 @@ module IFU(
         .reset          	( reset           ),
         .cache_flush    	( cache_flush     ),
         .flush          	( flush           ),
+        .exception_flush    ( exception_flush ),
 
         .s_raddr            ( PC    ),
         .s_valid            ( s_valid   ),
         .s_ready            ( s_ready   ),
         .m_data             ( m_Inst     ),
         .m_user_pc          ( m_PC  ),
+        .m_has_exception    ( m_has_exception ),
+        .m_exception_code   ( m_exception_code ),
         .m_valid            ( m_valid    ),
         .m_ready            ( m_ready    ),
 

@@ -30,10 +30,11 @@
 `define ALU_SEL_IMM 2'b01
 `define ALU_SEL_CSR 2'b10
 
-`define PC_NORMAL 2'b00
-`define PC_NEAR 2'b01
-`define PC_FAR 2'b10
-`define PC_BRANCH 2'b11
+`define PC_NORMAL 3'b000
+`define PC_NEAR 3'b001
+`define PC_FAR 3'b010
+`define PC_BRANCH 3'b011
+`define PC_MRET 3'b100
 
 `define CSR_SEL_RS1 1'b0
 `define CSR_SEL_ALU 1'b1

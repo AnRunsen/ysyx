@@ -18,13 +18,14 @@ module LSU(
     input [31:0] s_csr_data,
     input s_csr_wr_sel,
     input s_csr_wen,
-    input s_ecall,
     input [31:0] s_srcR1,
     input [31:0] s_srcR2,
     input [31:0] s_result,
     input [31:0] s_PC,
     input [31:0] s_imm,
     input s_fencei,
+    input s_has_exception,
+    input [3:0] s_exception_code,
 
     input s_valid,
     output s_ready,
@@ -38,12 +39,13 @@ module LSU(
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
-    output m_ecall,
     output [31:0] m_srcR1,
     output [31:0] m_result,
     output [31:0] m_rdata,
     output [31:0] m_PC,
     output [31:0] m_imm,
+    output m_has_exception,
+    output reg [3:0] m_exception_code,
 
     output m_valid,
     input m_ready,
@@ -60,8 +62,10 @@ module LSU(
 
     input [31:0] m_axi_rdata,
     input [1:0] m_axi_rresp,
+    /*verilator lint_off UNUSED */
     input [3:0] m_axi_rid,
     input m_axi_rlast,
+    /*verilator lint_on UNUSED */
     input m_axi_rvalid,
     output m_axi_rready,
 
@@ -81,8 +85,10 @@ module LSU(
 
     input [1:0] m_axi_bresp,
     input m_axi_bvalid,
+    /*verilator lint_off UNUSED */
     input [3:0] m_axi_bid,
     output m_axi_bready,
+    /*verilator lint_on UNUSED */
 
     /*to interact with icache*/
     output cache_flush,
@@ -91,7 +97,9 @@ module LSU(
     output [4:0] rd_lsu,
     output rd_valid_lsu,
     output [11:0] csr_lsu,
-    output csr_valid_lsu
+    output csr_valid_lsu,
+
+    input exception_flush
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -101,37 +109,71 @@ module LSU(
     end
 `endif
 
-    reg working_reg;
+    reg [3:0] exception_code;
+    /*handle the exception*/
     always @(posedge clk) begin
         if(reset) begin
-            working_reg <= 1'b0;
+            exception_code <= 4'b0;
+        end
+        
+        else if(s_mem_en && 
+            ((s_op_width == `OP_WIDTH_HALF && s_result[0] != 1'b0) || 
+            (s_op_width == `OP_WIDTH_WORD && s_result[1:0] != 2'b00))) begin
+            if(s_mem_write_en) exception_code <= 4'd6;
+            else exception_code <= 4'd4;
+        end
+
+        else if(m_axi_rvalid && m_axi_rready && m_axi_rresp != 2'b00) begin
+            exception_code <= 4'd5; // load access fault
+        end
+
+        else if(m_axi_bvalid && m_axi_bready && m_axi_bresp != 2'b00) begin
+            exception_code <= 4'd7; //store access fault
+        end
+    end
+
+    reg valid_reg;
+    always @(posedge clk) begin
+        if(reset) begin
+            valid_reg <= 1'b0;
+        end
+
+        else if(exception_flush) begin
+            valid_reg <= 1'b0;
         end
         else if(s_valid && s_ready) begin
-            working_reg <= 1'b1;
+            valid_reg <= 1'b1;
         end
         else if(m_ready && m_valid) begin
-            working_reg <= 1'b0;
+            valid_reg <= 1'b0;
         end
     end
 
     assign rd_lsu = rd;
-    assign rd_valid_lsu = working_reg && wb_en;
+    assign rd_valid_lsu = valid_reg && wb_en;
     assign csr_lsu = csr_addr;
-    assign csr_valid_lsu = working_reg && csr_wen;
+    assign csr_valid_lsu = valid_reg && csr_wen;
 
 
 
-    localparam IDLE = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
+    localparam EXCEPTION = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
                 READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 
                 WRITE_REQ = 3'b111;
     reg [2:0] state, next_state;
 
     always @(*) begin
         case(state)
-            IDLE: begin
+            EXCEPTION: begin
                 if(s_valid && s_ready) begin
-                    if(s_mem_en) begin
-                        if(s_mem_write_en) begin
+                    if(s_has_exception) begin
+                        next_state = EXCEPTION;
+                    end
+                    else if(s_mem_en) begin
+                        if((s_op_width == `OP_WIDTH_HALF && s_result[0] != 1'b0) || 
+                        (s_op_width == `OP_WIDTH_WORD && s_result[1:0] != 2'b00)) begin
+                            next_state = EXCEPTION;
+                        end
+                        else if(s_mem_write_en) begin
                             next_state = WRITE_REQ;
                         end
                         else begin
@@ -149,8 +191,15 @@ module LSU(
 
             PASS: begin
                 if(s_valid && s_ready) begin
-                    if(s_mem_en) begin
-                        if(s_mem_write_en) begin
+                    if(s_has_exception) begin
+                        next_state = EXCEPTION;
+                    end
+                    else if(s_mem_en) begin
+                        if((s_op_width == `OP_WIDTH_HALF && s_result[0] != 1'b0) || 
+                        (s_op_width == `OP_WIDTH_WORD && s_result[1:0] != 2'b00)) begin
+                            next_state = EXCEPTION;
+                        end
+                        else if(s_mem_write_en) begin
                             next_state = WRITE_REQ;
                         end
                         else begin
@@ -161,10 +210,6 @@ module LSU(
                         next_state = PASS;
                     end
                 end
-
-                else if(m_valid && m_ready) begin
-                    next_state = IDLE;
-                end
                 
                 else begin
                     next_state = state;
@@ -173,7 +218,12 @@ module LSU(
 
             READ_WAIT: begin
                 if(m_axi_rvalid && m_axi_rready) begin
-                    next_state = PASS;
+                    if(m_axi_rresp != 2'b00) begin
+                        next_state = EXCEPTION;
+                    end
+                    else begin
+                        next_state = PASS;
+                    end
                 end
                 else begin
                     next_state = READ_WAIT;
@@ -182,7 +232,12 @@ module LSU(
 
             WRITE_WAIT: begin
                 if(m_axi_bvalid && m_axi_bready) begin
-                    next_state = PASS;
+                    if(m_axi_bresp != 2'b00) begin
+                        next_state = EXCEPTION;
+                    end
+                    else begin
+                        next_state = PASS;
+                    end
                 end
                 else begin
                     next_state = WRITE_WAIT;
@@ -236,13 +291,13 @@ module LSU(
                 end
             end
 
-            default: next_state = IDLE;
+            default: next_state = PASS;
         endcase
     end
 
     always @(posedge clk) begin
         if(reset) begin
-            state <= IDLE;
+            state <= PASS;
         end
         else begin
             state <= next_state;
@@ -258,16 +313,17 @@ module LSU(
     reg [31:0] csr_data;
     reg csr_wr_sel;
     reg csr_wen;
-    reg ecall;
     reg [31:0] srcR1;
     reg [31:0] srcR2;
     reg [31:0] result;
     reg [31:0] PC;
     reg [31:0] imm;
     reg fencei;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
     
     /*logic to recv data*/
-    assign s_ready = (state == IDLE) || (state == PASS && m_ready && m_valid);
+    assign s_ready = !valid_reg || (m_ready && m_valid);
     always @(posedge clk) begin
         if(reset) begin
             rd <= 5'b0;
@@ -279,13 +335,14 @@ module LSU(
             csr_data <= 32'b0;
             csr_wr_sel <= 1'b0;
             csr_wen <= 1'b0;
-            ecall <= 1'b0;
             srcR1 <= 32'b0;
             srcR2 <= 32'b0;
             result <= 32'b0;
             PC <= 32'b0;
             imm <= 32'b0;
             fencei <= 1'b0;
+            has_exception_reg <= 1'b0;
+            exception_code_reg <= 4'b0;
         end
 
         else if(s_valid && s_ready) begin
@@ -299,12 +356,13 @@ module LSU(
             csr_wr_sel <= s_csr_wr_sel;
             csr_wen <= s_csr_wen;
             srcR1 <= s_srcR1;
-            ecall <= s_ecall;
             srcR2 <= s_srcR2;
             result <= s_result;
             PC <= s_PC;
             imm <= s_imm;
             fencei <= s_fencei;
+            has_exception_reg <= s_has_exception;
+            exception_code_reg <= s_exception_code;
         end
     end
 
@@ -316,13 +374,22 @@ module LSU(
     assign m_csr_data = csr_data;
     assign m_csr_wr_sel = csr_wr_sel;
     assign m_csr_wen = csr_wen;
-    assign m_ecall = ecall;
     assign m_srcR1 = srcR1;
     assign m_result = result;
     assign m_PC = PC;
     assign m_imm = imm;
-    assign m_valid = (state == PASS);
+    assign m_valid = (state == PASS || state == EXCEPTION) && valid_reg;
     assign cache_flush = (state == PASS) && fencei;
+    assign m_has_exception = (state == EXCEPTION);
+    always @(*) begin
+        if(has_exception_reg) begin
+            m_exception_code = exception_code_reg;
+        end
+        else begin
+            m_exception_code = exception_code;
+        end
+    end
+    
 
     /*logic to send read addr*/
     assign m_axi_araddr = result;

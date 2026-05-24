@@ -55,6 +55,7 @@ static void machine_info()
 }
 
 void _trm_init() {
+  cte_init(NULL);
   uart_init();
   machine_info();
   int ret = main(mainargs);
