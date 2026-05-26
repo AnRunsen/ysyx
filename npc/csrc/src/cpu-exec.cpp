@@ -56,13 +56,14 @@ void cpu_exec(uint64_t n)
             uint8_t exu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__valid_reg;
             uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__valid_reg;
             uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__valid_reg;
-
-            printf("\r| %s | %s | %s | %s | %s |",
+            uint32_t pc = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__PCR_PC;
+            printf("\r| %s | %s | %s | %s | %s |     PC: 0x%08x |",
                 ifu_valid ? "IFU" : "   ",
                 idu_valid ? "IDU" : "   ",
                 exu_valid ? "EXU" : "   ",
                 lsu_valid ? "LSU" : "   ",
-                wbu_valid ? "WBU" : "   ");
+                wbu_valid ? "WBU" : "   ",
+                pc);
             fflush(stdout);
 #endif
         }
