@@ -20,8 +20,8 @@ module IDU(
 
 
     output [4:0] m_rd,
-    output [31:0] m_srcR1,
-    output [31:0] m_srcR2,
+    output reg [31:0] m_srcR1,
+    output reg [31:0] m_srcR2,
     output reg [31:0] m_imm,
 
     output reg [3:0] m_alu_op,
@@ -39,7 +39,7 @@ module IDU(
     output reg m_mem_signext,
 
     output reg [11:0] m_csr_addr,
-    output [31:0] m_csr_data,
+    output reg [31:0] m_csr_data,
     output reg m_csr_wr_sel, //0: write m_srcR1, 1: write alu_res
     output reg m_csr_wen,
 
@@ -72,7 +72,21 @@ module IDU(
     input [4:0] rd_wbu,
     input [11:0] csr_wbu,
     input rd_valid_wbu,
-    input csr_valid_wbu
+    input csr_valid_wbu,
+
+    /*for load-use*/
+    input [31:0] forward_data_exu,
+    input forward_ready_exu,
+    input [31:0] csr_forward_data_exu,
+    input csr_forward_ready_exu,
+    input [31:0] forward_data_lsu,
+    input forward_ready_lsu,
+    input [31:0] csr_forward_data_lsu,
+    input csr_forward_ready_lsu,
+    input [31:0] forward_data_wbu,
+    input forward_ready_wbu,
+    input [31:0] csr_forward_data_wbu,
+    input csr_forward_ready_wbu
 );
 `ifndef SYNTHESIS
     always @(posedge clk) begin
@@ -84,28 +98,35 @@ module IDU(
 `endif
 
 
-    /*handle the RAW*/
-    wire       	stall;
+    wire stall;
     reg need_rs2;
+
     RAW u_RAW(
-        .rs1         	( rs1          ),
-        .rs2         	( rs2          ),
-        .need_rs2    	( need_rs2     ),
-        .csr_addr    	( csr_addr     ),
-        .rd_exu      	( rd_exu       ),
-        .rd_valid_exu 	( rd_valid_exu  ),
-        .rd_lsu      	( rd_lsu       ),
-        .rd_valid_lsu 	( rd_valid_lsu  ),
-        .rd_wbu      	( rd_wbu       ),
-        .rd_valid_wbu 	( rd_valid_wbu  ),
-        .csr_exu      	( csr_exu       ),
-        .csr_valid_exu 	( csr_valid_exu  ),
-        .csr_lsu      	( csr_lsu       ),
-        .csr_valid_lsu 	( csr_valid_lsu  ),
-        .csr_wbu      	( csr_wbu       ),
-        .csr_valid_wbu 	( csr_valid_wbu  ),
-        .stall       	( stall       )
+        .rs1                   	( rs1                    ),
+        .rs2                   	( rs2                    ),
+        .need_rs2              	( need_rs2               ),
+        .csr_addr              	( csr_addr               ),
+        .rd_exu                	( rd_exu                 ),
+        .rd_valid_exu          	( rd_valid_exu           ),
+        .forward_ready_exu     	( forward_ready_exu      ),
+        .csr_exu               	( csr_exu                ),
+        .csr_valid_exu         	( csr_valid_exu          ),
+        .csr_forward_ready_exu 	( csr_forward_ready_exu  ),
+        .rd_lsu                	( rd_lsu                 ),
+        .rd_valid_lsu          	( rd_valid_lsu           ),
+        .forward_ready_lsu     	( forward_ready_lsu      ),
+        .csr_lsu               	( csr_lsu                ),
+        .csr_valid_lsu         	( csr_valid_lsu          ),
+        .csr_forward_ready_lsu 	( csr_forward_ready_lsu  ),
+        .rd_wbu                	( rd_wbu                 ),
+        .rd_valid_wbu          	( rd_valid_wbu           ),
+        .forward_ready_wbu     	( forward_ready_wbu      ),
+        .csr_wbu               	( csr_wbu                ),
+        .csr_valid_wbu         	( csr_valid_wbu          ),
+        .csr_forward_ready_wbu 	( csr_forward_ready_wbu  ),
+        .stall                 	( stall                  )
     );
+
 
 
     /*logic to recv data*/
@@ -175,11 +196,54 @@ module IDU(
     wire [31:0] immU;
     wire [31:0] immJ;
 
-    assign m_csr_data = csr_data;
     assign csr_addr = m_csr_addr;
 
-    assign m_srcR1 = srcR1_in;
-    assign m_srcR2 = srcR2_in;
+    always @(*) begin
+        if(csr_addr == csr_exu && csr_valid_exu && csr_forward_ready_exu) begin
+            m_csr_data = csr_forward_data_exu;
+        end
+        else if(csr_addr == csr_lsu && csr_valid_lsu && csr_forward_ready_lsu) begin
+            m_csr_data = csr_forward_data_lsu;
+        end
+        else if(csr_addr == csr_wbu && csr_valid_wbu && csr_forward_ready_wbu) begin
+            m_csr_data = csr_forward_data_wbu;
+        end
+        else begin
+            m_csr_data = csr_data;
+        end
+    end
+
+
+    always @(*) begin
+        if(rs1 == rd_exu && rd_valid_exu && forward_ready_exu) begin
+            m_srcR1 = forward_data_exu;
+        end
+        else if(rs1 == rd_lsu && rd_valid_lsu && forward_ready_lsu) begin
+            m_srcR1 = forward_data_lsu;
+        end
+        else if(rs1 == rd_wbu && rd_valid_wbu && forward_ready_wbu) begin
+            m_srcR1 = forward_data_wbu;
+        end
+        else begin
+            m_srcR1 = srcR1_in;
+        end
+    end
+
+    always @(*) begin
+        if(rs2 == rd_exu && rd_valid_exu && forward_ready_exu) begin
+            m_srcR2 = forward_data_exu;
+        end
+        else if(rs2 == rd_lsu && rd_valid_lsu && forward_ready_lsu) begin
+            m_srcR2 = forward_data_lsu;
+        end
+        else if(rs2 == rd_wbu && rd_valid_wbu && forward_ready_wbu) begin
+            m_srcR2 = forward_data_wbu;
+        end
+        else begin
+            m_srcR2 = srcR2_in;
+        end
+    end
+
 
 
     assign rs1 = inst_reg[19:15];

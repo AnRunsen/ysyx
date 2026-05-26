@@ -99,6 +99,12 @@ module LSU(
     output [11:0] csr_lsu,
     output csr_valid_lsu,
 
+    /*For the load-use*/
+    output reg [31:0] forward_data_lsu,
+    output forward_ready_lsu,
+    output reg [31:0] csr_forward_data_lsu,
+    output csr_forward_ready_lsu,
+
     input exception_flush
 );
 `ifndef SYNTHESIS
@@ -154,6 +160,27 @@ module LSU(
     assign csr_lsu = csr_addr;
     assign csr_valid_lsu = valid_reg && csr_wen;
 
+    always @(*) begin
+        case(wb_sel)
+            `WB_SEL_IMM: forward_data_lsu = imm;
+            `WB_SEL_ALU: forward_data_lsu = m_result;
+            `WB_SEL_PC4: forward_data_lsu = PC + 4;
+            `WB_SEL_MEM: forward_data_lsu = m_rdata;
+            `WB_SEL_CSR: forward_data_lsu = csr_data;
+            default: forward_data_lsu = 32'b0;
+        endcase
+    end
+
+    always @(*) begin
+        case(csr_wr_sel)
+            `CSR_SEL_RS1: csr_forward_data_lsu = srcR1;
+            `CSR_SEL_ALU: csr_forward_data_lsu = m_result;
+            default: csr_forward_data_lsu = 32'b0;
+        endcase
+    end
+
+    assign forward_ready_lsu = m_valid;
+    assign csr_forward_ready_lsu = m_valid;
 
 
     localparam EXCEPTION = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
