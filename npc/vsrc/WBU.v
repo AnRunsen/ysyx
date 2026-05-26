@@ -45,6 +45,12 @@ module WBU(
     output [11:0] csr_wbu,
     output csr_valid_wbu,
 
+    /*For the load-use*/
+    output [31:0] forward_data_wbu,
+    output forward_ready_wbu,
+    output [31:0] csr_forward_data_wbu,
+    output csr_forward_ready_wbu,
+
     output exception_flush
 );
 
@@ -72,6 +78,18 @@ module WBU(
     assign csr_wbu = csr_addr;
     assign csr_valid_wbu = valid_reg && csr_wen;
 
+    assign forward_data_wbu = wdata;
+
+    always @(*) begin
+        case(csr_wr_sel)
+            `CSR_SEL_RS1: csr_forward_data_wbu = srcR1;
+            `CSR_SEL_ALU: csr_forward_data_wbu = result;
+            default: csr_forward_data_wbu = 32'b0;
+        endcase
+    end
+
+    assign forward_ready_wbu = valid_reg;
+    assign csr_forward_ready_wbu = valid_reg;
 
     /*logic to recv data*/
     reg [4:0] rd;

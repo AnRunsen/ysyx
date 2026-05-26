@@ -72,6 +72,12 @@ module EXU(
     output [11:0] csr_exu,
     output csr_valid_exu,
 
+    /*For the load-use*/
+    output reg [31:0] forward_data_exu,
+    output forward_ready_exu,
+    output reg [31:0] csr_forward_data_exu,
+    output csr_forward_ready_exu,
+
     /*To PCR*/
     output [31:0] pcr_exu_result,
     output [31:0] pcr_imm,
@@ -94,11 +100,31 @@ module EXU(
     assign pcr_imm = imm;
     assign pcr_behavior = brju;
     assign pcr_pc_now = PC_reg;
+
     assign rd_exu = rd;
     assign rd_valid_exu = valid_reg && wb_en;
     assign csr_exu = csr_addr;
     assign csr_valid_exu = valid_reg && csr_wen;
 
+    always @(*) begin
+        case(wb_sel)
+            `WB_SEL_IMM: forward_data_exu = imm;
+            `WB_SEL_ALU: forward_data_exu = m_result;
+            `WB_SEL_PC4: forward_data_exu = PC_reg + 4;
+            `WB_SEL_CSR: forward_data_exu = csr_data;
+            default: forward_data_exu = 32'b0;
+        endcase
+    end
+
+    always @(*) begin
+        case(csr_wr_sel)
+            `CSR_SEL_RS1: csr_forward_data_exu = srcR1;
+            `CSR_SEL_ALU: csr_forward_data_exu = m_result;
+            default: csr_forward_data_exu = 32'b0;
+        endcase
+    end
+    assign forward_ready_exu = m_valid && (wb_sel != `WB_SEL_MEM); //load instruction need to wait for MEM stage
+    assign csr_forward_ready_exu = m_valid;
 
     reg [4:0] rd;
     reg [31:0] srcR1;
