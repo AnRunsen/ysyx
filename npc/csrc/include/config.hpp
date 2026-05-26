@@ -6,6 +6,6 @@
 // #define DIFFTEST
 // #define MTRACE
 // #define WAVEON
-// #define PIPELINE_VIEW
+#define PIPELINE_VIEW
 
 #endif
