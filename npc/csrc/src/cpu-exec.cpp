@@ -52,10 +52,10 @@ void cpu_exec(uint64_t n)
 
 #ifdef PIPELINE_VIEW
             uint8_t ifu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IFU__DOT__u_ICACHE__DOT__m_valid;
-            uint8_t idu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__s_valid;
+            uint8_t idu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_IDU__DOT__valid_reg;
             uint8_t exu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_EXU__DOT__valid_reg;
-            uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__state == 0b01;
-            uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__state == 0b01;
+            uint8_t lsu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_LSU__DOT__valid_reg;
+            uint8_t wbu_valid = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_WBU__DOT__valid_reg;
 
             printf("\r| %s | %s | %s | %s | %s |",
                 ifu_valid ? "IFU" : "   ",
