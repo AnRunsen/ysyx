@@ -992,7 +992,7 @@ module ysyx_26040125(
         );
 
     BTB#(
-        .ENTRY_NUM(4)
+        .ENTRY_NUM(8)
     )ysyx_26040125_BTB(
             .clk         (clock),
             .reset       (reset),
