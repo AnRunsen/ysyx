@@ -86,6 +86,8 @@ module ysyx_26040125(
 
     // PCR outputs
     wire [31:0] PCR_PC;
+    wire [1:0]  PCR_meta_data_BTB_o;
+    wire        PCR_hit_BTB_o;
 
     // IFU outputs
     wire [31:0] IFU_m_Inst;
@@ -112,6 +114,8 @@ module ysyx_26040125(
     wire        IFU_pc_en;
     wire        IFU_m_has_exception;
     wire [3:0]  IFU_m_exception_code;
+    wire [1:0]  IFU_m_meta_data_BTB;
+    wire        IFU_m_hit_BTB;
 
     // GPR outputs
     wire [31:0] GPR_rdata1;
@@ -143,6 +147,8 @@ module ysyx_26040125(
     wire        IDU_m_fencei;
     wire        IDU_m_has_exception;
     wire [3:0]  IDU_m_exception_code;
+    wire [1:0]  IDU_m_meta_data_BTB;
+    wire        IDU_m_hit_BTB;
 
     /*verilator lint_off UNUSED */
     wire [4:0]  IDU_rs1;
@@ -184,6 +190,10 @@ module ysyx_26040125(
     wire        EXU_forward_ready_exu;
     wire [31:0] EXU_csr_forward_data_exu;
     wire        EXU_csr_forward_ready_exu;
+    wire [31:0] EXU_PC_w;
+    wire [31:0] EXU_target;
+    wire [1:0]  EXU_meta_data;
+    wire        EXU_write_en;
 
 
     // LSU outputs
@@ -368,6 +378,11 @@ module ysyx_26040125(
     wire [1:0]  MTIME_s_axi_bresp;
     wire        MTIME_s_axi_bvalid;
 
+    // BTB outputs
+    wire [31:0] BTB_target_BTB;
+    wire [1:0]  BTB_meta_data_BTB;
+    wire        BTB_hit_BTB;
+
     // Connect io_master to XBAR master B
     assign io_master_arvalid  = XBAR_m_axi_arvalid_B;
     assign io_master_araddr   = XBAR_m_axi_araddr_B;
@@ -390,32 +405,41 @@ module ysyx_26040125(
 
 
     PCR ysyx_26040125_PCR(
-            .clk         (clock),
-            .reset       (reset),
-            .exu_result  (EXU_pcr_exu_result),
-            .imm         (EXU_pcr_imm),
-            .mtvec       (CSR_mtvec_out),
-            .mepc        (CSR_mepc_out),
-            .behavior    (EXU_pcr_behavior),
-            .pc_en       (IFU_pc_en),
-            .PC          (PCR_PC),
-            .pc_now      (EXU_pcr_pc_now),
-            .flush       (EXU_flush),
-            .exception   (WBU_exception_flush)
+            .clk             (clock),
+            .reset           (reset),
+            .exu_result      (EXU_pcr_exu_result),
+            .imm             (EXU_pcr_imm),
+            .mtvec           (CSR_mtvec_out),
+            .mepc            (CSR_mepc_out),
+            .behavior        (EXU_pcr_behavior),
+            .pc_en           (IFU_pc_en),
+            .PC              (PCR_PC),
+            .pc_now          (EXU_pcr_pc_now),
+            .flush           (EXU_flush),
+            .exception       (WBU_exception_flush),
+            .meta_data_BTB_o (PCR_meta_data_BTB_o),
+            .hit_BTB_o       (PCR_hit_BTB_o),
+            .target_BTB      (BTB_target_BTB),
+            .meta_data_BTB   (BTB_meta_data_BTB),
+            .hit_BTB         (BTB_hit_BTB)
         );
 
     IFU ysyx_26040125_IFU(
             .clk            (clock),
             .reset          (reset),
-            .m_Inst         (IFU_m_Inst),
-            .m_PC           (IFU_m_PC),
-            .m_has_exception (IFU_m_has_exception),
-            .m_exception_code (IFU_m_exception_code),
-            .m_valid        (IFU_m_valid),
-            .m_ready        (IDU_s_ready),
-            .PC             (PCR_PC),
-            .cache_flush    (EXU_cache_flush),
-            .exception_flush(WBU_exception_flush),
+            .m_Inst            (IFU_m_Inst),
+            .m_PC              (IFU_m_PC),
+            .m_meta_data_BTB   (IFU_m_meta_data_BTB),
+            .m_hit_BTB         (IFU_m_hit_BTB),
+            .m_has_exception   (IFU_m_has_exception),
+            .m_exception_code  (IFU_m_exception_code),
+            .m_valid           (IFU_m_valid),
+            .m_ready           (IDU_s_ready),
+            .PC                (PCR_PC),
+            .meta_data_BTB     (PCR_meta_data_BTB_o),
+            .hit_BTB           (PCR_hit_BTB_o),
+            .cache_flush       (EXU_cache_flush),
+            .exception_flush   (WBU_exception_flush),
             .m_axi_araddr   (IFU_m_axi_araddr),
             .m_axi_arvalid  (IFU_m_axi_arvalid),
             .m_axi_arready  (ARB_s_axi_arready_A),
@@ -464,13 +488,17 @@ module ysyx_26040125(
     IDU ysyx_26040125_IDU(
             .clk            (clock),
             .reset          (reset),
-            .s_Inst         (IFU_m_Inst),
-            .s_PC           (IFU_m_PC),
-            .s_has_exception (IFU_m_has_exception),
-            .s_exception_code (IFU_m_exception_code),
-            .s_valid        (IFU_m_valid),
-            .s_ready        (IDU_s_ready),
-            .m_rd           (IDU_m_rd),
+            .s_Inst              (IFU_m_Inst),
+            .s_PC                (IFU_m_PC),
+            .s_meta_data_BTB     (IFU_m_meta_data_BTB),
+            .s_hit_BTB           (IFU_m_hit_BTB),
+            .s_has_exception     (IFU_m_has_exception),
+            .s_exception_code    (IFU_m_exception_code),
+            .s_valid             (IFU_m_valid),
+            .s_ready             (IDU_s_ready),
+            .m_meta_data_BTB     (IDU_m_meta_data_BTB),
+            .m_hit_BTB           (IDU_m_hit_BTB),
+            .m_rd                (IDU_m_rd),
             .m_srcR1        (IDU_m_srcR1),
             .m_srcR2        (IDU_m_srcR2),
             .m_imm          (IDU_m_imm),
@@ -554,6 +582,8 @@ module ysyx_26040125(
             .s_fencei       (IDU_m_fencei),
             .s_has_exception(IDU_m_has_exception),
             .s_exception_code(IDU_m_exception_code),
+            .s_meta_data_BTB (IDU_m_meta_data_BTB),
+            .s_hit_BTB       (IDU_m_hit_BTB),
             .s_valid        (IDU_m_valid),
             .s_ready        (EXU_s_ready),
             .m_rd           (EXU_m_rd),
@@ -590,7 +620,11 @@ module ysyx_26040125(
             .forward_data_exu (EXU_forward_data_exu),
             .forward_ready_exu (EXU_forward_ready_exu),
             .csr_forward_data_exu (EXU_csr_forward_data_exu),
-            .csr_forward_ready_exu (EXU_csr_forward_ready_exu)
+            .csr_forward_ready_exu (EXU_csr_forward_ready_exu),
+            .PC_w            (EXU_PC_w),
+            .target          (EXU_target),
+            .meta_data       (EXU_meta_data),
+            .write_en        (EXU_write_en)
         );
 
     LSU ysyx_26040125_LSU(
@@ -955,6 +989,19 @@ module ysyx_26040125(
             .s_axi_bresp   ( MTIME_s_axi_bresp       ),
             .s_axi_bvalid  ( MTIME_s_axi_bvalid      ),
             .s_axi_bready  ( XBAR_m_axi_bready_A    )
+        );
+
+    BTB ysyx_26040125_BTB(
+            .clk         (clock),
+            .reset       (reset),
+            .PC_r        (PCR_PC),
+            .PC_w        (EXU_PC_w),
+            .target      (EXU_target),
+            .meta_data   (EXU_meta_data),
+            .write_en    (EXU_write_en),
+            .target_BTB    (BTB_target_BTB),
+            .meta_data_BTB (BTB_meta_data_BTB),
+            .hit_BTB       (BTB_hit_BTB)
         );
 
 endmodule

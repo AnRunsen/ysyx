@@ -187,7 +187,7 @@ extern "C" void sim_exit()
     printf("  LSU: \t%lu\n", perf_cnt.lsu);
     printf("============================\n");
     printf("Num of ifetch: %lu  Num of iCache hit: %lu\t%f%%\n", ifetch_cnt, ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
-    printf("  Num of flush: %lu\033[0m\n", flush_cnt);
+    printf("Num of flush: %lu\033[0m\n", flush_cnt);
 
     exit_flag = true;
 }
