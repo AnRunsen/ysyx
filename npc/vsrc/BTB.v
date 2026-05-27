@@ -1,6 +1,6 @@
 module BTB
 #(
-    parameter ENTRY_NUM = 4
+    parameter ENTRY_NUM = 8
 )(
     input clk,
     input reset,

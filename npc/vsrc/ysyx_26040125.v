@@ -991,7 +991,9 @@ module ysyx_26040125(
             .s_axi_bready  ( XBAR_m_axi_bready_A    )
         );
 
-    BTB ysyx_26040125_BTB(
+    BTB#(
+        .ENTRY_NUM(8)
+    )ysyx_26040125_BTB(
             .clk         (clock),
             .reset       (reset),
             .PC_r        (PCR_PC),
