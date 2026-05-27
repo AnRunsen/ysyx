@@ -5,6 +5,7 @@
 
 #include "config.hpp"
 #include "ftrace.hpp"
+#include "reg.hpp"
 
 extern bool exit_flag;
 extern uint8_t mrom[0x8000000];
@@ -131,6 +132,8 @@ extern "C" void itrace(int inst, int pc)
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 
     printf("Inst to be exe:%s\n\n", buf);
+
+    isa_reg_display();
 #endif
     }   
 }
