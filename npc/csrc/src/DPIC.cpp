@@ -112,7 +112,7 @@ extern "C" void itrace(int inst, int pc)
     if(!bootloader_stage)
     {
         instr_cnt ++;
-    }
+    
 #ifdef ITRACE
     printf("PC: 0x%08x, Instruction: 0x%08x\n", pc, inst);
 
@@ -132,6 +132,7 @@ extern "C" void itrace(int inst, int pc)
 
     printf("Inst to be exe:%s\n\n", buf);
 #endif
+    }   
 }
 
 extern "C" int mtime_read(int raddr)
