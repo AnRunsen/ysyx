@@ -124,7 +124,17 @@ module ICACHE#(
                 end
             end
             
-            REQ: next_state = m_axi_arvalid && m_axi_arready ? WAIT : state;
+            REQ: begin
+                if(flush || exception_flush) begin
+                    next_state = HIT;
+                end
+                else if(m_axi_arvalid && m_axi_arready) begin
+                    next_state = WAIT;
+                end
+                else begin
+                    next_state = state;
+                end
+            end
             WAIT: begin
                 if(m_axi_rvalid && m_axi_rready) begin
                     if(m_axi_rresp != 2'b00) begin
@@ -258,7 +268,7 @@ module ICACHE#(
     assign m_user_pc = addr_reg;
 
     assign m_axi_araddr = {addr_reg[31:4], 4'b0};
-    assign m_axi_arvalid = state == REQ;
+    assign m_axi_arvalid = (state == REQ) && !flush && !exception_flush;
     assign m_axi_arid = 4'b0;
     assign m_axi_arlen = WORDS_PER_LINE-1;
     assign m_axi_arsize = 3'd2;

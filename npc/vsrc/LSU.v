@@ -268,7 +268,10 @@ module LSU(
             end
 
             READ_REQ: begin
-                if(m_axi_arvalid && m_axi_arready) begin
+                if(exception_flush) begin
+                    next_state = PASS;
+                end
+                else if(m_axi_arvalid && m_axi_arready) begin
                     next_state = READ_WAIT;
                 end
                 else begin
@@ -277,7 +280,10 @@ module LSU(
             end
 
             WRITE_REQ: begin
-                if(m_axi_awvalid && m_axi_awready && m_axi_wvalid && m_axi_wready) begin
+                if(exception_flush) begin
+                    next_state = PASS;
+                end
+                else if(m_axi_awvalid && m_axi_awready && m_axi_wvalid && m_axi_wready) begin
                     next_state = WRITE_WAIT;
                 end
 
@@ -412,7 +418,7 @@ module LSU(
 
     /*logic to send read addr*/
     assign m_axi_araddr = result;
-    assign m_axi_arvalid = (state == READ_REQ);
+    assign m_axi_arvalid = (state == READ_REQ) && !exception_flush;
     assign m_axi_arid = 4'b0;
     assign m_axi_arlen = 8'b0;
     assign m_axi_arsize = {1'b0, op_width}; //4 bytes
@@ -420,7 +426,7 @@ module LSU(
 
     /*logic to send write addr*/
     assign m_axi_awaddr = result;
-    assign m_axi_awvalid = (state == WRITE_ADDR_REQ || state == WRITE_REQ);
+    assign m_axi_awvalid = (state == WRITE_ADDR_REQ || state == WRITE_REQ) && !exception_flush;
     assign m_axi_awid = 4'b0;
     assign m_axi_awlen = 8'b0;
     assign m_axi_awsize = {1'b0, op_width}; //4 bytes
@@ -431,7 +437,7 @@ module LSU(
     assign m_axi_wdata = wdata_;
     assign m_axi_wstrb = (op_width == `OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
                          (op_width == `OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
-    assign m_axi_wvalid = (state == WRITE_DATA_REQ || state == WRITE_REQ);
+    assign m_axi_wvalid = (state == WRITE_DATA_REQ || state == WRITE_REQ) && !exception_flush;
     assign m_axi_wlast = (state == WRITE_DATA_REQ || state == WRITE_REQ);
 
     /*logic to recv read data*/
