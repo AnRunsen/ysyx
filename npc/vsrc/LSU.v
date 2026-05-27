@@ -23,7 +23,6 @@ module LSU(
     input [31:0] s_result,
     input [31:0] s_PC,
     input [31:0] s_imm,
-    input s_fencei,
     input s_has_exception,
     input [3:0] s_exception_code,
 
@@ -89,9 +88,6 @@ module LSU(
     input [3:0] m_axi_bid,
     output m_axi_bready,
     /*verilator lint_on UNUSED */
-
-    /*to interact with icache*/
-    output cache_flush,
 
     /*To the RAW module*/
     output [4:0] rd_lsu,
@@ -345,7 +341,6 @@ module LSU(
     reg [31:0] result;
     reg [31:0] PC;
     reg [31:0] imm;
-    reg fencei;
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
     
@@ -367,7 +362,6 @@ module LSU(
             result <= 32'b0;
             PC <= 32'b0;
             imm <= 32'b0;
-            fencei <= 1'b0;
             has_exception_reg <= 1'b0;
             exception_code_reg <= 4'b0;
         end
@@ -387,7 +381,6 @@ module LSU(
             result <= s_result;
             PC <= s_PC;
             imm <= s_imm;
-            fencei <= s_fencei;
             has_exception_reg <= s_has_exception;
             exception_code_reg <= s_exception_code;
         end
@@ -406,7 +399,6 @@ module LSU(
     assign m_PC = PC;
     assign m_imm = imm;
     assign m_valid = (state == PASS || state == EXCEPTION) && valid_reg;
-    assign cache_flush = (state == PASS) && fencei;
     assign m_has_exception = (state == EXCEPTION);
     always @(*) begin
         if(has_exception_reg) begin

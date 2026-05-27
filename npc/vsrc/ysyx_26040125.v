@@ -168,7 +168,7 @@ module ysyx_26040125(
     wire [31:0] EXU_m_PC;
     wire [31:0] EXU_m_imm;
     wire        EXU_m_valid;
-    wire        EXU_m_fencei;
+    wire        EXU_cache_flush;
     wire        EXU_m_has_exception;
     wire [3:0]  EXU_m_exception_code;
     wire [4:0]  EXU_rd_exu;
@@ -219,7 +219,6 @@ module ysyx_26040125(
     wire        LSU_m_axi_wvalid;
     wire        LSU_m_axi_wlast;
     wire        LSU_m_axi_bready;
-    wire        LSU_cache_flush;
     wire [4:0]  LSU_rd_lsu;
     wire [11:0] LSU_csr_lsu;
     wire        LSU_rd_valid_lsu;
@@ -415,7 +414,7 @@ module ysyx_26040125(
             .m_valid        (IFU_m_valid),
             .m_ready        (IDU_s_ready),
             .PC             (PCR_PC),
-            .cache_flush    (LSU_cache_flush),
+            .cache_flush    (EXU_cache_flush),
             .exception_flush(WBU_exception_flush),
             .m_axi_araddr   (IFU_m_axi_araddr),
             .m_axi_arvalid  (IFU_m_axi_arvalid),
@@ -575,7 +574,6 @@ module ysyx_26040125(
             .m_imm          (EXU_m_imm),
             .m_valid        (EXU_m_valid),
             .m_ready        (LSU_s_ready),
-            .m_fencei       (EXU_m_fencei),
             .m_has_exception (EXU_m_has_exception),
             .m_exception_code (EXU_m_exception_code),
             .rd_exu         (EXU_rd_exu),
@@ -587,6 +585,7 @@ module ysyx_26040125(
             .pcr_behavior   (EXU_pcr_behavior  ),
             .pcr_pc_now     (EXU_pcr_pc_now    ),
             .flush          (EXU_flush         ),
+            .cache_flush      (EXU_cache_flush   ),
             .exception_flush  (WBU_exception_flush),
             .forward_data_exu (EXU_forward_data_exu),
             .forward_ready_exu (EXU_forward_ready_exu),
@@ -613,7 +612,6 @@ module ysyx_26040125(
             .s_result       (EXU_m_result),
             .s_PC           (EXU_m_PC),
             .s_imm          (EXU_m_imm),
-            .s_fencei       (EXU_m_fencei),
             .s_has_exception (EXU_m_has_exception),
             .s_exception_code (EXU_m_exception_code),
             .s_valid        (EXU_m_valid),
@@ -663,7 +661,6 @@ module ysyx_26040125(
             .m_axi_bvalid   (ARB_s_axi_bvalid_B),
             .m_axi_bid      (ARB_s_axi_bid_B),
             .m_axi_bready   (LSU_m_axi_bready),
-            .cache_flush    (LSU_cache_flush),
             .rd_lsu         (LSU_rd_lsu),
             .csr_lsu        (LSU_csr_lsu),
             .rd_valid_lsu   (LSU_rd_valid_lsu),

@@ -26,6 +26,7 @@ module PCR(
     always @(*) begin
         if(flush) begin
             case(behavior)
+                `PC_NORMAL: PC_next = pc_now + 32'd4;
                 `PC_MRET: PC_next = mepc;
                 `PC_NEAR: PC_next = pc_now + imm;
                 `PC_FAR: PC_next = exu_result;
