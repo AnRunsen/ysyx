@@ -76,7 +76,7 @@ module IFU(
     wire s_valid = 1'b1;
 
     ICACHE #(
-        .LINE_NUM  	( 16  ),
+        .LINE_NUM  	( 4  ),
         .LINE_SIZE 	( 16  ))
     u_ICACHE(
         .clk            	( clk             ),

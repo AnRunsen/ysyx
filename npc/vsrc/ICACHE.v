@@ -3,7 +3,7 @@
     import "DPI-C" function void ifetch_num();
 `endif
 module ICACHE#(
-    parameter LINE_NUM = 16,
+    parameter LINE_NUM = 4,
     parameter LINE_SIZE = 16
 )(
     input clk,
