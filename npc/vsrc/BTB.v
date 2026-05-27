@@ -25,20 +25,11 @@ module BTB
 
     always @(posedge clk) begin
         if(reset) begin
-            PC_reg[0] <= 32'b0;
-            PC_reg[1] <= 32'b0;
-            PC_reg[2] <= 32'b0;
-            PC_reg[3] <= 32'b0;
-
-            target_reg[0] <= 32'b0;
-            target_reg[1] <= 32'b0;
-            target_reg[2] <= 32'b0;
-            target_reg[3] <= 32'b0;
-
-            meta_data_reg[0] <= 2'b0;
-            meta_data_reg[1] <= 2'b0;
-            meta_data_reg[2] <= 2'b0;
-            meta_data_reg[3] <= 2'b0;
+            for(integer i = 0; i < ENTRY_NUM; i = i + 1) begin
+                PC_reg[i] <= 32'b0;
+                target_reg[i] <= 32'b0;
+                meta_data_reg[i] <= 2'b0;
+            end
 
             wptr <= {$clog2(ENTRY_NUM){1'b0}};
         end
