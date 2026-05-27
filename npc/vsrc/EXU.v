@@ -58,7 +58,6 @@ module EXU(
     output [31:0] m_result,
     output [31:0] m_PC,
     output [31:0] m_imm,
-    output m_fencei,
     output m_has_exception,
     output [3:0] m_exception_code,
 
@@ -83,7 +82,9 @@ module EXU(
     output [31:0] pcr_imm,
     output [2:0] pcr_behavior,
     output [31:0] pcr_pc_now,
+
     output flush,
+    output cache_flush,
 
     input exception_flush
 );
@@ -95,7 +96,9 @@ module EXU(
     end
 `endif
 
-    assign flush = valid_reg && ((brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || (brju == `PC_MRET));
+    assign flush = valid_reg && (fencei || (brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || (brju == `PC_MRET));
+    assign cache_flush = valid_reg && fencei;
+
     assign pcr_exu_result = m_result;
     assign pcr_imm = imm;
     assign pcr_behavior = brju;
@@ -238,7 +241,6 @@ module EXU(
     assign m_srcR2 = srcR2;
     assign m_PC = PC_reg;
     assign m_imm = imm;
-    assign m_fencei = fencei;
     assign m_exception_code = exception_code_reg;
     assign m_has_exception = has_exception_reg;
 
