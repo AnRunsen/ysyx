@@ -1,6 +1,8 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
+    import PKG::flush_num;
+    import PKG::branch_num;
 `endif
 module EXU(
     input clk,
@@ -98,6 +100,12 @@ module EXU(
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
+            if(flush) begin
+                flush_num();
+            end
+            if(brju != `PC_NORMAL) begin
+                branch_num();
+            end
         end
     end
 `endif

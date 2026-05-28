@@ -2,7 +2,6 @@
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
     import PKG::itrace;
-    import PKG::flush_num;
 `endif
 module IDU(
     input clk,
@@ -184,9 +183,6 @@ module IDU(
         else begin
             if(flush || exception_flush) begin
                 valid_reg <= 1'b0;
-`ifndef SYNTHESIS
-                flush_num();
-`endif
             end
             else if(s_valid & s_ready) begin
                 valid_reg <= 1'b1;
