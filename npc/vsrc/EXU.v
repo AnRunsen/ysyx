@@ -112,10 +112,9 @@ module EXU(
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
 
-            /*logic to btrace*/
-            if(brju == `PC_BRANCH || brju == `PC_NEAR || brju == `PC_FAR) begin
-                btrace(PC_reg, target_btrace);
-            end
+            // if(brju == `PC_BRANCH || brju == `PC_NEAR || brju == `PC_FAR) begin
+            //     btrace(PC_reg, target_btrace);
+            // end
 
         end
     end
