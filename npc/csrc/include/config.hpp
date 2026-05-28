@@ -1,7 +1,7 @@
 #ifndef __CONFIG_HPP__
 #define __CONFIG_HPP__
 
-#define ITRACE
+// #define ITRACE
 // #define FTRACE
 // #define DIFFTEST
 // #define MTRACE
