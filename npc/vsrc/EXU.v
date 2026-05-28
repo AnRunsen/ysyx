@@ -321,7 +321,7 @@ module EXU(
         if(reset) begin
             valid_reg <= 1'b0;
         end
-        else if(exception_flush) begin
+        else if(flush || exception_flush) begin
             valid_reg <= 1'b0;
         end
         else if(s_valid && s_ready) begin

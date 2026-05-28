@@ -175,7 +175,7 @@ module IDU(
         end
     end
     reg valid_reg;
-    assign m_valid = valid_reg && !stall && !flush;
+    assign m_valid = valid_reg && !stall;
     always @(posedge clk) begin
         if(reset) begin
             valid_reg <= 1'b0;

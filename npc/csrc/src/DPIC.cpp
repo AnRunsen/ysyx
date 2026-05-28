@@ -18,6 +18,7 @@ extern uint64_t instr_cnt;
 extern uint64_t ihit_cnt;
 extern uint64_t ifetch_cnt;
 extern uint64_t flush_cnt;
+extern uint64_t branch_cnt;
 extern bool bootloader_stage;
 
 typedef struct {
@@ -80,6 +81,14 @@ extern "C" void flush_num()
     if(!bootloader_stage)
     {
         flush_cnt++;
+    }
+}
+
+extern "C" void branch_num()
+{
+    if(!bootloader_stage)
+    {
+        branch_cnt++;
     }
 }
 
