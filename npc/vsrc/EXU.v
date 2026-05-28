@@ -166,7 +166,7 @@ module EXU(
     assign pcr_pc_now = PC_reg;
 
     assign rd_exu = rd;
-    assign rd_valid_exu = valid_reg && wb_en;
+    assign rd_valid_exu = valid_reg && wb_en && (rd != 5'b0);
     assign csr_exu = csr_addr;
     assign csr_valid_exu = valid_reg && csr_wen;
 
