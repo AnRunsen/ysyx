@@ -1,6 +1,7 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
+    import PKG::btrace;
 `endif
 module EXU(
     input clk,
@@ -95,9 +96,27 @@ module EXU(
     output reg write_en
 );
 `ifndef SYNTHESIS
+
+    reg [31:0] target_btrace;
+
+    always @(*) begin
+        case(brju)
+            `PC_NEAR: target_btrace = PC_reg + imm;
+            `PC_FAR: target_btrace = m_result;
+            `PC_BRANCH: target_btrace = (m_result == 32'b1) ? PC_reg + imm : PC_reg + 32'd4;
+            default: target_btrace = 32'hFFFF_FFFF;
+        endcase
+    end
+
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
+
+            /*logic to btrace*/
+            if(brju == `PC_BRANCH || brju == `PC_NEAR || brju == `PC_FAR) begin
+                btrace(PC_reg, target_btrace);
+            end
+
         end
     end
 `endif

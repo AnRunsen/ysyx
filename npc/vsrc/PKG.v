@@ -7,4 +7,5 @@ package PKG;
     import "DPI-C" function void perf_cnt_update(input byte target);
     import "DPI-C" function void flush_num();
     import "DPI-C" function void enter_userapp(input int npc);
+    import "DPI-C" function void btrace(input int pc, input int target);
 endpackage

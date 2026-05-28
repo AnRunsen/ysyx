@@ -100,12 +100,12 @@ extern "C" void perf_cnt_update(uint8_t target) {
     
 }
 
-extern "C" void btrace(int pc, int npc)
+extern "C" void btrace(int pc, int target)
 {
-#ifdef FTRACE
-    int inst = sdram_read_laddr(pc);
-    ftrace_detect(inst, pc, npc);
-#endif
+    if(!bootloader_stage)
+    {
+        printf("Branch at PC: 0x%08x, target: 0x%08x\n", pc, target);
+    }
 }
 
 extern "C" void ftrace(int pc, int npc)
