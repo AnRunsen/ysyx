@@ -100,6 +100,14 @@ extern "C" void perf_cnt_update(uint8_t target) {
     
 }
 
+extern "C" void btrace(int pc, int npc)
+{
+#ifdef FTRACE
+    int inst = sdram_read_laddr(pc);
+    ftrace_detect(inst, pc, npc);
+#endif
+}
+
 extern "C" void ftrace(int pc, int npc)
 {
 #ifdef FTRACE
