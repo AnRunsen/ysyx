@@ -15,11 +15,15 @@ module ICACHE#(
 
     /*axi stream bus*/
     input  [31:0] s_raddr,
+    input  [1:0]  s_meta_data_BTB,
+    input         s_hit_BTB,
     input         s_valid,
     output        s_ready,
 
     output [31:0] m_data,
-    output [31:0] m_user_pc,
+    output [31:0] m_pc,
+    output [1:0]  m_meta_data_BTB,
+    output        m_hit_BTB,
     output        m_has_exception,
     output reg [3:0] m_exception_code,
     output        m_valid,
@@ -219,19 +223,21 @@ module ICACHE#(
     end
 
     reg [31:0] addr_reg;
-    reg [$clog2(LINE_NUM)-1:0] index_reg;
-    reg [TAG_SIZE-1:0] tag_reg;
+    reg [1:0] meta_data_BTB_reg;
+    reg hit_BTB_reg;
+    wire [$clog2(LINE_NUM)-1:0] index_reg = addr_reg[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
+    wire [TAG_SIZE-1:0] tag_reg = addr_reg[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
     wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
     always @(posedge clk) begin
         if(reset) begin
             addr_reg <= 32'b0;
-            index_reg <= 0;
-            tag_reg <= 0;
+            meta_data_BTB_reg <= 2'b0;
+            hit_BTB_reg <= 1'b0;
         end
         else if(s_valid && s_ready) begin
             addr_reg <= s_raddr;
-            index_reg <= index;
-            tag_reg <= tag;
+            meta_data_BTB_reg <= s_meta_data_BTB;
+            hit_BTB_reg <= s_hit_BTB;
         end
     end
 
@@ -265,7 +271,9 @@ module ICACHE#(
     assign m_data = cache[index_reg][word_sel*32 +: 32];
     assign m_has_exception = state == EXCEPTION;
     assign m_valid = (state == HIT || state == EXCEPTION) && valid_reg;
-    assign m_user_pc = addr_reg;
+    assign m_pc = addr_reg;
+    assign m_meta_data_BTB = meta_data_BTB_reg;
+    assign m_hit_BTB = hit_BTB_reg;
 
     assign m_axi_araddr = {addr_reg[31:4], 4'b0};
     assign m_axi_arvalid = (state == REQ) && !flush && !exception_flush;
