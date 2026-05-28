@@ -217,12 +217,12 @@ extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, u
     *data = sdram[bank][row_addr][col_addr];
 
     uint32_t addr = (bank << 10) | (row_addr << 12) | (col_addr << 1);
-    // printf("sdram read: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, *data);
+    printf("sdram read: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x\n", addr, bank, row_addr, col_addr, *data);
 }
 
 extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t data, uint8_t wmask) {
     uint32_t addr = (bank << 10) | (row_addr << 12) | (col_addr << 1);
-    // printf("sdram write: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", addr, bank, row_addr, col_addr, data, wmask);
+    printf("sdram write: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", addr, bank, row_addr, col_addr, data, wmask);
     if (~wmask & 0x1) {
         sdram[bank][row_addr][col_addr] = (sdram[bank][row_addr][col_addr] & 0xFF00) | (data & 0x00FF);
     }
