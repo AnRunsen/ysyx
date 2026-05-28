@@ -1,7 +1,6 @@
 `include "MACRO.v"
 `ifndef SYNTHESIS
     import PKG::perf_cnt_update;
-    import PKG::btrace;
 `endif
 module EXU(
     input clk,
@@ -37,9 +36,6 @@ module EXU(
     input s_has_exception,
     input [3:0] s_exception_code,
 
-    input [1:0] s_meta_data_BTB,
-    input s_hit_BTB,
-
     input s_valid,
     output s_ready,
     /*recv data end*/
@@ -69,11 +65,13 @@ module EXU(
     input m_ready,
     /*send data end*/
 
+    /*To the RAW module*/
     output [4:0] rd_exu,
     output rd_valid_exu,
     output [11:0] csr_exu,
     output csr_valid_exu,
 
+    /*For the load-use*/
     output reg [31:0] forward_data_exu,
     output forward_ready_exu,
     output reg [31:0] csr_forward_data_exu,
@@ -85,98 +83,21 @@ module EXU(
     output [2:0] pcr_behavior,
     output [31:0] pcr_pc_now,
 
-    output reg flush,
+    output flush,
     output cache_flush,
-    input exception_flush,
 
-    /*To the update of the BTB*/
-    output [31:0] PC_w,
-    output reg [31:0] target,
-    output reg [1:0] meta_data,
-    output reg write_en
+    input exception_flush
 );
 `ifndef SYNTHESIS
-
-    reg [31:0] target_btrace;
-
-    always @(*) begin
-        case(brju)
-            `PC_NEAR: target_btrace = PC_reg + imm;
-            `PC_FAR: target_btrace = m_result;
-            `PC_BRANCH: target_btrace = (m_result == 32'b1) ? PC_reg + imm : PC_reg + 32'd4;
-            default: target_btrace = 32'hFFFF_FFFF;
-        endcase
-    end
-
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
-
-            // if(brju == `PC_BRANCH || brju == `PC_NEAR || brju == `PC_FAR) begin
-            //     btrace(PC_reg, target_btrace);
-            // end
-
         end
     end
 `endif
 
-    /*logic to flush*/
-    always @(*) begin
-        if(m_valid && m_ready) begin
-            if(hit_BTB) begin
-                // if is jal, not flush
-                if(meta_data_BTB[1]) begin
-                    flush = 1'b0;
-                end
-                // if is branch
-                else begin
-                    // if predicted taken, but actually not taken, then flush
-                    if(meta_data_BTB[0]) begin
-                        flush = (m_result == 32'b0);
-                    end
-
-                    // if predicted not taken, but actually taken, then flush
-                    else begin
-                        flush = (m_result == 32'b1);
-                    end
-                end
-            end
-
-            else begin
-                flush = fencei || (brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || (brju == `PC_MRET);
-            end
-        end
-
-        else begin
-            flush = 1'b0;
-        end
-    end
-
-    /*logic to update BTB*/
-    assign PC_w = PC_reg;
-    always @(*) begin
-        write_en = 1'b0;
-        target = 32'b0;
-        meta_data = 2'b0;
-        if(m_valid && m_ready && !hit_BTB && (brju == `PC_BRANCH || brju == `PC_NEAR)) begin
-            write_en = 1'b1;
-            if(brju == `PC_BRANCH) begin
-                /*Use the BTFN(Backward Taken, Forward Not-taken)*/
-                target = imm[31] ? PC_reg + imm : PC_reg + 32'd4;
-                meta_data[1] = 1'b0;
-                meta_data[0] = imm[31] ? 1'b1 : 1'b0;
-            end
-
-            else begin
-                target = PC_reg + imm;
-                meta_data[1] = 1'b1;
-                meta_data[0] = 1'b1; // near jump is always taken
-            end
-        end
-    end
-
-    
-    assign cache_flush = m_valid && m_ready && fencei;
+    assign flush = valid_reg && (fencei || (brju == `PC_BRANCH && m_result == 32'b1) || (brju == `PC_FAR) || (brju == `PC_NEAR) || (brju == `PC_MRET));
+    assign cache_flush = valid_reg && fencei;
 
     assign pcr_exu_result = m_result;
     assign pcr_imm = imm;
@@ -237,9 +158,6 @@ module EXU(
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
 
-    reg [1:0] meta_data_BTB;
-    reg hit_BTB;
-
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
     always @(posedge clk) begin
@@ -272,9 +190,6 @@ module EXU(
             fencei <= 1'b0;
             has_exception_reg <= 1'b0;
             exception_code_reg <= 4'b0;
-
-            meta_data_BTB <= 2'b0;
-            hit_BTB <= 1'b0;
         end
 
         else if(s_valid && s_ready) begin
@@ -306,9 +221,6 @@ module EXU(
             fencei <= s_fencei;
             has_exception_reg <= s_has_exception;
             exception_code_reg <= s_exception_code;
-
-            meta_data_BTB <= s_meta_data_BTB;
-            hit_BTB <= s_hit_BTB;
         end
     end
 
@@ -339,7 +251,7 @@ module EXU(
         if(reset) begin
             valid_reg <= 1'b0;
         end
-        else if(exception_flush || flush) begin
+        else if(exception_flush) begin
             valid_reg <= 1'b0;
         end
         else if(s_valid && s_ready) begin

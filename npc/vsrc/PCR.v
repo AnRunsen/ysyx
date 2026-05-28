@@ -16,21 +16,11 @@ module PCR(
     input pc_en,
     input flush,
     input exception,
-    output reg [31:0] PC,
-    output [1:0] meta_data_BTB_o,
-    output hit_BTB_o,
-
-    /*port for BTB*/
-    input [31:0] target_BTB,
-    input [1:0] meta_data_BTB,
-    input hit_BTB
+    output reg [31:0] PC
 );
     initial begin
         PC = 32'h3000_0000;
     end
-
-    assign meta_data_BTB_o = meta_data_BTB;
-    assign hit_BTB_o = hit_BTB;
 
     reg [31:0] PC_next;
     always @(*) begin
@@ -47,10 +37,6 @@ module PCR(
 
         else if(exception) begin
             PC_next = mtvec;
-        end
-
-        else if(hit_BTB) begin
-            PC_next = target_BTB;
         end
 
         else begin
