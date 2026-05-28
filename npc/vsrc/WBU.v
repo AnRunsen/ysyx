@@ -74,7 +74,7 @@ module WBU(
     end
 
     assign rd_wbu = rd;
-    assign rd_valid_wbu = valid_reg && wb_en;
+    assign rd_valid_wbu = valid_reg && wb_en && (rd != 5'b0);
     assign csr_wbu = csr_addr;
     assign csr_valid_wbu = valid_reg && csr_wen;
 

@@ -152,7 +152,7 @@ module LSU(
     end
 
     assign rd_lsu = rd;
-    assign rd_valid_lsu = valid_reg && wb_en;
+    assign rd_valid_lsu = valid_reg && wb_en && (rd != 5'b0);
     assign csr_lsu = csr_addr;
     assign csr_valid_lsu = valid_reg && csr_wen;
 

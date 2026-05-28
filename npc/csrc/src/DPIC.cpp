@@ -18,6 +18,7 @@ extern uint64_t instr_cnt;
 extern uint64_t ihit_cnt;
 extern uint64_t ifetch_cnt;
 extern uint64_t flush_cnt;
+extern uint64_t branch_cnt;
 extern bool bootloader_stage;
 
 typedef struct {
@@ -80,6 +81,14 @@ extern "C" void flush_num()
     if(!bootloader_stage)
     {
         flush_cnt++;
+    }
+}
+
+extern "C" void branch_num()
+{
+    if(!bootloader_stage)
+    {
+        branch_cnt++;
     }
 }
 
@@ -188,8 +197,8 @@ extern "C" void sim_exit()
     printf("  EXU: \t%lu\n", perf_cnt.exu);
     printf("  LSU: \t%lu\n", perf_cnt.lsu);
     printf("============================\n");
-    printf("Num of ifetch: %lu  Num of iCache hit: %lu\t%f%%\n", ifetch_cnt, ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
-    printf("Num of flush: %lu\033[0m\n", flush_cnt);
+    printf("Num of ifetch: %lu\tNum of iCache hit: %lu\t%f%%\n", ifetch_cnt, ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
+    printf("Num of flush: %lu\tNum of branch: %lu\t%f%%\033[0m\n", flush_cnt, branch_cnt, (double)flush_cnt / (double)branch_cnt * 100);
 
     exit_flag = true;
 }
