@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
 #ifdef WAVEON
     cpu->trace(tfp, 99);
-    tfp->open("cpu_correct.vcd");
+    tfp->open("cpu.vcd");
 #endif
 
 #ifdef FTRACE
