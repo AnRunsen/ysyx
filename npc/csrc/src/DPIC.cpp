@@ -5,6 +5,7 @@
 
 #include "config.hpp"
 #include "ftrace.hpp"
+#include "reg.hpp"
 
 extern bool exit_flag;
 extern uint8_t mrom[0x8000000];
@@ -112,7 +113,7 @@ extern "C" void itrace(int inst, int pc)
     if(!bootloader_stage)
     {
         instr_cnt ++;
-    }
+    
 #ifdef ITRACE
     printf("PC: 0x%08x, Instruction: 0x%08x\n", pc, inst);
 
@@ -132,6 +133,7 @@ extern "C" void itrace(int inst, int pc)
 
     printf("Inst to be exe:%s\n\n", buf);
 #endif
+    }   
 }
 
 extern "C" int mtime_read(int raddr)
@@ -212,6 +214,9 @@ extern "C" void psram_write(uint32_t addr, uint8_t data) {
 }
 
 extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t *data) {
+    assert(bank < 4);
+    assert(row_addr < 8192);
+    assert(col_addr < 512);
     *data = sdram[bank][row_addr][col_addr];
 
     uint32_t addr = (bank << 10) | (row_addr << 12) | (col_addr << 1);
@@ -219,6 +224,9 @@ extern "C" void sdram_read(uint8_t bank, uint32_t row_addr, uint32_t col_addr, u
 }
 
 extern "C" void sdram_write(uint8_t bank, uint32_t row_addr, uint32_t col_addr, uint16_t data, uint8_t wmask) {
+    assert(bank < 4);
+    assert(row_addr < 8192);
+    assert(col_addr < 512);
     uint32_t addr = (bank << 10) | (row_addr << 12) | (col_addr << 1);
     // printf("sdram write: addr = 0x%08x, bank=%d, row_addr=0x%08x, col_addr=0x%08x, data=0x%04x, wmask=0x%02x\n", addr, bank, row_addr, col_addr, data, wmask);
     if (~wmask & 0x1) {

@@ -8,12 +8,16 @@ module IFU(
 
     output [31:0] m_Inst,
     output [31:0] m_PC,
+    output [1:0] m_meta_data_BTB,
+    output m_hit_BTB,
     output m_has_exception,
     output [3:0] m_exception_code,
     output m_valid,
     input m_ready,
 
     input [31:0] PC,
+    input [1:0] meta_data_BTB,
+    input hit_BTB,
 
     input flush,
     input cache_flush,
@@ -86,10 +90,14 @@ module IFU(
         .exception_flush    ( exception_flush ),
 
         .s_raddr            ( PC    ),
+        .s_meta_data_BTB    ( meta_data_BTB    ),
+        .s_hit_BTB          ( hit_BTB         ),
         .s_valid            ( s_valid   ),
         .s_ready            ( s_ready   ),
         .m_data             ( m_Inst     ),
-        .m_user_pc          ( m_PC  ),
+        .m_pc               ( m_PC  ),
+        .m_meta_data_BTB    ( m_meta_data_BTB ),
+        .m_hit_BTB          ( m_hit_BTB         ),
         .m_has_exception    ( m_has_exception ),
         .m_exception_code   ( m_exception_code ),
         .m_valid            ( m_valid    ),

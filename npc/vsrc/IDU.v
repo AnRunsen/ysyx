@@ -14,12 +14,15 @@ module IDU(
     /* explict ports*/
     input [31:0] s_Inst,
     input [31:0] s_PC,
+    input [1:0] s_meta_data_BTB,
+    input s_hit_BTB,
     input s_has_exception,
     input [3:0] s_exception_code,
     input s_valid,
     output s_ready,
 
-
+    output [1:0] m_meta_data_BTB,
+    output m_hit_BTB,
     output [4:0] m_rd,
     output reg [31:0] m_srcR1,
     output reg [31:0] m_srcR2,
@@ -133,6 +136,8 @@ module IDU(
     /*logic to recv data*/
     reg [31:0] inst_reg;
     reg [31:0] pc_reg;
+    reg [1:0] meta_data_BTB_reg;
+    reg hit_BTB_reg;
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
     assign s_ready = (!m_valid || (m_valid & m_ready)) && !stall;
@@ -140,6 +145,8 @@ module IDU(
         if(reset) begin
             inst_reg <= 32'b0;
             pc_reg <= 32'b0;
+            meta_data_BTB_reg <= 2'b0;
+            hit_BTB_reg <= 1'b0;
             has_exception_reg <= 1'b0;
             exception_code_reg <= 4'b0;
         end
@@ -147,6 +154,8 @@ module IDU(
             if(s_ready & s_valid) begin
                 inst_reg <= s_Inst;
                 pc_reg <= s_PC;
+                meta_data_BTB_reg <= s_meta_data_BTB;
+                hit_BTB_reg <= s_hit_BTB;
                 has_exception_reg <= s_has_exception;
                 exception_code_reg <= s_exception_code;
             end
@@ -256,6 +265,9 @@ module IDU(
     assign opcode = inst_reg[6:0];
     assign funct3 = inst_reg[14:12];
     assign funct7 = inst_reg[31:25];
+
+    assign m_meta_data_BTB = meta_data_BTB_reg;
+    assign m_hit_BTB = hit_BTB_reg;
 
 
     assign immI = { {20{inst_reg[31]}}, inst_reg[31:20] };
