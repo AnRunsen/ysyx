@@ -104,7 +104,7 @@ module EXU(
 
     /*logic to flush*/
     always @(*) begin
-        if(valid_reg) begin
+        if(m_valid && m_ready) begin
             if(hit_BTB) begin
                 // if is jal, not flush
                 if(meta_data_BTB[1]) begin
@@ -140,7 +140,7 @@ module EXU(
         write_en = 1'b0;
         target = 32'b0;
         meta_data = 2'b0;
-        if(valid_reg && !hit_BTB && (brju == `PC_BRANCH || brju == `PC_NEAR)) begin
+        if(m_valid && m_ready && !hit_BTB && (brju == `PC_BRANCH || brju == `PC_NEAR)) begin
             write_en = 1'b1;
             if(brju == `PC_BRANCH) begin
                 /*Use the BTFN(Backward Taken, Forward Not-taken)*/
@@ -158,7 +158,7 @@ module EXU(
     end
 
     
-    assign cache_flush = valid_reg && fencei;
+    assign cache_flush = m_valid && m_ready && fencei;
 
     assign pcr_exu_result = m_result;
     assign pcr_imm = imm;
