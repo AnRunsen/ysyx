@@ -39,19 +39,17 @@
 `define ysyx_26040125_CSR_SEL_RS1 1'b0
 `define ysyx_26040125_CSR_SEL_ALU 1'b1
 
-
-import "DPI-C" function void sim_exit();
-import "DPI-C" function void itrace(input int inst, input int pc);
-import "DPI-C" function void ftrace(input int pc, input int npc);
-import "DPI-C" function void uart_write(input int waddr, input int wdata, input byte wmask);
-import "DPI-C" function int mtime_read(input int raddr);
-import "DPI-C" function void perf_cnt_update(input byte target);
-import "DPI-C" function void flush_num();
-import "DPI-C" function void branch_num();
-import "DPI-C" function void enter_userapp(input int npc);
-import "DPI-C" function void ihit_num();
-import "DPI-C" function void ifetch_num();
-
+`ifdef VERILATOR
+    import "DPI-C" function void sim_exit();
+    import "DPI-C" function void itrace(input int inst, input int pc);
+    import "DPI-C" function void ftrace(input int pc, input int npc);
+    import "DPI-C" function void perf_cnt_update(input byte target);
+    import "DPI-C" function void flush_num();
+    import "DPI-C" function void branch_num();
+    import "DPI-C" function void enter_userapp(input int npc);
+    import "DPI-C" function void ihit_num();
+    import "DPI-C" function void ifetch_num();
+`endif
 
 
 module ysyx_26040125_ALU(
@@ -522,12 +520,12 @@ module ysyx_26040125_CSR(
 
     always @(posedge clk) begin
         if(reset) mvendorid <= 32'b0;
-        else mvendorid <= 32'h79737978; //just a random value
+        else mvendorid <= 32'h79737978;
     end
 
     always @(posedge clk) begin
         if(reset) marchid <= 32'b0;
-        else marchid <= 32'h018D573D; //26040125 in hex
+        else marchid <= 32'h018D573D;
     end
 
     assign mtvec_out = mtvec;
@@ -626,7 +624,7 @@ module ysyx_26040125_EXU(
     output reg [1:0] meta_data,
     output reg write_en
 );
-`ifndef SYNTHESIS
+`ifdef VERILATOR
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
@@ -889,7 +887,10 @@ module ysyx_26040125_EXU(
 
 endmodule
 
-module ysyx_26040125_GPR #(ADDR_WIDTH = 4, DATA_WIDTH = 32) (
+module ysyx_26040125_GPR #(
+    parameter ADDR_WIDTH = 4, 
+    parameter DATA_WIDTH = 32
+)(
     input clk,
     input reset,
     input [DATA_WIDTH-1:0] wdata,
@@ -983,7 +984,7 @@ module ysyx_26040125_ICACHE#(
     /*verilator lint_on UNUSED */
 );
 
-    `ifndef SYNTHESIS
+    `ifdef VERILATOR
         always @(posedge clk) begin
             if(s_valid && s_ready) begin
                 if(hit) begin
@@ -1226,12 +1227,12 @@ module ysyx_26040125_IDU(
     output reg [1:0] m_alu_sel0, //sel the ALU A port is m_srcR1(0) or PC(1)
     output reg [1:0] m_alu_sel1, //sel the ALU B port is m_srcR2(0) or m_imm(1) or csr(2)
 
-    output m_wb_en,
-    output m_mem_en,
-    output m_mem_write_en,
+    output reg m_wb_en,
+    output reg m_mem_en,
+    output reg m_mem_write_en,
 
-    output [1:0] m_op_width,
-    output [2:0] m_wb_sel, //m_imm, alu, mem, PC+4
+    output reg [1:0] m_op_width,
+    output reg [2:0] m_wb_sel, //m_imm, alu, mem, PC+4
 
     output reg [2:0] m_brju,
     output reg m_mem_signext,
@@ -1243,7 +1244,7 @@ module ysyx_26040125_IDU(
 
     output [31:0] m_PC,
 
-    output m_fencei,
+    output reg m_fencei,
     output m_has_exception,
     output reg [3:0] m_exception_code,
 
@@ -1286,7 +1287,7 @@ module ysyx_26040125_IDU(
     input [31:0] csr_forward_data_wbu,
     input csr_forward_ready_wbu
 );
-`ifndef SYNTHESIS
+`ifdef VERILATOR
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(1);
@@ -1755,7 +1756,7 @@ module ysyx_26040125_IFU(
 
     output pc_en
 );
-`ifndef SYNTHESIS
+`ifdef VERILATOR
     always @(posedge clk) begin
         if(m_valid && m_ready) begin
             perf_cnt_update(0);
@@ -1767,6 +1768,18 @@ module ysyx_26040125_IFU(
             sim_exit();
         end
     end
+
+`elsif __ICARUS__
+    always @(*) begin
+        if(PC==32'h00000010) begin
+            $finish();
+        end
+
+        // else begin
+        //     $display("PC:0x%x", PC);
+        // end
+    end
+
 `endif
 
 
@@ -1936,7 +1949,7 @@ module ysyx_26040125_LSU(
 
     input exception_flush
 );
-`ifndef SYNTHESIS
+`ifdef VERILATOR
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(3);
@@ -2355,107 +2368,6 @@ module ysyx_26040125_ext16(
 endmodule
 
 
-module ysyx_26040125_MTIME(
-    input clk,
-    input reset,
-
-    input  [3:0]  s_axi_arid,
-    input  [31:0] s_axi_araddr,
-    input  [7:0]  s_axi_arlen,
-    input  [2:0]  s_axi_arsize,
-    input  [1:0]  s_axi_arburst,
-    input         s_axi_arvalid,
-    output        s_axi_arready,
-
-    output [3:0] s_axi_rid,
-    output reg [31:0] s_axi_rdata,
-    output [1:0]  s_axi_rresp,
-    output        s_axi_rlast,
-    output        s_axi_rvalid,
-    input         s_axi_rready,
-
-    input  [3:0]  s_axi_awid,
-    input  [31:0] s_axi_awaddr,
-    input  [7:0]  s_axi_awlen,
-    input  [2:0]  s_axi_awsize,
-    input  [1:0]  s_axi_awburst,
-    input         s_axi_awvalid,
-    output        s_axi_awready,
-
-    input  [31:0] s_axi_wdata,
-    input  [3:0]  s_axi_wstrb,
-    input         s_axi_wlast,
-    input         s_axi_wvalid,
-    output        s_axi_wready,
-
-    output [3:0]  s_axi_bid,
-    output [1:0]  s_axi_bresp,
-    output        s_axi_bvalid,
-    input         s_axi_bready
-);
-
-    /*write port unused*/
-    assign s_axi_awready = 1'b0;
-    assign s_axi_wready  = 1'b0;
-    assign s_axi_bresp   = 2'b00;
-    assign s_axi_bvalid  = 1'b0;
-
-    localparam IDLE = 2'd0, RESP = 2'd1;
-    reg [1:0] state, next_state;
-
-    always @(*) begin
-        case(state)
-            IDLE: begin
-                if (s_axi_arvalid && s_axi_arready) begin
-                    next_state = RESP;
-                end else begin
-                    next_state = IDLE;
-                end
-            end
-            RESP: begin
-                if (s_axi_rready && s_axi_rvalid) begin
-                    next_state = IDLE;
-                end else begin
-                    next_state = RESP;
-                end
-            end
-            default: begin
-                next_state = IDLE;
-            end
-        endcase
-    end
-
-    always @(posedge clk) begin
-        if (reset) begin
-            state <= IDLE;
-        end else begin
-            state <= next_state;
-        end
-    end
-
-    always @(posedge clk) begin
-        if (reset) begin
-            s_axi_rdata <= 32'b0;
-        end
-        else if (s_axi_arready && s_axi_arvalid) begin
-            `ifndef SYNTHESIS
-                s_axi_rdata <= mtime_read(s_axi_araddr);
-            `else
-                s_axi_rdata <= 32'b0; // During synthesis, we cannot call DPI function, so we return 0
-            `endif
-        end
-    end
-
-    assign s_axi_arready = (state == IDLE);
-    assign s_axi_rvalid  = (state == RESP);
-    assign s_axi_rresp   = 2'b00;
-    assign s_axi_rlast   = 1'b1;
-    assign s_axi_rid     = 4'b0;
-    assign s_axi_bid     = 4'b0;
-
-endmodule
-
-
 module ysyx_26040125_PCR(
     input clk,
     input reset,
@@ -2477,10 +2389,6 @@ module ysyx_26040125_PCR(
     input [1:0] meta_data_BTB,
     input hit_BTB
 );
-    initial begin
-        PC = 32'h3000_0000;
-    end
-
     assign meta_data_BTB_o = meta_data_BTB;
     assign hit_BTB_o = hit_BTB;
 
@@ -2514,13 +2422,13 @@ module ysyx_26040125_PCR(
 
     always @(posedge clk) begin
         if(reset) begin
-            PC <= 32'h3000_0000;
+            PC <= 32'h8000_0000;
         end
 
         else begin
             if(pc_en || flush || exception) begin
                 PC <= PC_next;
-                `ifndef SYNTHESIS
+                `ifdef VERILATOR
                     ftrace(PC, PC_next);
                     enter_userapp(PC_next);
                 `endif
@@ -2652,7 +2560,7 @@ module ysyx_26040125_WBU(
     /*For the load-use*/
     output [31:0] forward_data_wbu,
     output forward_ready_wbu,
-    output [31:0] csr_forward_data_wbu,
+    output reg [31:0] csr_forward_data_wbu,
     output csr_forward_ready_wbu,
 
     output exception_flush
@@ -2777,322 +2685,7 @@ module ysyx_26040125_WBU(
 
 
 endmodule
-module ysyx_26040125_XBAR(
-    input clk,
-    input reset,
 
-    /* slave AXI full port */
-    input  [3:0] s_axi_arid,
-    input  [31:0] s_axi_araddr,
-    input  [7:0]  s_axi_arlen,
-    input  [2:0]  s_axi_arsize,
-    input  [1:0]  s_axi_arburst,
-    input         s_axi_arvalid,
-    output        s_axi_arready,
-
-    output [3:0] s_axi_rid,
-    output [31:0] s_axi_rdata,
-    output [1:0]  s_axi_rresp,
-    output        s_axi_rlast,
-    output        s_axi_rvalid,
-    input         s_axi_rready,
-
-    input  [3:0] s_axi_awid,
-    input  [31:0] s_axi_awaddr,
-    input  [7:0]  s_axi_awlen,
-    input  [2:0]  s_axi_awsize,
-    input  [1:0]  s_axi_awburst,
-    input         s_axi_awvalid,
-    output        s_axi_awready,
-
-    input  [31:0] s_axi_wdata,
-    input  [3:0]  s_axi_wstrb,
-    input         s_axi_wlast,
-    input         s_axi_wvalid,
-    output        s_axi_wready,
-
-    output [3:0] s_axi_bid,
-    output [1:0]  s_axi_bresp,
-    output        s_axi_bvalid,
-    input         s_axi_bready,
-
-    /* master AXI full port A (0x0200_0000 ~ 0x0200_ffff) */
-    output [3:0] m_axi_arid_A,
-    output [31:0] m_axi_araddr_A,
-    output [7:0]  m_axi_arlen_A,
-    output [2:0]  m_axi_arsize_A,
-    output [1:0]  m_axi_arburst_A,
-    output        m_axi_arvalid_A,
-    input         m_axi_arready_A,
-
-    input  [3:0] m_axi_rid_A,
-    input  [31:0] m_axi_rdata_A,
-    input  [1:0]  m_axi_rresp_A,
-    input         m_axi_rlast_A,
-    input         m_axi_rvalid_A,
-    output        m_axi_rready_A,
-
-    output [3:0] m_axi_awid_A,
-    output [31:0] m_axi_awaddr_A,
-    output [7:0]  m_axi_awlen_A,
-    output [2:0]  m_axi_awsize_A,
-    output [1:0]  m_axi_awburst_A,
-    output        m_axi_awvalid_A,
-    input         m_axi_awready_A,
-
-    output [31:0] m_axi_wdata_A,
-    output [3:0]  m_axi_wstrb_A,
-    output        m_axi_wlast_A,
-    output        m_axi_wvalid_A,
-    input         m_axi_wready_A,
-
-    input  [3:0] m_axi_bid_A,
-    input  [1:0]  m_axi_bresp_A,
-    input         m_axi_bvalid_A,
-    output        m_axi_bready_A,
-
-    /* master AXI full port B*/
-    output [3:0] m_axi_arid_B,
-    output [31:0] m_axi_araddr_B,
-    output [7:0]  m_axi_arlen_B,
-    output [2:0]  m_axi_arsize_B,
-    output [1:0]  m_axi_arburst_B,
-    output        m_axi_arvalid_B,
-    input         m_axi_arready_B,
-
-    input  [3:0] m_axi_rid_B,
-    input  [31:0] m_axi_rdata_B,
-    input  [1:0]  m_axi_rresp_B,
-    input         m_axi_rlast_B,
-    input         m_axi_rvalid_B,
-    output        m_axi_rready_B,
-
-    output [3:0] m_axi_awid_B,
-    output [31:0] m_axi_awaddr_B,
-    output [7:0]  m_axi_awlen_B,
-    output [2:0]  m_axi_awsize_B,
-    output [1:0]  m_axi_awburst_B,
-    output        m_axi_awvalid_B,
-    input         m_axi_awready_B,
-
-    output [31:0] m_axi_wdata_B,
-    output [3:0]  m_axi_wstrb_B,
-    output        m_axi_wlast_B,
-    output        m_axi_wvalid_B,
-    input         m_axi_wready_B,
-
-    input  [3:0] m_axi_bid_B,
-    input  [1:0]  m_axi_bresp_B,
-    input         m_axi_bvalid_B,
-    output        m_axi_bready_B
-);
-
-    // 0x0200_0000 ~ 0x0200_ffff -> port A (0), else -> port B (1)
-    function addr_sel;
-        input [31:0] addr;
-        begin
-            addr_sel = (addr >= 32'h0200_0000 && addr <= 32'h0200_ffff) ? 1'b0 : 1'b1;
-        end
-    endfunction
-
-    /*Read Channel*/
-    localparam READ_IDLE = 2'b00, READ_REQ = 2'b01, READ_WAIT = 2'b10;
-    reg [1:0] r_state, r_next_state;
-    reg r_sel;
-
-    always @(*) begin
-        case (r_state)
-            READ_IDLE: r_next_state = (s_axi_arvalid && s_axi_arready) ? READ_REQ  : READ_IDLE;
-            READ_REQ:  r_next_state = (r_sel == 1'b0 ? m_axi_arready_A : m_axi_arready_B) ? READ_WAIT : READ_REQ;
-            READ_WAIT: r_next_state = (s_axi_rvalid && s_axi_rready && s_axi_rlast) ? READ_IDLE : READ_WAIT;
-            default:   r_next_state = READ_IDLE;
-        endcase
-    end
-
-    always @(posedge clk) begin
-        if (reset) r_state <= READ_IDLE;
-        else        r_state <= r_next_state;
-    end
-
-    assign s_axi_arready = (r_state == READ_IDLE);
-
-    reg [3:0] r_id;
-    reg [31:0] raddr;
-    reg [7:0]  rlen;
-    reg [2:0]  rsize;
-    reg [1:0]  rburst;
-
-    always @(posedge clk) begin
-        if (reset) begin
-            r_id   <= 4'b0;
-            raddr  <= 32'b0;
-            rlen   <= 8'b0;
-            rsize  <= 3'b0;
-            rburst <= 2'b0;
-            r_sel  <= 1'b0;
-        end else if (s_axi_arvalid && s_axi_arready) begin
-            r_id   <= s_axi_arid;
-            raddr  <= s_axi_araddr;
-            rlen   <= s_axi_arlen;
-            rsize  <= s_axi_arsize;
-            rburst <= s_axi_arburst;
-            r_sel  <= addr_sel(s_axi_araddr);
-        end
-    end
-
-    assign m_axi_arid_A    = r_id;
-    assign m_axi_araddr_A  = raddr;
-    assign m_axi_arlen_A   = rlen;
-    assign m_axi_arsize_A  = rsize;
-    assign m_axi_arburst_A = rburst;
-    assign m_axi_arvalid_A = (r_state == READ_REQ) && (r_sel == 1'b0);
-
-    assign m_axi_arid_B    = r_id;
-    assign m_axi_araddr_B  = raddr;
-    assign m_axi_arlen_B   = rlen;
-    assign m_axi_arsize_B  = rsize;
-    assign m_axi_arburst_B = rburst;
-    assign m_axi_arvalid_B = (r_state == READ_REQ) && (r_sel == 1'b1);
-
-    assign m_axi_rready_A  = (r_state == READ_WAIT) && (r_sel == 1'b0) && s_axi_rready;
-    assign m_axi_rready_B  = (r_state == READ_WAIT) && (r_sel == 1'b1) && s_axi_rready;
-
-    assign s_axi_rid    = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rid_A    : m_axi_rid_B)    : 4'b0;
-    assign s_axi_rdata  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rdata_A  : m_axi_rdata_B)  : 32'b0;
-    assign s_axi_rresp  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rresp_A  : m_axi_rresp_B)  : 2'b0;
-    assign s_axi_rlast  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rlast_A  : m_axi_rlast_B)  : 1'b0;
-    assign s_axi_rvalid = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rvalid_A : m_axi_rvalid_B) : 1'b0;
-
-    /*Write Channel*/
-    localparam WRITE_IDLE      = 3'b000,
-               WRITE_WAIT_ADDR = 3'b001,
-               WRITE_WAIT_DATA = 3'b010,
-               WRITE_REQ       = 3'b011,
-               WRITE_REQ_ADDR  = 3'b100,
-               WRITE_REQ_DATA  = 3'b101,
-               WRITE_RESP      = 3'b110;
-    reg [2:0] w_state, w_next_state;
-    reg w_sel;
-
-    always @(*) begin
-        case (w_state)
-            WRITE_IDLE: begin
-                if (s_axi_awvalid && s_axi_awready && s_axi_wvalid && s_axi_wready)
-                    w_next_state = WRITE_REQ;
-                else if (s_axi_awvalid && s_axi_awready)
-                    w_next_state = WRITE_WAIT_DATA;
-                else if (s_axi_wvalid && s_axi_wready)
-                    w_next_state = WRITE_WAIT_ADDR;
-                else
-                    w_next_state = WRITE_IDLE;
-            end
-            WRITE_WAIT_DATA: w_next_state = (s_axi_wvalid  && s_axi_wready)  ? WRITE_REQ : WRITE_WAIT_DATA;
-            WRITE_WAIT_ADDR: w_next_state = (s_axi_awvalid && s_axi_awready) ? WRITE_REQ : WRITE_WAIT_ADDR;
-            WRITE_REQ      : begin
-                if (w_sel == 1'b0) begin
-                    if (m_axi_awready_A && m_axi_wready_A && m_axi_awvalid_A && m_axi_wvalid_A)
-                        w_next_state = WRITE_RESP;
-                    else if (m_axi_awready_A && m_axi_awvalid_A)
-                        w_next_state = WRITE_REQ_DATA;
-                    else if (m_axi_wready_A && m_axi_wvalid_A)
-                        w_next_state = WRITE_REQ_ADDR;
-                    else
-                        w_next_state = WRITE_REQ;
-                end
-                else begin
-                    if (m_axi_awready_B && m_axi_wready_B && m_axi_awvalid_B && m_axi_wvalid_B)
-                        w_next_state = WRITE_RESP;
-                    else if (m_axi_awready_B && m_axi_awvalid_B)
-                        w_next_state = WRITE_REQ_DATA;
-                    else if (m_axi_wready_B && m_axi_wvalid_B)
-                        w_next_state = WRITE_REQ_ADDR;
-                    else
-                        w_next_state = WRITE_REQ;
-                end
-            end
-            WRITE_REQ_ADDR:  w_next_state = (w_sel == 1'b0 ? m_axi_awready_A : m_axi_awready_B) ? WRITE_REQ_DATA : WRITE_REQ_ADDR;
-            WRITE_REQ_DATA:  w_next_state = (w_sel == 1'b0 ? m_axi_wready_A  : m_axi_wready_B)  ? WRITE_RESP     : WRITE_REQ_DATA;
-            WRITE_RESP:      w_next_state = (s_axi_bvalid  && s_axi_bready)  ? WRITE_IDLE       : WRITE_RESP;
-            default:         w_next_state = WRITE_IDLE;
-        endcase
-    end
-
-    always @(posedge clk) begin
-        if (reset) w_state <= WRITE_IDLE;
-        else        w_state <= w_next_state;
-    end
-
-    assign s_axi_awready = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_ADDR);
-    assign s_axi_wready  = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_DATA);
-
-    reg [3:0] w_id;
-    reg [31:0] waddr;
-    reg [7:0]  wlen;
-    reg [2:0]  wsize;
-    reg [1:0]  wburst;
-    reg [31:0] wdata;
-    reg [3:0]  wstrb;
-    reg        wlast;
-
-    always @(posedge clk) begin
-        if (reset) begin
-            w_id   <= 4'b0;
-            waddr  <= 32'b0;
-            wlen   <= 8'b0;
-            wsize  <= 3'b0;
-            wburst <= 2'b0;
-            w_sel  <= 1'b0;
-        end else if (s_axi_awvalid && s_axi_awready) begin
-            w_id   <= s_axi_awid;
-            waddr  <= s_axi_awaddr;
-            wlen   <= s_axi_awlen;
-            wsize  <= s_axi_awsize;
-            wburst <= s_axi_awburst;
-            w_sel  <= addr_sel(s_axi_awaddr);
-        end
-    end
-
-    always @(posedge clk) begin
-        if (reset) begin
-            wdata <= 32'b0;
-            wstrb <= 4'b0;
-            wlast <= 1'b0;
-        end else if (s_axi_wvalid && s_axi_wready) begin
-            wdata <= s_axi_wdata;
-            wstrb <= s_axi_wstrb;
-            wlast <= s_axi_wlast;
-        end
-    end
-
-    assign m_axi_awid_A    = w_id;
-    assign m_axi_awaddr_A  = waddr;
-    assign m_axi_awlen_A   = wlen;
-    assign m_axi_awsize_A  = wsize;
-    assign m_axi_awburst_A = wburst;
-    assign m_axi_awvalid_A = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b0);
-    assign m_axi_wdata_A   = wdata;
-    assign m_axi_wstrb_A   = wstrb;
-    assign m_axi_wlast_A   = wlast;
-    assign m_axi_wvalid_A  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b0);
-    assign m_axi_bready_A  = (w_state == WRITE_RESP)     && (w_sel == 1'b0) && s_axi_bready;
-
-    assign m_axi_awid_B    = w_id;
-    assign m_axi_awaddr_B  = waddr;
-    assign m_axi_awlen_B   = wlen;
-    assign m_axi_awsize_B  = wsize;
-    assign m_axi_awburst_B = wburst;
-    assign m_axi_awvalid_B = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b1);
-    assign m_axi_wdata_B   = wdata;
-    assign m_axi_wstrb_B   = wstrb;
-    assign m_axi_wlast_B   = wlast;
-    assign m_axi_wvalid_B  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b1);
-    assign m_axi_bready_B  = (w_state == WRITE_RESP)     && (w_sel == 1'b1) && s_axi_bready;
-
-    assign s_axi_bid    = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bid_A    : m_axi_bid_B)    : 4'b0;
-    assign s_axi_bresp  = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bresp_A  : m_axi_bresp_B)  : 2'b0;
-    assign s_axi_bvalid = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bvalid_A : m_axi_bvalid_B) : 1'b0;
-
-endmodule
 module ysyx_26040125(
         input  clock,
         input  reset,
@@ -3389,114 +2982,11 @@ module ysyx_26040125(
     wire [1:0]  ARB_s_axi_bresp_B;
     wire        ARB_s_axi_bvalid_B;
     wire [3:0]  ARB_s_axi_bid_B;
-    // ARB outputs (master side, to XBAR slave)
-    wire [31:0] ARB_m_axi_araddr;
-    wire        ARB_m_axi_arvalid;
-    wire [3:0]  ARB_m_axi_arid;
-    wire [7:0]  ARB_m_axi_arlen;
-    wire [2:0]  ARB_m_axi_arsize;
-    wire [1:0]  ARB_m_axi_arburst;
-    wire        ARB_m_axi_rready;
-    wire [31:0] ARB_m_axi_awaddr;
-    wire        ARB_m_axi_awvalid;
-    wire [3:0]  ARB_m_axi_awid;
-    wire [7:0]  ARB_m_axi_awlen;
-    wire [2:0]  ARB_m_axi_awsize;
-    wire [1:0]  ARB_m_axi_awburst;
-    wire [31:0] ARB_m_axi_wdata;
-    wire [3:0]  ARB_m_axi_wstrb;
-    wire        ARB_m_axi_wvalid;
-    wire        ARB_m_axi_wlast;
-    wire        ARB_m_axi_bready;
-
-    // XBAR outputs (slave side, responses back to ARB)
-    wire        XBAR_s_axi_arready;
-    wire [31:0] XBAR_s_axi_rdata;
-    wire [1:0]  XBAR_s_axi_rresp;
-    wire        XBAR_s_axi_rvalid;
-    wire [3:0]  XBAR_s_axi_rid;
-    wire        XBAR_s_axi_rlast;
-    wire        XBAR_s_axi_awready;
-    wire        XBAR_s_axi_wready;
-    wire [1:0]  XBAR_s_axi_bresp;
-    wire        XBAR_s_axi_bvalid;
-    wire [3:0]  XBAR_s_axi_bid;
-    // XBAR outputs (master A, to MTIME)
-    wire [3:0]  XBAR_m_axi_arid_A;
-    wire [31:0] XBAR_m_axi_araddr_A;
-    wire [7:0]  XBAR_m_axi_arlen_A;
-    wire [2:0]  XBAR_m_axi_arsize_A;
-    wire [1:0]  XBAR_m_axi_arburst_A;
-    wire        XBAR_m_axi_arvalid_A;
-    wire        XBAR_m_axi_rready_A;
-    wire [3:0]  XBAR_m_axi_awid_A;
-    wire [31:0] XBAR_m_axi_awaddr_A;
-    wire [7:0]  XBAR_m_axi_awlen_A;
-    wire [2:0]  XBAR_m_axi_awsize_A;
-    wire [1:0]  XBAR_m_axi_awburst_A;
-    wire        XBAR_m_axi_awvalid_A;
-    wire [31:0] XBAR_m_axi_wdata_A;
-    wire [3:0]  XBAR_m_axi_wstrb_A;
-    wire        XBAR_m_axi_wlast_A;
-    wire        XBAR_m_axi_wvalid_A;
-    wire        XBAR_m_axi_bready_A;
-    // XBAR outputs (master B, to external io_master)
-    wire [3:0]  XBAR_m_axi_arid_B;
-    wire [31:0] XBAR_m_axi_araddr_B;
-    wire [7:0]  XBAR_m_axi_arlen_B;
-    wire [2:0]  XBAR_m_axi_arsize_B;
-    wire [1:0]  XBAR_m_axi_arburst_B;
-    wire        XBAR_m_axi_arvalid_B;
-    wire        XBAR_m_axi_rready_B;
-    wire [3:0]  XBAR_m_axi_awid_B;
-    wire [31:0] XBAR_m_axi_awaddr_B;
-    wire [7:0]  XBAR_m_axi_awlen_B;
-    wire [2:0]  XBAR_m_axi_awsize_B;
-    wire [1:0]  XBAR_m_axi_awburst_B;
-    wire        XBAR_m_axi_awvalid_B;
-    wire [31:0] XBAR_m_axi_wdata_B;
-    wire [3:0]  XBAR_m_axi_wstrb_B;
-    wire        XBAR_m_axi_wlast_B;
-    wire        XBAR_m_axi_wvalid_B;
-    wire        XBAR_m_axi_bready_B;
-
-    // MTIME outputs
-    wire        MTIME_s_axi_arready;
-    wire [3:0]  MTIME_s_axi_rid;
-    wire [31:0] MTIME_s_axi_rdata;
-    wire [1:0]  MTIME_s_axi_rresp;
-    wire        MTIME_s_axi_rlast;
-    wire        MTIME_s_axi_rvalid;
-    wire        MTIME_s_axi_awready;
-    wire        MTIME_s_axi_wready;
-    wire [3:0]  MTIME_s_axi_bid;
-    wire [1:0]  MTIME_s_axi_bresp;
-    wire        MTIME_s_axi_bvalid;
 
     // BTB outputs
     wire [31:0] BTB_target_BTB;
     wire [1:0]  BTB_meta_data_BTB;
     wire        BTB_hit_BTB;
-
-    // Connect io_master to XBAR master B
-    assign io_master_arvalid  = XBAR_m_axi_arvalid_B;
-    assign io_master_araddr   = XBAR_m_axi_araddr_B;
-    assign io_master_arid     = XBAR_m_axi_arid_B;
-    assign io_master_arlen    = XBAR_m_axi_arlen_B;
-    assign io_master_arsize   = XBAR_m_axi_arsize_B;
-    assign io_master_arburst  = XBAR_m_axi_arburst_B;
-    assign io_master_rready   = XBAR_m_axi_rready_B;
-    assign io_master_awvalid  = XBAR_m_axi_awvalid_B;
-    assign io_master_awaddr   = XBAR_m_axi_awaddr_B;
-    assign io_master_awid     = XBAR_m_axi_awid_B;
-    assign io_master_awlen    = XBAR_m_axi_awlen_B;
-    assign io_master_awsize   = XBAR_m_axi_awsize_B;
-    assign io_master_awburst  = XBAR_m_axi_awburst_B;
-    assign io_master_wvalid   = XBAR_m_axi_wvalid_B;
-    assign io_master_wdata    = XBAR_m_axi_wdata_B;
-    assign io_master_wstrb    = XBAR_m_axi_wstrb_B;
-    assign io_master_wlast    = XBAR_m_axi_wlast_B;
-    assign io_master_bready   = XBAR_m_axi_bready_B;
 
 
     ysyx_26040125_PCR ysyx_26040125_PCR(
@@ -3924,166 +3414,35 @@ module ysyx_26040125(
             .s_axi_bready_B    ( LSU_m_axi_bready     ),
             .s_axi_bid_B       ( ARB_s_axi_bid_B      ),
 
-            .m_axi_araddr      ( ARB_m_axi_araddr     ),
-            .m_axi_arvalid     ( ARB_m_axi_arvalid    ),
-            .m_axi_arready     ( XBAR_s_axi_arready   ),
-            .m_axi_arid        ( ARB_m_axi_arid       ),
-            .m_axi_arlen       ( ARB_m_axi_arlen      ),
-            .m_axi_arsize      ( ARB_m_axi_arsize     ),
-            .m_axi_arburst     ( ARB_m_axi_arburst    ),
-            .m_axi_rdata       ( XBAR_s_axi_rdata     ),
-            .m_axi_rresp       ( XBAR_s_axi_rresp     ),
-            .m_axi_rid         ( XBAR_s_axi_rid       ),
-            .m_axi_rlast       ( XBAR_s_axi_rlast     ),
-            .m_axi_rvalid      ( XBAR_s_axi_rvalid    ),
-            .m_axi_rready      ( ARB_m_axi_rready     ),
-            .m_axi_awaddr      ( ARB_m_axi_awaddr     ),
-            .m_axi_awvalid     ( ARB_m_axi_awvalid    ),
-            .m_axi_awready     ( XBAR_s_axi_awready   ),
-            .m_axi_awid        ( ARB_m_axi_awid       ),
-            .m_axi_awlen       ( ARB_m_axi_awlen      ),
-            .m_axi_awsize      ( ARB_m_axi_awsize     ),
-            .m_axi_awburst     ( ARB_m_axi_awburst    ),
-            .m_axi_wdata       ( ARB_m_axi_wdata      ),
-            .m_axi_wstrb       ( ARB_m_axi_wstrb      ),
-            .m_axi_wvalid      ( ARB_m_axi_wvalid     ),
-            .m_axi_wlast       ( ARB_m_axi_wlast      ),
-            .m_axi_wready      ( XBAR_s_axi_wready    ),
-            .m_axi_bresp       ( XBAR_s_axi_bresp     ),
-            .m_axi_bvalid      ( XBAR_s_axi_bvalid    ),
-            .m_axi_bid         ( XBAR_s_axi_bid       ),
-            .m_axi_bready      ( ARB_m_axi_bready     )
-        );
-
-    ysyx_26040125_XBAR ysyx_26040125_XBAR(
-            .clk               (clock),
-            .reset             (reset),
-
-            .s_axi_arid        (ARB_m_axi_arid),
-            .s_axi_araddr      (ARB_m_axi_araddr),
-            .s_axi_arlen       (ARB_m_axi_arlen),
-            .s_axi_arsize      (ARB_m_axi_arsize),
-            .s_axi_arburst     (ARB_m_axi_arburst),
-            .s_axi_arvalid     (ARB_m_axi_arvalid),
-            .s_axi_arready     (XBAR_s_axi_arready),
-            .s_axi_rid         (XBAR_s_axi_rid),
-            .s_axi_rdata       (XBAR_s_axi_rdata),
-            .s_axi_rresp       (XBAR_s_axi_rresp),
-            .s_axi_rlast       (XBAR_s_axi_rlast),
-            .s_axi_rvalid      (XBAR_s_axi_rvalid),
-            .s_axi_rready      (ARB_m_axi_rready),
-            .s_axi_awid        (ARB_m_axi_awid),
-            .s_axi_awaddr      (ARB_m_axi_awaddr),
-            .s_axi_awlen       (ARB_m_axi_awlen),
-            .s_axi_awsize      (ARB_m_axi_awsize),
-            .s_axi_awburst     (ARB_m_axi_awburst),
-            .s_axi_awvalid     (ARB_m_axi_awvalid),
-            .s_axi_awready     (XBAR_s_axi_awready),
-            .s_axi_wdata       (ARB_m_axi_wdata),
-            .s_axi_wstrb       (ARB_m_axi_wstrb),
-            .s_axi_wlast       (ARB_m_axi_wlast),
-            .s_axi_wvalid      (ARB_m_axi_wvalid),
-            .s_axi_wready      (XBAR_s_axi_wready),
-            .s_axi_bid         (XBAR_s_axi_bid),
-            .s_axi_bresp       (XBAR_s_axi_bresp),
-            .s_axi_bvalid      (XBAR_s_axi_bvalid),
-            .s_axi_bready      (ARB_m_axi_bready),
-
-            // Master A -> MTIME
-            .m_axi_arid_A      (XBAR_m_axi_arid_A),
-            .m_axi_araddr_A    (XBAR_m_axi_araddr_A),
-            .m_axi_arlen_A     (XBAR_m_axi_arlen_A),
-            .m_axi_arsize_A    (XBAR_m_axi_arsize_A),
-            .m_axi_arburst_A   (XBAR_m_axi_arburst_A),
-            .m_axi_arvalid_A   (XBAR_m_axi_arvalid_A),
-            .m_axi_arready_A   (MTIME_s_axi_arready),
-            .m_axi_rid_A       (MTIME_s_axi_rid),
-            .m_axi_rdata_A     (MTIME_s_axi_rdata),
-            .m_axi_rresp_A     (MTIME_s_axi_rresp),
-            .m_axi_rlast_A     (MTIME_s_axi_rlast),
-            .m_axi_rvalid_A    (MTIME_s_axi_rvalid),
-            .m_axi_rready_A    (XBAR_m_axi_rready_A),
-            .m_axi_awid_A      (XBAR_m_axi_awid_A),
-            .m_axi_awaddr_A    (XBAR_m_axi_awaddr_A),
-            .m_axi_awlen_A     (XBAR_m_axi_awlen_A),
-            .m_axi_awsize_A    (XBAR_m_axi_awsize_A),
-            .m_axi_awburst_A   (XBAR_m_axi_awburst_A),
-            .m_axi_awvalid_A   (XBAR_m_axi_awvalid_A),
-            .m_axi_awready_A   (MTIME_s_axi_awready),
-            .m_axi_wdata_A     (XBAR_m_axi_wdata_A),
-            .m_axi_wstrb_A     (XBAR_m_axi_wstrb_A),
-            .m_axi_wlast_A     (XBAR_m_axi_wlast_A),
-            .m_axi_wvalid_A    (XBAR_m_axi_wvalid_A),
-            .m_axi_wready_A    (MTIME_s_axi_wready),
-            .m_axi_bid_A       (MTIME_s_axi_bid),
-            .m_axi_bresp_A     (MTIME_s_axi_bresp),
-            .m_axi_bvalid_A    (MTIME_s_axi_bvalid),
-            .m_axi_bready_A    (XBAR_m_axi_bready_A),
-
-            // Master B -> external io_master
-            .m_axi_arid_B      (XBAR_m_axi_arid_B),
-            .m_axi_araddr_B    (XBAR_m_axi_araddr_B),
-            .m_axi_arlen_B     (XBAR_m_axi_arlen_B),
-            .m_axi_arsize_B    (XBAR_m_axi_arsize_B),
-            .m_axi_arburst_B   (XBAR_m_axi_arburst_B),
-            .m_axi_arvalid_B   (XBAR_m_axi_arvalid_B),
-            .m_axi_arready_B   (io_master_arready),
-            .m_axi_rid_B       (io_master_rid),
-            .m_axi_rdata_B     (io_master_rdata),
-            .m_axi_rresp_B     (io_master_rresp),
-            .m_axi_rlast_B     (io_master_rlast),
-            .m_axi_rvalid_B    (io_master_rvalid),
-            .m_axi_rready_B    (XBAR_m_axi_rready_B),
-            .m_axi_awid_B      (XBAR_m_axi_awid_B),
-            .m_axi_awaddr_B    (XBAR_m_axi_awaddr_B),
-            .m_axi_awlen_B     (XBAR_m_axi_awlen_B),
-            .m_axi_awsize_B    (XBAR_m_axi_awsize_B),
-            .m_axi_awburst_B   (XBAR_m_axi_awburst_B),
-            .m_axi_awvalid_B   (XBAR_m_axi_awvalid_B),
-            .m_axi_awready_B   (io_master_awready),
-            .m_axi_wdata_B     (XBAR_m_axi_wdata_B),
-            .m_axi_wstrb_B     (XBAR_m_axi_wstrb_B),
-            .m_axi_wlast_B     (XBAR_m_axi_wlast_B),
-            .m_axi_wvalid_B    (XBAR_m_axi_wvalid_B),
-            .m_axi_wready_B    (io_master_wready),
-            .m_axi_bid_B       (io_master_bid),
-            .m_axi_bresp_B     (io_master_bresp),
-            .m_axi_bvalid_B    (io_master_bvalid),
-            .m_axi_bready_B    (XBAR_m_axi_bready_B)
-        );
-
-    ysyx_26040125_MTIME ysyx_26040125_MTIME(
-            .clk           ( clock                  ),
-            .reset         ( reset                  ),
-            .s_axi_arid    ( XBAR_m_axi_arid_A      ),
-            .s_axi_araddr  ( XBAR_m_axi_araddr_A    ),
-            .s_axi_arlen   ( XBAR_m_axi_arlen_A     ),
-            .s_axi_arsize  ( XBAR_m_axi_arsize_A    ),
-            .s_axi_arburst ( XBAR_m_axi_arburst_A   ),
-            .s_axi_arvalid ( XBAR_m_axi_arvalid_A   ),
-            .s_axi_arready ( MTIME_s_axi_arready     ),
-            .s_axi_rid     ( MTIME_s_axi_rid         ),
-            .s_axi_rdata   ( MTIME_s_axi_rdata       ),
-            .s_axi_rresp   ( MTIME_s_axi_rresp       ),
-            .s_axi_rlast   ( MTIME_s_axi_rlast       ),
-            .s_axi_rvalid  ( MTIME_s_axi_rvalid      ),
-            .s_axi_rready  ( XBAR_m_axi_rready_A    ),
-            .s_axi_awid    ( XBAR_m_axi_awid_A      ),
-            .s_axi_awaddr  ( XBAR_m_axi_awaddr_A    ),
-            .s_axi_awlen   ( XBAR_m_axi_awlen_A     ),
-            .s_axi_awsize  ( XBAR_m_axi_awsize_A    ),
-            .s_axi_awburst ( XBAR_m_axi_awburst_A   ),
-            .s_axi_awvalid ( XBAR_m_axi_awvalid_A   ),
-            .s_axi_awready ( MTIME_s_axi_awready     ),
-            .s_axi_wdata   ( XBAR_m_axi_wdata_A     ),
-            .s_axi_wstrb   ( XBAR_m_axi_wstrb_A     ),
-            .s_axi_wlast   ( XBAR_m_axi_wlast_A     ),
-            .s_axi_wvalid  ( XBAR_m_axi_wvalid_A    ),
-            .s_axi_wready  ( MTIME_s_axi_wready      ),
-            .s_axi_bid     ( MTIME_s_axi_bid         ),
-            .s_axi_bresp   ( MTIME_s_axi_bresp       ),
-            .s_axi_bvalid  ( MTIME_s_axi_bvalid      ),
-            .s_axi_bready  ( XBAR_m_axi_bready_A    )
+            .m_axi_araddr      (io_master_araddr),
+            .m_axi_arvalid     (io_master_arvalid),
+            .m_axi_arready     (io_master_arready),
+            .m_axi_arid        (io_master_arid),
+            .m_axi_arlen       (io_master_arlen),
+            .m_axi_arsize      (io_master_arsize),
+            .m_axi_arburst     (io_master_arburst),
+            .m_axi_rdata       (io_master_rdata),
+            .m_axi_rresp       (io_master_rresp),
+            .m_axi_rid         (io_master_rid),
+            .m_axi_rlast       (io_master_rlast),
+            .m_axi_rvalid      (io_master_rvalid),
+            .m_axi_rready      (io_master_rready),
+            .m_axi_awaddr      (io_master_awaddr),
+            .m_axi_awvalid     (io_master_awvalid),
+            .m_axi_awready     (io_master_awready),
+            .m_axi_awid        (io_master_awid),
+            .m_axi_awlen       (io_master_awlen),
+            .m_axi_awsize      (io_master_awsize),
+            .m_axi_awburst     (io_master_awburst),
+            .m_axi_wdata       (io_master_wdata),
+            .m_axi_wstrb       (io_master_wstrb),
+            .m_axi_wvalid      (io_master_wvalid),
+            .m_axi_wlast       (io_master_wlast),
+            .m_axi_wready      (io_master_wready),
+            .m_axi_bresp       (io_master_bresp),
+            .m_axi_bvalid      (io_master_bvalid),
+            .m_axi_bid         (io_master_bid),
+            .m_axi_bready      (io_master_bready)
         );
 
     ysyx_26040125_BTB#(

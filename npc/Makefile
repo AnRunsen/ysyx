@@ -3,8 +3,7 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 TOP = ysyxSoCFull
 BUILD_DIR = build
-# ALL_V = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
-ALL_V = $(shell find $(abspath ./release) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
+ALL_V = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
 VSRCS := $(filter-out $(abspath ./vsrc/unused/%), $(ALL_V))
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)

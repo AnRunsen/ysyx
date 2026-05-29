@@ -5,21 +5,80 @@
 static Context* (*user_handler)(Event, Context*) = NULL;
 
 Context* __am_irq_handle(Context *c) {
-  if (user_handler) {
-    Event ev = {0};
-    switch (c->mcause) {
-      case 0xffffffff:{
+  switch (c->mcause) {
+    case 0:{
+      printf("Instruction address misaligned at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 1:{
+      printf("Instruction access fault at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 2:{
+      printf("Illegal instruction at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 3:{
+      uint32_t code = c->gpr[10];
+      if (code == 0)
+      {
+        printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);
+      }
+      else if (code == 1)
+      {
+        printf("Code:%d \033[31;1mHit Bad Trap\033[0m\n", code);
+      }
+      printf("Breakpoint at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 4:{
+      printf("Load address misaligned at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 5:{
+      printf("Load access fault at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 6:{
+      printf("Store address misaligned at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 7:{
+      printf("Store access fault at 0x%08x\n", c->mepc);
+      ((void (*)(void))0x00000010)();
+      while (1);
+      break;
+    }
+    case 11:{
+      if(c->gpr[15] == 0xFFFFFFFF)
+      {
+        Event ev = {0};
         ev.event = EVENT_YIELD;
         c->mepc += 4; // skip ecall
+        
+        if (user_handler) {
+          c = user_handler(ev, c);
+          assert(c != NULL);
+        }
+
         break;
       }
-      default: ev.event = EVENT_ERROR; break;
     }
-
-    c = user_handler(ev, c);
-    assert(c != NULL);
   }
-
   return c;
 }
 
