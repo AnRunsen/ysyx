@@ -167,22 +167,6 @@ extern "C" int mtime_read(int raddr)
         assert(0);
     }
 }
-extern "C" void uart_write(int waddr, int wdata, uint8_t wmask)
-{
-    if (waddr == 0x10000000)
-    {
-        putchar(wdata & 0xFF);
-        fflush(stdout);
-    }
-
-    else
-    {
-        printf("\033[31;1mUnknown UART Write: addr=0x%08x, data=0x%08x, wmask=0x%02x\033[0m\n", waddr, wdata, wmask);
-        assert(0);
-    }
-
-    return;
-}
 
 
 extern "C" void sim_exit()
@@ -198,7 +182,7 @@ extern "C" void sim_exit()
     printf("  LSU: \t%lu\n", perf_cnt.lsu);
     printf("============================\n");
     printf("Num of ifetch: %lu\tNum of iCache hit: %lu\t%f%%\n", ifetch_cnt, ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
-    printf("Num of flush: %lu\tNum of branch: %lu\t%f%%\033[0m\n", flush_cnt, branch_cnt, 1.0f-((double)flush_cnt / (double)branch_cnt * 100));
+    printf("Num of flush: %lu\tNum of branch: %lu\t%f%%\033[0m\n", flush_cnt, branch_cnt, (1.0f-(double)flush_cnt / (double)branch_cnt) * 100);
 
     exit_flag = true;
 }
