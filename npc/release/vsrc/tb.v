@@ -8,15 +8,17 @@ module tb;
     always #5 clk = ~clk;
 
     initial begin
+        reset = 0;
+        #100;
         reset = 1;
         repeat (5) @(posedge clk);
         reset = 0;
     end
 
-    initial begin
-        $dumpfile("wave.fst");
-        $dumpvars(0, tb);
-    end
+    // initial begin
+    //     $dumpfile("wave.fst");
+    //     $dumpvars(0, tb);
+    // end
 
     // -----------------------------------------------------------------------
     // AXI4 master wires between DUT and RAM

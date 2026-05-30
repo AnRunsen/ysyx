@@ -416,34 +416,36 @@ module ysyx_26040125_BTB
     reg [31:0] PC_reg [ENTRY_NUM-1:0];
     reg [31:0] target_reg [ENTRY_NUM-1:0];
     reg [1:0] meta_data_reg [ENTRY_NUM-1:0];
-
+    reg [ENTRY_NUM-1:0] valid;
     reg [$clog2(ENTRY_NUM)-1:0] wptr;
 
-    integer i;
+
     always @(posedge clk or posedge reset) begin
         if(reset) begin
-            for(i = 0; i < ENTRY_NUM; i = i + 1) begin
-                PC_reg[i] <= 32'b0;
-                target_reg[i] <= 32'b0;
-                meta_data_reg[i] <= 2'b0;
-            end
-
-            wptr <= {$clog2(ENTRY_NUM){1'b0}};
+            valid <= {ENTRY_NUM{1'b0}};
+            wptr <= 0;
         end
         else if(write_en) begin
-            PC_reg[wptr] <= PC_w;
-            target_reg[wptr] <= target;
-            meta_data_reg[wptr] <= meta_data;
+            valid[wptr] <= 1'b1;
             wptr <= wptr + 1;
         end
     end
 
+    always @(posedge clk) begin
+        if(write_en) begin
+            PC_reg[wptr] <= PC_w;
+            target_reg[wptr] <= target;
+            meta_data_reg[wptr] <= meta_data;
+        end
+    end
+
+    integer i;
     always @(*) begin
         hit_BTB = 1'b0;
         target_BTB = 32'b0;
         meta_data_BTB = 2'b0;
         for(i = 0; i < ENTRY_NUM; i = i + 1) begin
-            if(PC_reg[i] == PC_r) begin
+            if(valid[i] && PC_reg[i] == PC_r) begin
                 hit_BTB = 1'b1;
                 target_BTB = target_reg[i];
                 meta_data_BTB = meta_data_reg[i];
@@ -893,7 +895,6 @@ module ysyx_26040125_GPR #(
     parameter DATA_WIDTH = 32
 )(
     input clk,
-    input reset,
     input [DATA_WIDTH-1:0] wdata,
     input [ADDR_WIDTH-1:0] waddr,
     input wen,
@@ -903,20 +904,15 @@ module ysyx_26040125_GPR #(
     output [DATA_WIDTH-1:0]rdata2
 );
     reg [DATA_WIDTH-1:0] gpr [2**ADDR_WIDTH-1:0];
-    integer i;
 
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            for(i=0; i<2**ADDR_WIDTH; i=i+1) begin
-                gpr[i] <= {DATA_WIDTH{1'b0}};
-            end
-        end
-        else if(wen) gpr[waddr] <= (waddr == 4'b0) ? {DATA_WIDTH{1'b0}} : wdata;
+    always @(posedge clk) begin
+        if(wen) gpr[waddr] <= (waddr == 4'b0) ? {DATA_WIDTH{1'b0}} : wdata;
     end
 
-    assign rdata1 = gpr[raddr1];
-    assign rdata2 = gpr[raddr2];
+    assign rdata1 = (raddr1 == 4'b0) ? {DATA_WIDTH{1'b0}} : gpr[raddr1];
+    assign rdata2 = (raddr2 == 4'b0) ? {DATA_WIDTH{1'b0}} : gpr[raddr2];
 endmodule
+
 
 module ysyx_26040125_ICACHE#(
     parameter LINE_NUM = 4,
@@ -1015,7 +1011,7 @@ module ysyx_26040125_ICACHE#(
 
     reg [LINE_SIZE*8-1:0] cache [LINE_NUM-1:0];
     reg [TAG_SIZE-1:0] tags [LINE_NUM-1:0];
-    reg valid [LINE_NUM-1:0];
+    reg [LINE_NUM-1:0] valid;
 
     wire [$clog2(LINE_NUM)-1:0] index = s_raddr[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
     wire [TAG_SIZE-1:0] tag = s_raddr[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
@@ -1159,27 +1155,39 @@ module ysyx_26040125_ICACHE#(
 
 
     /*logic to update cache*/
-    integer i;
     reg [3:0] recv_counter;
+
     always @(posedge clk or posedge reset) begin
-        if(reset || cache_flush) begin
-            for(i = 0; i < LINE_NUM; i = i + 1) begin
-                valid[i] <= 1'b0;
-                tags[i] <= {TAG_SIZE{1'b0}};
-                cache[i] <= {(LINE_SIZE*8){1'b0}};
-            end
+        if(reset) begin
+            valid <= {LINE_NUM{1'b0}};
+        end
+        else if(cache_flush) begin
+            valid <= {LINE_NUM{1'b0}};
+        end
+        else if(m_axi_rvalid && m_axi_rready) begin
+            valid[index_reg] <= 1'b1;
+        end
+    end
+
+
+    always @(posedge clk or posedge reset) begin
+        if(reset) begin
             recv_counter <= 4'b0;
         end
         else if(m_axi_rvalid && m_axi_rready) begin
-            cache[index_reg][recv_counter*32 +: 32] <= m_axi_rdata;
-            tags[index_reg] <= tag_reg;
-            valid[index_reg] <= 1'b1;
             if(m_axi_rlast) begin
                 recv_counter <= 4'b0;
             end
             else begin
                 recv_counter <= recv_counter + 1;
             end
+        end
+    end
+
+    always @(posedge clk) begin
+        if(m_axi_rvalid && m_axi_rready) begin
+            cache[index_reg][recv_counter*32 +: 32] <= m_axi_rdata;
+            tags[index_reg] <= tag_reg;
         end
     end
 
@@ -1359,17 +1367,6 @@ module ysyx_26040125_IDU(
     end
 
     /*logic to send data*/
-    assign m_PC = pc_reg;
-    //***_reg is to the value recv from last module, and *** is this module's exception
-    assign m_has_exception = has_exception_reg || has_exception;
-    always @(*) begin
-        if(has_exception_reg) begin
-            m_exception_code = exception_code_reg;
-        end
-        else begin
-            m_exception_code = exception_code;
-        end
-    end
     reg valid_reg;
     assign m_valid = valid_reg && !stall;
     always @(posedge clk or posedge reset) begin
@@ -1390,6 +1387,18 @@ module ysyx_26040125_IDU(
         end
     end
 
+
+    assign m_PC = pc_reg;
+    //***_reg is to the value recv from last module, and *** is this module's exception
+    assign m_has_exception = has_exception_reg || has_exception;
+    always @(*) begin
+        if(has_exception_reg) begin
+            m_exception_code = exception_code_reg;
+        end
+        else begin
+            m_exception_code = exception_code;
+        end
+    end
 
     wire [6:0] opcode;
     wire [2:0] funct3;
@@ -3064,7 +3073,6 @@ module ysyx_26040125(
 
     ysyx_26040125_GPR ysyx_26040125_GPR(
             .clk    (clock),
-            .reset  (reset),
             .wdata  (WBU_wdata),
             .waddr  (WBU_waddr[3:0]),
             .wen    (WBU_wen),
