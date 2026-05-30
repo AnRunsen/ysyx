@@ -763,42 +763,8 @@ module ysyx_26040125_EXU(
 
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            rd <= 5'b0;
-            srcR1 <= 32'b0;
-            srcR2 <= 32'b0;
-            imm <= 32'b0;
-
-            alu_op <= 4'b0;
-            ysyx_26040125_ALU_SEL0 <= 2'b0; //sel the ALU A port is srcR1(0) or PC(1)
-            ysyx_26040125_ALU_SEL1 <= 2'b0; //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
-
-            wb_en <= 1'b0;
-            mem_en <= 1'b0;
-            mem_write_en <= 1'b0;
-
-            ysyx_26040125_OP_WIDTH <= 2'b0;
-            ysyx_26040125_WB_SEL <= 3'b0; //imm; alu; mem; PC+4
-
-            brju <= 3'b0;
-            mem_signext <= 1'b0;
-
-            csr_addr <= 12'b0;
-            csr_data <= 32'b0;
-            csr_wr_sel <= 1'b0; //0: write srcR1; 1: write alu_res
-            csr_wen <= 1'b0;
-
-            PC_reg <= 32'b0;
-            fencei <= 1'b0;
-            has_exception_reg <= 1'b0;
-            exception_code_reg <= 4'b0;
-
-            meta_data_BTB <= 2'b0;
-            hit_BTB <= 1'b0;
-        end
-
-        else if(s_valid && s_ready) begin
+    always @(posedge clk) begin
+        if(s_valid && s_ready) begin
             rd <= s_rd;
             srcR1 <= s_srcR1;
             srcR2 <= s_srcR2;
@@ -1345,24 +1311,14 @@ module ysyx_26040125_IDU(
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
     assign s_ready = (!m_valid || (m_valid & m_ready)) && !stall;
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            inst_reg <= 32'b0;
-            pc_reg <= 32'b0;
-            meta_data_BTB_reg <= 2'b0;
-            hit_BTB_reg <= 1'b0;
-            has_exception_reg <= 1'b0;
-            exception_code_reg <= 4'b0;
-        end
-        else begin
-            if(s_ready & s_valid) begin
-                inst_reg <= s_Inst;
-                pc_reg <= s_PC;
-                meta_data_BTB_reg <= s_meta_data_BTB;
-                hit_BTB_reg <= s_hit_BTB;
-                has_exception_reg <= s_has_exception;
-                exception_code_reg <= s_exception_code;
-            end
+    always @(posedge clk) begin
+        if(s_ready & s_valid) begin
+            inst_reg <= s_Inst;
+            pc_reg <= s_PC;
+            meta_data_BTB_reg <= s_meta_data_BTB;
+            hit_BTB_reg <= s_hit_BTB;
+            has_exception_reg <= s_has_exception;
+            exception_code_reg <= s_exception_code;
         end
     end
 
@@ -1965,12 +1921,8 @@ module ysyx_26040125_LSU(
 
     reg [3:0] exception_code;
     /*handle the exception*/
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            exception_code <= 4'b0;
-        end
-        
-        else if(s_mem_en && 
+    always @(posedge clk) begin
+        if(s_mem_en && 
             ((s_op_width == `ysyx_26040125_OP_WIDTH_HALF && s_result[0] != 1'b0) || 
             (s_op_width == `ysyx_26040125_OP_WIDTH_WORD && s_result[1:0] != 2'b00))) begin
             if(s_mem_write_en) exception_code <= 4'd6;
@@ -2204,27 +2156,8 @@ module ysyx_26040125_LSU(
     
     /*logic to recv data*/
     assign s_ready = !valid_reg || (m_ready && m_valid);
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            rd <= 5'b0;
-            wb_en <= 1'b0;
-            ysyx_26040125_OP_WIDTH <= 2'b0;
-            ysyx_26040125_WB_SEL <= 3'b0;
-            mem_signext <= 1'b0;
-            csr_addr <= 12'b0;
-            csr_data <= 32'b0;
-            csr_wr_sel <= 1'b0;
-            csr_wen <= 1'b0;
-            srcR1 <= 32'b0;
-            srcR2 <= 32'b0;
-            result <= 32'b0;
-            PC <= 32'b0;
-            imm <= 32'b0;
-            has_exception_reg <= 1'b0;
-            exception_code_reg <= 4'b0;
-        end
-
-        else if(s_valid && s_ready) begin
+    always @(posedge clk) begin
+        if(s_valid && s_ready) begin
             rd <= s_rd;
             wb_en <= s_wb_en;
             ysyx_26040125_OP_WIDTH <= s_op_width;
@@ -2295,11 +2228,8 @@ module ysyx_26040125_LSU(
     /*logic to recv read data*/
     assign m_axi_rready = (state == READ_WAIT);
     reg [31:0] rdata_reg;
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            rdata_reg <= 32'b0;
-        end
-        else if(m_axi_rvalid && m_axi_rready) begin
+    always @(posedge clk) begin
+        if(m_axi_rvalid && m_axi_rready) begin
             rdata_reg <= m_axi_rdata;
         end
     end
@@ -2632,25 +2562,8 @@ module ysyx_26040125_WBU(
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
     assign s_ready = 1'b1;
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            rd <= 5'b0;
-            wb_en <= 1'b0;
-            ysyx_26040125_WB_SEL <= 3'b0;
-            csr_addr <= 12'b0;
-            csr_data <= 32'b0;
-            csr_wr_sel <= 1'b0;
-            csr_wen <= 1'b0;
-            srcR1 <= 32'b0;
-            result <= 32'b0;
-            rdata <= 32'b0;
-            PC <= 32'b0;
-            imm <= 32'b0;
-            has_exception_reg <= 1'b0;
-            exception_code_reg <= 4'b0;
-        end
-
-        else if(s_valid && s_ready) begin
+    always @(posedge clk) begin
+        if(s_valid && s_ready) begin
             rd <= s_rd;
             wb_en <= s_wb_en;
             ysyx_26040125_WB_SEL <= s_wb_sel;
