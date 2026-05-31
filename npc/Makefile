@@ -30,14 +30,6 @@ VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP)\
 -I$(abspath ../ysyxSoC/perip/spi/rtl)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 
-PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP)\
---timescale "1ns/1ns"\
---no-timing\
--I$(abspath ./vsrc)\
--I$(abspath ../ysyxSoC/perip/uart16550/rtl)\
--I$(abspath ../ysyxSoC/perip/spi/rtl)\
-$(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
-
 ./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H) $(BIND_FILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
@@ -47,13 +39,12 @@ $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 $(LIBCAPSTONE):
 	$(MAKE) -C ./csrc/capstone
 
-prebuild: $(VSRCS)
-	verilator $(PREBUILD_FLAGS) $(VSRCS)
-
 run: ./$(BUILD_DIR)/V$(TOP)
 	$^ $(IMG) $(ELF)
 
-build: ./$(BUILD_DIR)/V$(TOP)
+verilog:
+	mkdir -p $(BUILD_DIR)
+	cp ./release/vsrc/ysyx_26040125.v ./$(BUILD_DIR)/
 
 clean:
 	rm -rf $(BUILD_DIR)

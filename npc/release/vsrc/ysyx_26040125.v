@@ -2359,7 +2359,7 @@ module ysyx_26040125_PCR(
 
     always @(posedge clk or posedge reset) begin
         if(reset) begin
-            PC <= 32'h8000_0000;
+            PC <= 32'h3000_0000;
         end
 
         else begin
