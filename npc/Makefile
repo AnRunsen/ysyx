@@ -53,11 +53,11 @@ sim-iverilog-netlist: $(IMG) $(NETLIST) $(CELLS)
 	./$(BUILD_DIR)/simv -fst
 
 verilog: ./$(BUILD_DIR)/ysyx_26040125.v
-	sed -i "s/PC <= 32'h8000_0000/PC <= 32'h3000_0000/g" ./$(BUILD_DIR)/ysyx_26040125.v
 
 ./$(BUILD_DIR)/ysyx_26040125.v: ./iverilog-sim/ysyx_26040125.v
 	mkdir -p $(BUILD_DIR)
 	cp ./iverilog-sim/ysyx_26040125.v ./$(BUILD_DIR)/ysyx_26040125.v
+	sed -i "s/PC <= 32'h8000_0000/PC <= 32'h3000_0000/g" ./$(BUILD_DIR)/ysyx_26040125.v
 
 clean:
 	rm -rf $(BUILD_DIR)
