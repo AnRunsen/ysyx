@@ -25,8 +25,4 @@ image: image-dep
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
-run: insert-arg
-	$(OBJCOPY) -I binary -O verilog $(IMAGE).bin $(IMAGE).hex
-	$(MAKE) -C $(NPC_HOME)/release sim HEX=$(IMAGE).hex
-
 .PHONY: insert-arg

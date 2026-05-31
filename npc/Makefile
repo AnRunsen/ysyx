@@ -3,8 +3,8 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 TOP = ysyxSoCFull
 BUILD_DIR = build
-ALL_V = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
-VSRCS := $(filter-out $(abspath ./vsrc/unused/%), $(ALL_V))
+OBJCOPY = riscv64-linux-gnu-objcopy
+VSRCS = $(shell find ./$(BUILD_DIR)/ysyx_26040125.v $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
@@ -42,12 +42,24 @@ $(LIBCAPSTONE):
 run: ./$(BUILD_DIR)/V$(TOP)
 	$^ $(IMG) $(ELF)
 
-verilog:
+sim-iverilog: ./iverilog-sim/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
+	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./$(BUILD_DIR)/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	./$(BUILD_DIR)/simv -fst
+
+sim-iverilog-netlist: $(IMG) $(NETLIST) $(CELLS)
+	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
+	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/RAM.v ./iverilog-sim/tb.v $(NETLIST) $(CELLS)
+	./$(BUILD_DIR)/simv -fst
+
+verilog: ./$(BUILD_DIR)/ysyx_26040125.v
+	sed -i "s/PC <= 32'h8000_0000/PC <= 32'h3000_0000/g" ./$(BUILD_DIR)/ysyx_26040125.v
+
+./$(BUILD_DIR)/ysyx_26040125.v: ./iverilog-sim/ysyx_26040125.v
 	mkdir -p $(BUILD_DIR)
-	cp ./release/vsrc/ysyx_26040125.v ./$(BUILD_DIR)/
+	cp ./iverilog-sim/ysyx_26040125.v ./$(BUILD_DIR)/ysyx_26040125.v
 
 clean:
 	rm -rf $(BUILD_DIR)
-
 
 
