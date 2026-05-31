@@ -4,7 +4,7 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 TOP = ysyxSoCFull
 BUILD_DIR = build
 OBJCOPY = riscv64-linux-gnu-objcopy
-VSRCS = $(shell find ./$(BUILD_DIR)/ysyx_26040125.v $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
+VSRCS = $(shell find $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v") ./$(BUILD_DIR)/ysyx_26040125.v
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
