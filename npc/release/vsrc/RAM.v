@@ -2,6 +2,8 @@
 // Supports INCR burst transfers, byte-enable writes, and $readmemh initialisation.
 // Port naming follows the AXI4 slave convention (s_axi_*).
 
+// `define MTRACE
+
 module RAM #(
     parameter MEM_FILE = "microbench-riscv32e-npc.hex"
 )(
@@ -112,6 +114,14 @@ module RAM #(
 
                 R_BURST: begin
                     if (s_axi_rvalid && s_axi_rready) begin
+`ifdef MTRACE
+                            $display("[mtrace] rd addr=0x%08x data=0x%08x",
+                                     r_addr,
+                                     { mem[{r_addr[ADDR_BITS-1:2], 2'b00} + 3],
+                                       mem[{r_addr[ADDR_BITS-1:2], 2'b00} + 2],
+                                       mem[{r_addr[ADDR_BITS-1:2], 2'b00} + 1],
+                                       mem[{r_addr[ADDR_BITS-1:2], 2'b00} + 0] });
+`endif
                         if (r_cnt == r_len) begin
                             r_state <= R_IDLE;
                         end else begin
@@ -175,8 +185,13 @@ module RAM #(
 
                 W_BURST: begin
                     if (s_axi_wvalid) begin
+`ifdef MTRACE
+                        $display("[mtrace] wr addr=0x%08x data=0x%08x strb=0x%x",
+                                 w_addr, s_axi_wdata, s_axi_wstrb);
+`endif
                         if(w_addr == 32'h1000_0000) begin
                             $write("%c", s_axi_wdata[7:0]);
+                            $fflush();
                         end
 
                         else begin

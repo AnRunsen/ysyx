@@ -27,6 +27,6 @@ image: image-dep
 
 run: insert-arg
 	$(OBJCOPY) -I binary -O verilog $(IMAGE).bin $(IMAGE).hex
-	$(MAKE) -C $(NPC_HOME) run HEX=$(IMAGE).hex
+	$(MAKE) -C $(NPC_HOME)/release sim HEX=$(IMAGE).hex
 
 .PHONY: insert-arg

@@ -22,8 +22,8 @@ module ALU(
     wire [31:0] srl_res;
     wire [31:0] sra_res;
 
-    assign {add_res} = A + B;
-    assign {sub_res} = A - B;
+    assign add_res = A + B;
+    assign sub_res = A - B;
     assign and_res = A & B;
     assign or_res = A | B;
     assign xor_res = A ^ B;
