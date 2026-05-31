@@ -1,17 +1,17 @@
-AM_SRCS := riscv/ysyxSoC/start.S \
-           riscv/ysyxSoC/fsbl.S \
-           riscv/ysyxSoC/ssbl.S \
-           riscv/ysyxSoC/trm.c \
-           riscv/ysyxSoC/ioe.c \
-           riscv/ysyxSoC/timer.c \
-           riscv/ysyxSoC/input.c \
-           riscv/ysyxSoC/cte.c \
-           riscv/ysyxSoC/trap.S \
+AM_SRCS := riscv/ysyxsoc/start.S \
+           riscv/ysyxsoc/fsbl.S \
+           riscv/ysyxsoc/ssbl.S \
+           riscv/ysyxsoc/trm.c \
+           riscv/ysyxsoc/ioe.c \
+           riscv/ysyxsoc/timer.c \
+           riscv/ysyxsoc/input.c \
+           riscv/ysyxsoc/cte.c \
+           riscv/ysyxsoc/trap.S \
            platform/dummy/vme.c \
            platform/dummy/mpe.c
 
 CFLAGS    += -fdata-sections -ffunction-sections
-LDSCRIPTS += $(AM_HOME)/scripts/ysyxSoC.ld
+LDSCRIPTS += $(AM_HOME)/scripts/ysyxsoc.ld
 LDFLAGS   += --gc-sections -e _fsbl
 
 MAINARGS_MAX_LEN = 64

@@ -3,8 +3,8 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 TOP = ysyxSoCFull
 BUILD_DIR = build
-ALL_V = $(shell find $(abspath ./vsrc) $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v")
-VSRCS := $(filter-out $(abspath ./vsrc/unused/%), $(ALL_V))
+OBJCOPY = riscv64-linux-gnu-objcopy
+VSRCS = $(shell find $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v") ./$(BUILD_DIR)/ysyx_26040125.v
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
@@ -30,14 +30,6 @@ VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP)\
 -I$(abspath ../ysyxSoC/perip/spi/rtl)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 
-PREBUILD_FLAGS = --cc --Mdir $(BUILD_DIR) --trace --top $(TOP)\
---timescale "1ns/1ns"\
---no-timing\
--I$(abspath ./vsrc)\
--I$(abspath ../ysyxSoC/perip/uart16550/rtl)\
--I$(abspath ../ysyxSoC/perip/spi/rtl)\
-$(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
-
 ./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H) $(BIND_FILE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
@@ -47,16 +39,27 @@ $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 $(LIBCAPSTONE):
 	$(MAKE) -C ./csrc/capstone
 
-prebuild: $(VSRCS)
-	verilator $(PREBUILD_FLAGS) $(VSRCS)
-
 run: ./$(BUILD_DIR)/V$(TOP)
 	$^ $(IMG) $(ELF)
 
-build: ./$(BUILD_DIR)/V$(TOP)
+sim-iverilog: ./iverilog-sim/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
+	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./$(BUILD_DIR)/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	./$(BUILD_DIR)/simv -fst
+
+sim-iverilog-netlist: $(IMG) $(NETLIST) $(CELLS)
+	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
+	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/RAM.v ./iverilog-sim/tb.v $(NETLIST) $(CELLS)
+	./$(BUILD_DIR)/simv -fst
+
+verilog: ./$(BUILD_DIR)/ysyx_26040125.v
+
+./$(BUILD_DIR)/ysyx_26040125.v: ./iverilog-sim/ysyx_26040125.v
+	mkdir -p $(BUILD_DIR)
+	cp ./iverilog-sim/ysyx_26040125.v ./$(BUILD_DIR)/ysyx_26040125.v
+	sed -i "s/PC <= 32'h8000_0000/PC <= 32'h3000_0000/g" ./$(BUILD_DIR)/ysyx_26040125.v
 
 clean:
 	rm -rf $(BUILD_DIR)
-
 
 

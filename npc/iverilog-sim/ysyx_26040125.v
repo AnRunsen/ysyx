@@ -2628,7 +2628,7 @@ module ysyx_26040125_CLINT(
     output        s_axi_arready,
 
     output [3:0] s_axi_rid,
-    output [31:0] s_axi_rdata,
+    output reg [31:0] s_axi_rdata,
     output [1:0]  s_axi_rresp,
     output        s_axi_rlast,
     output        s_axi_rvalid,
@@ -2714,12 +2714,26 @@ module ysyx_26040125_CLINT(
         end
     end
 
-    `ifdef VERILATOR
-        assign s_axi_rdata = mtime_read(r_addr);
-    `else
-        assign s_axi_rdata = r_addr == 32'h0200_0004 ? mtime[31:0] : 
-                            r_addr == 32'h0200_0008 ? mtime[63:32] : 32'b0;
-    `endif
+
+    always @(*) begin
+        case(r_addr)
+            32'h0200_0004: begin
+`ifdef VERILATOR
+                s_axi_rdata = mtime_read(r_addr);
+`else
+                s_axi_rdata = mtime[31:0];
+`endif
+            end 
+            32'h0200_0008: begin
+`ifdef VERILATOR                
+                s_axi_rdata = mtime_read(r_addr);
+`else
+                s_axi_rdata = mtime[63:32];
+`endif
+            end 
+            default: s_axi_rdata = 32'b0;
+        endcase
+    end
 
     assign s_axi_arready = (state == IDLE);
     assign s_axi_rvalid  = (state == RESP);
