@@ -4,7 +4,7 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 TOP = ysyxSoCFull
 BUILD_DIR = build
 OBJCOPY = riscv64-linux-gnu-objcopy
-VSRCS = $(shell find $(abspath ../ysyxSoC-clean/perip) $(abspath ../ysyxSoC-clean/build) -name "*.v") ./$(BUILD_DIR)/ysyx_26040125.v
+VSRCS = $(shell find $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -name "*.v") ./$(BUILD_DIR)/ysyx_26040125.v
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
@@ -26,8 +26,8 @@ VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP)\
 --timescale "1ns/1ns"\
 --no-timing\
 -I$(abspath ./vsrc)\
--I$(abspath ../ysyxSoC-clean/perip/uart16550/rtl)\
--I$(abspath ../ysyxSoC-clean/perip/spi/rtl)\
+-I$(abspath ../ysyxSoC/perip/uart16550/rtl)\
+-I$(abspath ../ysyxSoC/perip/spi/rtl)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 
 ./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H) $(BIND_FILE)
