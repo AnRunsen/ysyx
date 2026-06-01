@@ -11,6 +11,7 @@
 !README.md
 !.gitignore
 !init.sh
+/ysyxSoC
 /nvboard
 /fceux-am
 /am-kernels
