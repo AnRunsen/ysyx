@@ -7,7 +7,7 @@
 !/navy-apps/*
 !/npc/*
 !/ysyxSoC/**
-!/patch/*
+!/patch/**
 !Makefile
 !README.md
 !.gitignore
