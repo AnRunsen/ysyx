@@ -9,7 +9,7 @@ CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
-CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
+CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include/capstone)
 LDFLAGS = $(NEMU_HOME)/build/riscv32-nemu-interpreter-so -lreadline -lcapstone -L$(abspath ./csrc/capstone/repo)
 
 #=============NVBOARD=============
