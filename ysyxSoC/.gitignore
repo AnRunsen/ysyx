@@ -1,2 +1,5 @@
 build/
 out/
+patch/
+ready-to-run/
+spec/
