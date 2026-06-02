@@ -10,7 +10,7 @@ CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
 LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
 CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include/capstone)
-LDFLAGS = $(NEMU_HOME)/build/riscv32-nemu-interpreter-so -lreadline -lcapstone -L$(abspath ./csrc/capstone/repo)
+LDFLAGS = -lreadline -lcapstone -L$(abspath ./csrc/capstone/repo)
 
 #=============NVBOARD=============
 BIND_FILE = $(abspath ./board/auto_bind.cpp)
@@ -30,7 +30,7 @@ VERILATOR_FLAGS = --build --trace --cc --exe --Mdir $(BUILD_DIR) --top $(TOP)\
 -I$(abspath ../ysyxSoC/perip/spi/rtl)\
 $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 
-./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H) $(BIND_FILE)
+./$(BUILD_DIR)/V$(TOP): $(VSRCS) $(CSRCS) $(CONFIG_H) $(BIND_FILE) $(NVBOARD_ARCHIVE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
