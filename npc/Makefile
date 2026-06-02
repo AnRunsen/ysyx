@@ -45,13 +45,13 @@ run: ./$(BUILD_DIR)/V$(TOP)
 sim-iverilog: ./iverilog-sim/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
 	mkdir -p $(BUILD_DIR)
 	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
-	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	iverilog -g2012 -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
 	./$(BUILD_DIR)/simv -fst
 
 sim-iverilog-netlist: $(IMG) $(NETLIST) $(CELLS)
 	mkdir -p $(BUILD_DIR)
 	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
-	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/RAM.v ./iverilog-sim/tb.v $(NETLIST) $(CELLS)
+	iverilog -g2012 -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/RAM.v ./iverilog-sim/tb.v $(NETLIST) $(CELLS)
 	./$(BUILD_DIR)/simv -fst
 
 verilog: ./$(BUILD_DIR)/ysyx_26040125.v
