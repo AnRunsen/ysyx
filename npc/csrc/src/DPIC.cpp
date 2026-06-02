@@ -30,7 +30,6 @@ typedef struct {
 
 performance_cnt perf_cnt;
 
-void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
 uint32_t sdram_read_laddr(uint32_t addr){
     addr &= ~0x3u;
@@ -91,7 +90,7 @@ extern "C" void branch_num()
         branch_cnt++;
     }
 }
-
+void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 extern "C" void perf_cnt_update(uint8_t target) {
     if(!bootloader_stage)
     {
@@ -137,6 +136,8 @@ extern "C" void itrace(int inst, int pc)
     }
 
     *(p++) = ' ';
+
+    void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
     disassemble(p, sizeof(buf) - (p - buf), pc, instp, ilen);
 

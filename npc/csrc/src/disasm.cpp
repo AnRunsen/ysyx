@@ -12,6 +12,7 @@
 *
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
+#ifdef ITRACE
 
 #include <dlfcn.h>
 #include <capstone/capstone.h>
@@ -62,3 +63,5 @@ void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte) {
   }
   cs_free_dl(insn, count);
 }
+
+#endif
