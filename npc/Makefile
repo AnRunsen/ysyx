@@ -42,12 +42,14 @@ $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 run: ./$(BUILD_DIR)/V$(TOP)
 	$^ $(IMG) $(ELF)
 
-sim-iverilog: ./$(BUILD_DIR)/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+sim-iverilog: ./iverilog-sim/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	mkdir -p $(BUILD_DIR)
 	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
-	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./$(BUILD_DIR)/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
 	./$(BUILD_DIR)/simv -fst
 
 sim-iverilog-netlist: $(IMG) $(NETLIST) $(CELLS)
+	mkdir -p $(BUILD_DIR)
 	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
 	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./iverilog-sim/RAM.v ./iverilog-sim/tb.v $(NETLIST) $(CELLS)
 	./$(BUILD_DIR)/simv -fst
