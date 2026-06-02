@@ -1,7 +1,7 @@
 From e1602bbf54ab5229aec25b48b1532c6d5abe3c54 Mon Sep 17 00:00:00 2001
 From: 231180181-An Runsen <2634032821@qq.com>
 Date: Sun, 31 May 2026 18:10:07 +0800
-Subject: [PATCH] reconstruct ysyxSoC
+Subject: [PATCH 1/2] reconstruct ysyxSoC
 
 ---
  .gitignore                              |   3 +
