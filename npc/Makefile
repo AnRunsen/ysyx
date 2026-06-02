@@ -42,7 +42,7 @@ $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 run: ./$(BUILD_DIR)/V$(TOP)
 	$^ $(IMG) $(ELF)
 
-sim-iverilog: ./iverilog-sim/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
+sim-iverilog: ./$(BUILD_DIR)/ysyx_26040125.v $(IMG) ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
 	$(OBJCOPY) -I binary -O verilog $(IMG) $(IMG:.bin=.hex)
 	iverilog -DHEX_PATH=\"$(IMG:.bin=.hex)\" -o ./$(BUILD_DIR)/simv ./$(BUILD_DIR)/ysyx_26040125.v ./iverilog-sim/RAM.v ./iverilog-sim/tb.v
 	./$(BUILD_DIR)/simv -fst
