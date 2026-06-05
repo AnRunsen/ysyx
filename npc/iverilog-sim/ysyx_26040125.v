@@ -240,6 +240,8 @@ module ysyx_26040125_ARB(
 
     localparam R_POLLINGA = 2'b00, R_POLLINGB = 2'b01, R_WORKINGA = 2'b10, R_WORKINGB = 2'b11;
     reg [1:0] r_state, r_next_state;
+    localparam W_POLLINGA = 2'b00, W_POLLINGB = 2'b01, W_WORKINGA = 2'b10, W_WORKINGB = 2'b11;
+    reg [1:0] w_state, w_next_state;
 
     always @(*) begin
         case(r_state)
@@ -316,9 +318,6 @@ module ysyx_26040125_ARB(
     assign s_axi_rlast_B = m_axi_rlast;
     assign m_axi_rready = (r_state == R_WORKINGA) ? s_axi_rready_A : s_axi_rready_B;
 
-
-    localparam W_POLLINGA = 2'b00, W_POLLINGB = 2'b01, W_WORKINGA = 2'b10, W_WORKINGB = 2'b11;
-    reg [1:0] w_state, w_next_state;
 
     always @(*) begin
         case(w_state)
@@ -642,6 +641,35 @@ module ysyx_26040125_EXU(
     end
 `endif
 
+    reg [4:0] rd;
+    reg [31:0] srcR1;
+    reg [31:0] srcR2;
+    reg [31:0] imm;
+    reg [3:0] alu_op;
+    reg [1:0] ysyx_26040125_ALU_SEL0; //sel the ALU A port is srcR1(0) or PC(1)
+    reg [1:0] ysyx_26040125_ALU_SEL1; //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
+    reg wb_en;
+    reg mem_en;
+    reg mem_write_en;
+    reg [1:0] ysyx_26040125_OP_WIDTH;
+    reg [2:0] ysyx_26040125_WB_SEL; //imm; alu; mem; PC+4
+    reg [2:0] brju;
+    reg mem_signext;
+    reg [11:0] csr_addr;
+    reg [31:0] csr_data;
+    reg csr_wr_sel; //0: write srcR1; 1: write alu_res
+    reg csr_wen;
+    reg [31:0] PC_reg;
+    reg fencei;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
+    reg [1:0] meta_data_BTB;
+    reg hit_BTB;
+    reg valid_reg;
+    wire [31:0] alu_src1;
+    wire [31:0] alu_src2;
+
+
     /*logic to flush*/
     always @(*) begin
         if(m_valid && m_ready) begin
@@ -730,38 +758,7 @@ module ysyx_26040125_EXU(
     assign forward_ready_exu = m_valid && (ysyx_26040125_WB_SEL != `ysyx_26040125_WB_SEL_MEM); //load instruction need to wait for MEM stage
     assign csr_forward_ready_exu = m_valid;
 
-    reg [4:0] rd;
-    reg [31:0] srcR1;
-    reg [31:0] srcR2;
-    reg [31:0] imm;
-
-    reg [3:0] alu_op;
-    reg [1:0] ysyx_26040125_ALU_SEL0; //sel the ALU A port is srcR1(0) or PC(1)
-    reg [1:0] ysyx_26040125_ALU_SEL1; //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
-
-    reg wb_en;
-    reg mem_en;
-    reg mem_write_en;
-
-    reg [1:0] ysyx_26040125_OP_WIDTH;
-    reg [2:0] ysyx_26040125_WB_SEL; //imm; alu; mem; PC+4
-
-    reg [2:0] brju;
-    reg mem_signext;
-
-    reg [11:0] csr_addr;
-    reg [31:0] csr_data;
-    reg csr_wr_sel; //0: write srcR1; 1: write alu_res
-    reg csr_wen;
-
-    reg [31:0] PC_reg;
-    reg fencei;
-    reg has_exception_reg;
-    reg [3:0] exception_code_reg;
-
-    reg [1:0] meta_data_BTB;
-    reg hit_BTB;
-
+    
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
     always @(posedge clk) begin
@@ -820,7 +817,7 @@ module ysyx_26040125_EXU(
     assign m_exception_code = exception_code_reg;
     assign m_has_exception = has_exception_reg;
 
-    reg valid_reg;
+    
     assign m_valid = valid_reg;
 
     always @(posedge clk or posedge reset) begin
@@ -839,8 +836,6 @@ module ysyx_26040125_EXU(
 
     end
 
-    wire [31:0] alu_src1;
-    wire [31:0] alu_src2;
 
     assign alu_src1 = (ysyx_26040125_ALU_SEL0 == `ysyx_26040125_ALU_SEL_RS1) ? srcR1 :
                       (ysyx_26040125_ALU_SEL0 == `ysyx_26040125_ALU_SEL_PC) ? PC_reg : 32'b0;
@@ -963,6 +958,30 @@ module ysyx_26040125_ICACHE#(
     localparam TAG_SIZE = 32 - $clog2(LINE_NUM) - $clog2(LINE_SIZE);
     localparam WORDS_PER_LINE = LINE_SIZE / 4;
     localparam WORDS_SEL_SIZE = $clog2(WORDS_PER_LINE);
+    reg [LINE_SIZE*8-1:0] cache [LINE_NUM-1:0];
+    reg [TAG_SIZE-1:0] tags [LINE_NUM-1:0];
+    reg [LINE_NUM-1:0] valid;
+
+    wire [$clog2(LINE_NUM)-1:0] index = s_raddr[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
+    wire [TAG_SIZE-1:0] tag = s_raddr[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
+    wire hit = valid[index] && tags[index] == tag;
+    wire misaligned = s_raddr[1:0] != 2'b00;
+
+    reg valid_reg;
+
+    localparam HIT = 2'd0, REQ = 2'd1, WAIT = 2'd2, EXCEPTION = 2'd3;
+    reg [1:0] state, next_state;
+
+    reg [31:0] addr_reg;
+    reg [1:0] meta_data_BTB_reg;
+    reg hit_BTB_reg;
+    wire [$clog2(LINE_NUM)-1:0] index_reg = addr_reg[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
+    wire [TAG_SIZE-1:0] tag_reg = addr_reg[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
+    wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
+
+    reg [3:0] recv_counter;
+
+
     /*unused axi signal(write channel)*/
     assign m_axi_awaddr = 32'b0;
     assign m_axi_awvalid = 1'b0;
@@ -975,18 +994,6 @@ module ysyx_26040125_ICACHE#(
     assign m_axi_wvalid = 1'b0;
     assign m_axi_wlast = 1'b0;
     assign m_axi_bready = 1'b0;
-
-    reg [LINE_SIZE*8-1:0] cache [LINE_NUM-1:0];
-    reg [TAG_SIZE-1:0] tags [LINE_NUM-1:0];
-    reg [LINE_NUM-1:0] valid;
-
-    wire [$clog2(LINE_NUM)-1:0] index = s_raddr[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
-    wire [TAG_SIZE-1:0] tag = s_raddr[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
-    wire hit = valid[index] && tags[index] == tag;
-    wire misaligned = s_raddr[1:0] != 2'b00;
-
-    localparam HIT = 2'd0, REQ = 2'd1, WAIT = 2'd2, EXCEPTION = 2'd3;
-    reg [1:0] state, next_state;
 
     always @(*) begin
         case(state)
@@ -1081,8 +1088,6 @@ module ysyx_26040125_ICACHE#(
 
 
     /*logic to latch data*/
-    reg valid_reg;
-
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             valid_reg <= 1'b0;
@@ -1101,12 +1106,6 @@ module ysyx_26040125_ICACHE#(
         end
     end
 
-    reg [31:0] addr_reg;
-    reg [1:0] meta_data_BTB_reg;
-    reg hit_BTB_reg;
-    wire [$clog2(LINE_NUM)-1:0] index_reg = addr_reg[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
-    wire [TAG_SIZE-1:0] tag_reg = addr_reg[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
-    wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             addr_reg <= 32'b0;
@@ -1122,8 +1121,6 @@ module ysyx_26040125_ICACHE#(
 
 
     /*logic to update cache*/
-    reg [3:0] recv_counter;
-
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             valid <= {LINE_NUM{1'b0}};
@@ -1275,6 +1272,27 @@ module ysyx_26040125_IDU(
 
     wire stall;
     reg need_rs2;
+    reg [31:0] inst_reg;
+    reg [31:0] pc_reg;
+    reg [1:0] meta_data_BTB_reg;
+    reg hit_BTB_reg;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
+    reg valid_reg;
+
+    wire [6:0] opcode;
+    wire [2:0] funct3;
+    wire [6:0] funct7;
+
+    /*all of the m_imm are sign-extended to 32 bits*/
+    wire [31:0] immI;
+    wire [31:0] immS;
+    wire [31:0] immB;
+    wire [31:0] immU;
+    wire [31:0] immJ;
+
+    reg has_exception;
+    reg [3:0] exception_code;
 
     ysyx_26040125_RAW u_RAW(
         .rs1                   	( rs1                    ),
@@ -1302,15 +1320,7 @@ module ysyx_26040125_IDU(
         .stall                 	( stall                  )
     );
 
-
-
-    /*logic to recv data*/
-    reg [31:0] inst_reg;
-    reg [31:0] pc_reg;
-    reg [1:0] meta_data_BTB_reg;
-    reg hit_BTB_reg;
-    reg has_exception_reg;
-    reg [3:0] exception_code_reg;
+    /*logic to recv data*/ 
     assign s_ready = (!m_valid || (m_valid & m_ready)) && !stall;
     always @(posedge clk) begin
         if(s_ready & s_valid) begin
@@ -1324,7 +1334,6 @@ module ysyx_26040125_IDU(
     end
 
     /*logic to send data*/
-    reg valid_reg;
     assign m_valid = valid_reg && !stall;
     always @(posedge clk or posedge reset) begin
         if(reset) begin
@@ -1357,16 +1366,7 @@ module ysyx_26040125_IDU(
         end
     end
 
-    wire [6:0] opcode;
-    wire [2:0] funct3;
-    wire [6:0] funct7;
-
-    /*all of the m_imm are sign-extended to 32 bits*/
-    wire [31:0] immI;
-    wire [31:0] immS;
-    wire [31:0] immB;
-    wire [31:0] immU;
-    wire [31:0] immJ;
+    
 
     assign csr_addr = m_csr_addr;
 
@@ -1436,8 +1436,7 @@ module ysyx_26040125_IDU(
     assign immJ = { {11{inst_reg[31]}}, inst_reg[31], inst_reg[19:12], inst_reg[20], inst_reg[30:21], 1'b0 };
 
 
-    reg has_exception;
-    reg [3:0] exception_code;
+    
 
     always @(*) begin
         // --- safe defaults (all zeros, which map to ysyx_26040125_PC_NORMAL / ysyx_26040125_ALU_SEL_RS1 / ysyx_26040125_ALU_SEL_RS2) ---
@@ -1920,7 +1919,37 @@ module ysyx_26040125_LSU(
     end
 `endif
 
+    localparam EXCEPTION = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
+                READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 
+                WRITE_REQ = 3'b111;
+
     reg [3:0] exception_code;
+    reg valid_reg;
+    reg [2:0] state, next_state;
+    reg [4:0] rd;
+    reg wb_en;
+    reg [1:0] ysyx_26040125_OP_WIDTH;
+    reg [2:0] ysyx_26040125_WB_SEL;
+    reg mem_signext;
+    reg [11:0] csr_addr;
+    reg [31:0] csr_data;
+    reg csr_wr_sel;
+    reg csr_wen;
+    reg [31:0] srcR1;
+    reg [31:0] srcR2;
+    reg [31:0] result;
+    reg [31:0] PC;
+    reg [31:0] imm;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
+    reg [31:0] rdata_reg;
+    reg [7:0] data8;
+    reg [15:0] data16;
+    wire [31:0] rdata_ext8;
+    wire [31:0] rdata_ext16;
+    wire [31:0] rdata_ext;
+    wire [31:0] wdata_;
+
     /*handle the exception*/
     always @(posedge clk) begin
         if(s_mem_en && 
@@ -1939,7 +1968,6 @@ module ysyx_26040125_LSU(
         end
     end
 
-    reg valid_reg;
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             valid_reg <= 1'b0;
@@ -1982,12 +2010,6 @@ module ysyx_26040125_LSU(
 
     assign forward_ready_lsu = m_valid;
     assign csr_forward_ready_lsu = m_valid;
-
-
-    localparam EXCEPTION = 3'b000, PASS = 3'b001, READ_WAIT = 3'b010, WRITE_WAIT = 3'b011,
-                READ_REQ = 3'b100, WRITE_ADDR_REQ = 3'b101, WRITE_DATA_REQ = 3'b110, 
-                WRITE_REQ = 3'b111;
-    reg [2:0] state, next_state;
 
     always @(*) begin
         case(state)
@@ -2138,22 +2160,6 @@ module ysyx_26040125_LSU(
         end
     end
 
-    reg [4:0] rd;
-    reg wb_en;
-    reg [1:0] ysyx_26040125_OP_WIDTH;
-    reg [2:0] ysyx_26040125_WB_SEL;
-    reg mem_signext;
-    reg [11:0] csr_addr;
-    reg [31:0] csr_data;
-    reg csr_wr_sel;
-    reg csr_wen;
-    reg [31:0] srcR1;
-    reg [31:0] srcR2;
-    reg [31:0] result;
-    reg [31:0] PC;
-    reg [31:0] imm;
-    reg has_exception_reg;
-    reg [3:0] exception_code_reg;
     
     /*logic to recv data*/
     assign s_ready = !valid_reg || (m_ready && m_valid);
@@ -2219,7 +2225,7 @@ module ysyx_26040125_LSU(
     assign m_axi_awburst = 2'b01; //INCR
 
     /*logic to send write data*/
-    wire [31:0] wdata_ = srcR2 << (result[1:0]*8);
+    assign wdata_ = srcR2 << (result[1:0]*8);
     assign m_axi_wdata = wdata_;
     assign m_axi_wstrb = (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
                          (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
@@ -2228,16 +2234,12 @@ module ysyx_26040125_LSU(
 
     /*logic to recv read data*/
     assign m_axi_rready = (state == READ_WAIT);
-    reg [31:0] rdata_reg;
     always @(posedge clk) begin
         if(m_axi_rvalid && m_axi_rready) begin
             rdata_reg <= m_axi_rdata;
         end
     end
 
-
-    reg [7:0] data8;
-    reg [15:0] data16;
 
     always @(*) begin
         case(result[1:0])
@@ -2255,8 +2257,6 @@ module ysyx_26040125_LSU(
         endcase
     end
 
-    wire [31:0] rdata_ext8;
-    wire [31:0] rdata_ext16;
 
 
     ysyx_26040125_ext8 u_ext8(
@@ -2270,7 +2270,7 @@ module ysyx_26040125_LSU(
         .sign   	( mem_signext    ),
         .data_o 	( rdata_ext16  )
     );
-    wire [31:0] rdata_ext;
+    
     assign rdata_ext = (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_BYTE) ? rdata_ext8 :
                        (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_HALF) ? rdata_ext16 :
                        (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_WORD) ? rdata_reg :
@@ -2512,6 +2512,21 @@ module ysyx_26040125_WBU(
 // `endif
 
     reg valid_reg;
+    reg [4:0] rd;
+    reg wb_en;
+    reg [2:0] ysyx_26040125_WB_SEL;
+    reg [11:0] csr_addr;
+    reg [31:0] csr_data;
+    reg csr_wr_sel;
+    reg csr_wen;
+    reg [31:0] srcR1;
+    reg [31:0] result;
+    reg [31:0] rdata;
+    reg [31:0] PC;
+    reg [31:0] imm;
+    reg has_exception_reg;
+    reg [3:0] exception_code_reg;
+
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             valid_reg <= 1'b0;
@@ -2548,20 +2563,6 @@ module ysyx_26040125_WBU(
     assign csr_forward_ready_wbu = valid_reg;
 
     /*logic to recv data*/
-    reg [4:0] rd;
-    reg wb_en;
-    reg [2:0] ysyx_26040125_WB_SEL;
-    reg [11:0] csr_addr;
-    reg [31:0] csr_data;
-    reg csr_wr_sel;
-    reg csr_wen;
-    reg [31:0] srcR1;
-    reg [31:0] result;
-    reg [31:0] rdata;
-    reg [31:0] PC;
-    reg [31:0] imm;
-    reg has_exception_reg;
-    reg [3:0] exception_code_reg;
     assign s_ready = 1'b1;
     always @(posedge clk) begin
         if(s_valid && s_ready) begin
@@ -2655,7 +2656,12 @@ module ysyx_26040125_CLINT(
     /* verilator lint_on UNUSED */
 );
 
+
+    localparam IDLE = 2'd0, RESP = 2'd1;
+    reg [1:0] state, next_state;
     reg [63:0] mtime;
+    reg [31:0] r_addr;
+
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             mtime <= 64'b0;
@@ -2670,9 +2676,6 @@ module ysyx_26040125_CLINT(
     assign s_axi_wready  = 1'b0;
     assign s_axi_bresp   = 2'b00;
     assign s_axi_bvalid  = 1'b0;
-
-    localparam IDLE = 2'd0, RESP = 2'd1;
-    reg [1:0] state, next_state;
 
     always @(*) begin
         case(state)
@@ -2707,13 +2710,11 @@ module ysyx_26040125_CLINT(
         end
     end
 
-    reg [31:0] r_addr;
     always @(posedge clk) begin
         if (s_axi_arvalid && s_axi_arready) begin
             r_addr <= s_axi_araddr;
         end
     end
-
 
     always @(*) begin
         case(r_addr)
@@ -2865,6 +2866,31 @@ module ysyx_26040125_XBAR(
     localparam READ_IDLE = 2'b00, READ_REQ = 2'b01, READ_WAIT = 2'b10;
     reg [1:0] r_state, r_next_state;
     reg r_sel;
+    reg [3:0] r_id;
+    reg [31:0] raddr;
+    reg [7:0]  rlen;
+    reg [2:0]  rsize;
+    reg [1:0]  rburst;
+
+    /*Write Channel*/
+    localparam WRITE_IDLE      = 3'b000,
+               WRITE_WAIT_ADDR = 3'b001,
+               WRITE_WAIT_DATA = 3'b010,
+               WRITE_REQ       = 3'b011,
+               WRITE_REQ_ADDR  = 3'b100,
+               WRITE_REQ_DATA  = 3'b101,
+               WRITE_RESP      = 3'b110;
+    reg [2:0] w_state, w_next_state;
+    reg w_sel;
+    reg [3:0] w_id;
+    reg [31:0] waddr;
+    reg [7:0]  wlen;
+    reg [2:0]  wsize;
+    reg [1:0]  wburst;
+    reg [31:0] wdata;
+    reg [3:0]  wstrb;
+    reg        wlast;
+
 
     always @(*) begin
         case (r_state)
@@ -2881,12 +2907,6 @@ module ysyx_26040125_XBAR(
     end
 
     assign s_axi_arready = (r_state == READ_IDLE);
-
-    reg [3:0] r_id;
-    reg [31:0] raddr;
-    reg [7:0]  rlen;
-    reg [2:0]  rsize;
-    reg [1:0]  rburst;
 
     always @(posedge clk) begin
         if (s_axi_arvalid && s_axi_arready) begin
@@ -2921,17 +2941,6 @@ module ysyx_26040125_XBAR(
     assign s_axi_rresp  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rresp_A  : m_axi_rresp_B)  : 2'b0;
     assign s_axi_rlast  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rlast_A  : m_axi_rlast_B)  : 1'b0;
     assign s_axi_rvalid = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rvalid_A : m_axi_rvalid_B) : 1'b0;
-
-    /*Write Channel*/
-    localparam WRITE_IDLE      = 3'b000,
-               WRITE_WAIT_ADDR = 3'b001,
-               WRITE_WAIT_DATA = 3'b010,
-               WRITE_REQ       = 3'b011,
-               WRITE_REQ_ADDR  = 3'b100,
-               WRITE_REQ_DATA  = 3'b101,
-               WRITE_RESP      = 3'b110;
-    reg [2:0] w_state, w_next_state;
-    reg w_sel;
 
     always @(*) begin
         case (w_state)
@@ -2984,14 +2993,6 @@ module ysyx_26040125_XBAR(
     assign s_axi_awready = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_ADDR);
     assign s_axi_wready  = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_DATA);
 
-    reg [3:0] w_id;
-    reg [31:0] waddr;
-    reg [7:0]  wlen;
-    reg [2:0]  wsize;
-    reg [1:0]  wburst;
-    reg [31:0] wdata;
-    reg [3:0]  wstrb;
-    reg        wlast;
 
     always @(posedge clk) begin
         if (s_axi_awvalid && s_axi_awready) begin
