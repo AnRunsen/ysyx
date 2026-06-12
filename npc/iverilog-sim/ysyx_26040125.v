@@ -60,66 +60,36 @@ module ysyx_26040125_ALU(
         output reg [31:0] Result
     );
 
-    wire [31:0] add_res;
-    wire [31:0] sub_res;
-    wire [31:0] and_res;
-    wire [31:0] or_res;
-    wire [31:0] xor_res;
-    wire lt_res;
-    wire ge_res;
-    wire ltu_res;
-    wire geu_res;
-    wire eq_res;
-    wire ne_res;
-    wire [31:0] sll_res;
-    wire [31:0] srl_res;
-    wire [31:0] sra_res;
-
-    assign add_res = A + B;
-    assign sub_res = A - B;
-    assign and_res = A & B;
-    assign or_res = A | B;
-    assign xor_res = A ^ B;
-    assign lt_res = (A < B) ? 1'b1 : 1'b0;
-    assign ge_res = (A >= B) ? 1'b1 : 1'b0;
-    assign eq_res = (A == B) ? 1'b1 : 1'b0;
-    assign ne_res = (A != B) ? 1'b1 : 1'b0;
-    assign sll_res = A << B[4:0];
-    assign srl_res = A >> B[4:0];
-    assign sra_res = A >>> B[4:0];
-    assign ltu_res = ($unsigned(A) < $unsigned(B)) ? 1'b1 : 1'b0;
-    assign geu_res = ($unsigned(A) >= $unsigned(B)) ? 1'b1 : 1'b0;
-
     always @(*) begin
         case (Opcode)
             `ysyx_26040125_ALU_OP_ADD:
-                Result = add_res;
+                Result = A + B;
             `ysyx_26040125_ALU_OP_SUB:
-                Result = sub_res;
+                Result = A - B;
             `ysyx_26040125_ALU_OP_AND:
-                Result = and_res;
+                Result = A & B;
             `ysyx_26040125_ALU_OP_OR:
-                Result = or_res;
+                Result = A | B;
             `ysyx_26040125_ALU_OP_XOR:
-                Result = xor_res;
+                Result = A ^ B;
             `ysyx_26040125_ALU_OP_LT:
-                Result = {31'b0, lt_res};
+                Result = {31'b0, (A < B)};
             `ysyx_26040125_ALU_OP_LTU:
-                Result = {31'b0, ltu_res};
+                Result = {31'b0, ($unsigned(A) < $unsigned(B))};
             `ysyx_26040125_ALU_OP_GE:
-                Result = {31'b0, ge_res};
+                Result = {31'b0, (A >= B)};
             `ysyx_26040125_ALU_OP_GEU:
-                Result = {31'b0, geu_res};
+                Result = {31'b0, ($unsigned(A) >= $unsigned(B))};
             `ysyx_26040125_ALU_OP_EQ:
-                Result = {31'b0, eq_res};
+                Result = {31'b0, (A == B)};
             `ysyx_26040125_ALU_OP_SLL:
-                Result = sll_res;
+                Result = A << B[4:0];
             `ysyx_26040125_ALU_OP_SRL:
-                Result = srl_res;
+                Result = A >> B[4:0];
             `ysyx_26040125_ALU_OP_SRA:
-                Result = sra_res;
+                Result = A >>> B[4:0];
             `ysyx_26040125_ALU_OP_NE:
-                Result = {31'b0, ne_res};
+                Result = {31'b0, (A != B)};
             default:
                 Result = 32'h0000_0000;
         endcase
@@ -394,65 +364,6 @@ module ysyx_26040125_ARB(
     assign m_axi_bready = (w_state == W_WORKINGA) ? s_axi_bready_A : s_axi_bready_B;
 endmodule
     
-module ysyx_26040125_BTB
-#(
-    parameter ENTRY_NUM = 4
-)(
-    input clk,
-    input reset,
-
-    input [31:0] PC_r,
-
-    input [31:0] PC_w,
-    input [31:0] target,
-    input [1:0] meta_data, //bit1 for branch/jump, bit0 for taken/not taken
-    input write_en,
-
-    output reg [31:0] target_BTB,
-    output reg [1:0] meta_data_BTB,
-    output reg hit_BTB
-);
-
-    reg [31:0] PC_reg [ENTRY_NUM-1:0];
-    reg [31:0] target_reg [ENTRY_NUM-1:0];
-    reg [1:0] meta_data_reg [ENTRY_NUM-1:0];
-    reg [ENTRY_NUM-1:0] valid;
-    reg [$clog2(ENTRY_NUM)-1:0] wptr;
-
-
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            valid <= {ENTRY_NUM{1'b0}};
-            wptr <= 0;
-        end
-        else if(write_en) begin
-            valid[wptr] <= 1'b1;
-            wptr <= wptr + 1;
-        end
-    end
-
-    always @(posedge clk) begin
-        if(write_en) begin
-            PC_reg[wptr] <= PC_w;
-            target_reg[wptr] <= target;
-            meta_data_reg[wptr] <= meta_data;
-        end
-    end
-
-    integer i;
-    always @(*) begin
-        hit_BTB = 1'b0;
-        target_BTB = 32'b0;
-        meta_data_BTB = 2'b0;
-        for(i = 0; i < ENTRY_NUM; i = i + 1) begin
-            if(valid[i] && PC_reg[i] == PC_r) begin
-                hit_BTB = 1'b1;
-                target_BTB = target_reg[i];
-                meta_data_BTB = meta_data_reg[i];
-            end
-        end
-    end
-endmodule
 
 module ysyx_26040125_CSR(
     input clk,
@@ -562,9 +473,6 @@ module ysyx_26040125_EXU(
     input s_has_exception,
     input [3:0] s_exception_code,
 
-    input [1:0] s_meta_data_BTB,
-    input s_hit_BTB,
-
     input s_valid,
     output s_ready,
     /*recv data end*/
@@ -612,13 +520,7 @@ module ysyx_26040125_EXU(
 
     output reg flush,
     output cache_flush,
-    input exception_flush,
-
-    /*To the update of the BTB*/
-    output [31:0] PC_w,
-    output reg [31:0] target,
-    output reg [1:0] meta_data,
-    output reg write_en
+    input exception_flush
 );
 `ifdef VERILATOR
     always @(posedge clk) begin
@@ -644,8 +546,8 @@ module ysyx_26040125_EXU(
     reg wb_en;
     reg mem_en;
     reg mem_write_en;
-    reg [1:0] ysyx_26040125_OP_WIDTH;
-    reg [2:0] ysyx_26040125_WB_SEL; //imm; alu; mem; PC+4
+    reg [1:0] op_width;
+    reg [2:0] wb_sel; //imm; alu; mem; PC+4
     reg [2:0] brju;
     reg mem_signext;
     reg [11:0] csr_addr;
@@ -656,8 +558,6 @@ module ysyx_26040125_EXU(
     reg fencei;
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
-    reg [1:0] meta_data_BTB;
-    reg hit_BTB;
     reg valid_reg;
     wire [31:0] alu_src1;
     wire [31:0] alu_src2;
@@ -666,55 +566,10 @@ module ysyx_26040125_EXU(
     /*logic to flush*/
     always @(*) begin
         if(m_valid && m_ready) begin
-            if(hit_BTB) begin
-                // if is jal, not flush
-                if(meta_data_BTB[1]) begin
-                    flush = 1'b0;
-                end
-                // if is branch
-                else begin
-                    // if predicted taken, but actually not taken, then flush
-                    if(meta_data_BTB[0]) begin
-                        flush = (m_result == 32'b0);
-                    end
-
-                    // if predicted not taken, but actually taken, then flush
-                    else begin
-                        flush = (m_result == 32'b1);
-                    end
-                end
-            end
-
-            else begin
-                flush = fencei || (brju == `ysyx_26040125_PC_BRANCH && m_result == 32'b1) || (brju == `ysyx_26040125_PC_FAR) || (brju == `ysyx_26040125_PC_NEAR) || (brju == `ysyx_26040125_PC_MRET);
-            end
+            flush = fencei || (brju == `ysyx_26040125_PC_BRANCH && m_result == 32'b1) || (brju == `ysyx_26040125_PC_FAR) || (brju == `ysyx_26040125_PC_NEAR) || (brju == `ysyx_26040125_PC_MRET);
         end
-
         else begin
             flush = 1'b0;
-        end
-    end
-
-    /*logic to update BTB*/
-    assign PC_w = PC_reg;
-    always @(*) begin
-        write_en = 1'b0;
-        target = 32'b0;
-        meta_data = 2'b0;
-        if(m_valid && m_ready && !hit_BTB && (brju == `ysyx_26040125_PC_BRANCH || brju == `ysyx_26040125_PC_NEAR)) begin
-            write_en = 1'b1;
-            if(brju == `ysyx_26040125_PC_BRANCH) begin
-                /*Use the BTFN(Backward Taken, Forward Not-taken)*/
-                target = imm[31] ? PC_reg + imm : PC_reg + 32'd4;
-                meta_data[1] = 1'b0;
-                meta_data[0] = imm[31] ? 1'b1 : 1'b0;
-            end
-
-            else begin
-                target = PC_reg + imm;
-                meta_data[1] = 1'b1;
-                meta_data[0] = 1'b1; // near jump is always taken
-            end
         end
     end
 
@@ -732,7 +587,7 @@ module ysyx_26040125_EXU(
     assign csr_valid_exu = valid_reg && csr_wen;
 
     always @(*) begin
-        case(ysyx_26040125_WB_SEL)
+        case(wb_sel)
             `ysyx_26040125_WB_SEL_IMM: forward_data_exu = imm;
             `ysyx_26040125_WB_SEL_ALU: forward_data_exu = m_result;
             `ysyx_26040125_WB_SEL_PC4: forward_data_exu = PC_reg + 4;
@@ -748,7 +603,7 @@ module ysyx_26040125_EXU(
             default: csr_forward_data_exu = 32'b0;
         endcase
     end
-    assign forward_ready_exu = m_valid && (ysyx_26040125_WB_SEL != `ysyx_26040125_WB_SEL_MEM); //load instruction need to wait for MEM stage
+    assign forward_ready_exu = m_valid && (wb_sel != `ysyx_26040125_WB_SEL_MEM); //load instruction need to wait for MEM stage
     assign csr_forward_ready_exu = m_valid;
 
     
@@ -769,8 +624,8 @@ module ysyx_26040125_EXU(
             mem_en <= s_mem_en;
             mem_write_en <= s_mem_write_en;
 
-            ysyx_26040125_OP_WIDTH <= s_op_width;
-            ysyx_26040125_WB_SEL <= s_wb_sel;
+            op_width <= s_op_width;
+            wb_sel <= s_wb_sel;
 
             brju <= s_brju;
             mem_signext <= s_mem_signext;
@@ -784,9 +639,6 @@ module ysyx_26040125_EXU(
             fencei <= s_fencei;
             has_exception_reg <= s_has_exception;
             exception_code_reg <= s_exception_code;
-
-            meta_data_BTB <= s_meta_data_BTB;
-            hit_BTB <= s_hit_BTB;
         end
     end
 
@@ -796,8 +648,8 @@ module ysyx_26040125_EXU(
     assign m_wb_en = wb_en;
     assign m_mem_en = mem_en;
     assign m_mem_write_en = mem_write_en;
-    assign m_op_width = ysyx_26040125_OP_WIDTH;
-    assign m_wb_sel = ysyx_26040125_WB_SEL;
+    assign m_op_width = op_width;
+    assign m_wb_sel = wb_sel;
     assign m_mem_signext = mem_signext;
     assign m_csr_addr = csr_addr;
     assign m_csr_data = csr_data;
@@ -882,15 +734,11 @@ module ysyx_26040125_ICACHE#(
 
     /*axi stream bus*/
     input  [31:0] s_raddr,
-    input  [1:0]  s_meta_data_BTB,
-    input         s_hit_BTB,
     input         s_valid,
     output        s_ready,
 
     output [31:0] m_data,
     output [31:0] m_pc,
-    output [1:0]  m_meta_data_BTB,
-    output        m_hit_BTB,
     output        m_has_exception,
     output reg [3:0] m_exception_code,
     output        m_valid,
@@ -966,8 +814,6 @@ module ysyx_26040125_ICACHE#(
     reg [1:0] state, next_state;
 
     reg [31:0] addr_reg;
-    reg [1:0] meta_data_BTB_reg;
-    reg hit_BTB_reg;
     wire [$clog2(LINE_NUM)-1:0] index_reg = addr_reg[$clog2(LINE_SIZE)+$clog2(LINE_NUM)-1:$clog2(LINE_SIZE)];
     wire [TAG_SIZE-1:0] tag_reg = addr_reg[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
     wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
@@ -1102,13 +948,9 @@ module ysyx_26040125_ICACHE#(
     always @(posedge clk or posedge reset) begin
         if(reset) begin
             addr_reg <= 32'b0;
-            meta_data_BTB_reg <= 2'b0;
-            hit_BTB_reg <= 1'b0;
         end
         else if(s_valid && s_ready) begin
             addr_reg <= s_raddr;
-            meta_data_BTB_reg <= s_meta_data_BTB;
-            hit_BTB_reg <= s_hit_BTB;
         end
     end
 
@@ -1153,8 +995,6 @@ module ysyx_26040125_ICACHE#(
     assign m_has_exception = state == EXCEPTION;
     assign m_valid = (state == HIT || state == EXCEPTION) && valid_reg;
     assign m_pc = addr_reg;
-    assign m_meta_data_BTB = meta_data_BTB_reg;
-    assign m_hit_BTB = hit_BTB_reg;
 
     assign m_axi_araddr = {addr_reg[31:$clog2(LINE_SIZE)], {$clog2(LINE_SIZE){1'b0}}};
     assign m_axi_arvalid = (state == REQ) && !flush && !exception_flush;
@@ -1175,15 +1015,11 @@ module ysyx_26040125_IDU(
     /* explict ports*/
     input [31:0] s_Inst,
     input [31:0] s_PC,
-    input [1:0] s_meta_data_BTB,
-    input s_hit_BTB,
     input s_has_exception,
     input [3:0] s_exception_code,
     input s_valid,
     output s_ready,
 
-    output [1:0] m_meta_data_BTB,
-    output m_hit_BTB,
     output [4:0] m_rd,
     output reg [31:0] m_srcR1,
     output reg [31:0] m_srcR2,
@@ -1267,8 +1103,6 @@ module ysyx_26040125_IDU(
     reg need_rs2;
     reg [31:0] inst_reg;
     reg [31:0] pc_reg;
-    reg [1:0] meta_data_BTB_reg;
-    reg hit_BTB_reg;
     reg has_exception_reg;
     reg [3:0] exception_code_reg;
     reg valid_reg;
@@ -1319,8 +1153,6 @@ module ysyx_26040125_IDU(
         if(s_ready & s_valid) begin
             inst_reg <= s_Inst;
             pc_reg <= s_PC;
-            meta_data_BTB_reg <= s_meta_data_BTB;
-            hit_BTB_reg <= s_hit_BTB;
             has_exception_reg <= s_has_exception;
             exception_code_reg <= s_exception_code;
         end
@@ -1417,9 +1249,6 @@ module ysyx_26040125_IDU(
     assign opcode = inst_reg[6:0];
     assign funct3 = inst_reg[14:12];
     assign funct7 = inst_reg[31:25];
-
-    assign m_meta_data_BTB = meta_data_BTB_reg;
-    assign m_hit_BTB = hit_BTB_reg;
 
 
     assign immI = { {20{inst_reg[31]}}, inst_reg[31:20] };
@@ -1662,16 +1491,12 @@ module ysyx_26040125_IFU(
 
     output [31:0] m_Inst,
     output [31:0] m_PC,
-    output [1:0] m_meta_data_BTB,
-    output m_hit_BTB,
     output m_has_exception,
     output [3:0] m_exception_code,
     output m_valid,
     input m_ready,
 
     input [31:0] PC,
-    input [1:0] meta_data_BTB,
-    input hit_BTB,
 
     input flush,
     input cache_flush,
@@ -1752,14 +1577,10 @@ module ysyx_26040125_IFU(
         .exception_flush    ( exception_flush ),
 
         .s_raddr            ( PC    ),
-        .s_meta_data_BTB    ( meta_data_BTB    ),
-        .s_hit_BTB          ( hit_BTB         ),
         .s_valid            ( s_valid   ),
         .s_ready            ( s_ready   ),
         .m_data             ( m_Inst     ),
         .m_pc               ( m_PC  ),
-        .m_meta_data_BTB    ( m_meta_data_BTB ),
-        .m_hit_BTB          ( m_hit_BTB         ),
         .m_has_exception    ( m_has_exception ),
         .m_exception_code   ( m_exception_code ),
         .m_valid            ( m_valid    ),
@@ -1921,8 +1742,8 @@ module ysyx_26040125_LSU(
     reg [2:0] state, next_state;
     reg [4:0] rd;
     reg wb_en;
-    reg [1:0] ysyx_26040125_OP_WIDTH;
-    reg [2:0] ysyx_26040125_WB_SEL;
+    reg [1:0] op_width;
+    reg [2:0] wb_sel;
     reg mem_signext;
     reg [11:0] csr_addr;
     reg [31:0] csr_data;
@@ -1938,8 +1759,6 @@ module ysyx_26040125_LSU(
     reg [31:0] rdata_reg;
     reg [7:0] data8;
     reg [15:0] data16;
-    wire [31:0] rdata_ext8;
-    wire [31:0] rdata_ext16;
     wire [31:0] rdata_ext;
     wire [31:0] wdata_;
 
@@ -1983,7 +1802,7 @@ module ysyx_26040125_LSU(
     assign csr_valid_lsu = valid_reg && csr_wen;
 
     always @(*) begin
-        case(ysyx_26040125_WB_SEL)
+        case(wb_sel)
             `ysyx_26040125_WB_SEL_IMM: forward_data_lsu = imm;
             `ysyx_26040125_WB_SEL_ALU: forward_data_lsu = m_result;
             `ysyx_26040125_WB_SEL_PC4: forward_data_lsu = PC + 4;
@@ -2160,8 +1979,8 @@ module ysyx_26040125_LSU(
         if(s_valid && s_ready) begin
             rd <= s_rd;
             wb_en <= s_wb_en;
-            ysyx_26040125_OP_WIDTH <= s_op_width;
-            ysyx_26040125_WB_SEL <= s_wb_sel;
+            op_width <= s_op_width;
+            wb_sel <= s_wb_sel;
             mem_signext <= s_mem_signext;
             csr_addr <= s_csr_addr;
             csr_data <= s_csr_data;
@@ -2180,7 +1999,7 @@ module ysyx_26040125_LSU(
     /*logic to send data*/
     assign m_rd = rd;
     assign m_wb_en = wb_en;
-    assign m_wb_sel = ysyx_26040125_WB_SEL;
+    assign m_wb_sel = wb_sel;
     assign m_csr_addr = csr_addr;
     assign m_csr_data = csr_data;
     assign m_csr_wr_sel = csr_wr_sel;
@@ -2206,7 +2025,7 @@ module ysyx_26040125_LSU(
     assign m_axi_arvalid = (state == READ_REQ) && !exception_flush;
     assign m_axi_arid = 4'b0;
     assign m_axi_arlen = 8'b0;
-    assign m_axi_arsize = {1'b0, ysyx_26040125_OP_WIDTH}; //4 bytes
+    assign m_axi_arsize = {1'b0, op_width}; //4 bytes
     assign m_axi_arburst = 2'b01; //INCR
 
     /*logic to send write addr*/
@@ -2214,14 +2033,14 @@ module ysyx_26040125_LSU(
     assign m_axi_awvalid = (state == WRITE_ADDR_REQ || state == WRITE_REQ) && !exception_flush;
     assign m_axi_awid = 4'b0;
     assign m_axi_awlen = 8'b0;
-    assign m_axi_awsize = {1'b0, ysyx_26040125_OP_WIDTH}; //4 bytes
+    assign m_axi_awsize = {1'b0, op_width}; //4 bytes
     assign m_axi_awburst = 2'b01; //INCR
 
     /*logic to send write data*/
     assign wdata_ = srcR2 << (result[1:0]*8);
     assign m_axi_wdata = wdata_;
-    assign m_axi_wstrb = (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
-                         (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
+    assign m_axi_wstrb = (op_width == `ysyx_26040125_OP_WIDTH_BYTE) ? 4'b0001 << result[1:0] :
+                         (op_width == `ysyx_26040125_OP_WIDTH_HALF) ? 4'b0011 << result[1:0] : 4'b1111;
     assign m_axi_wvalid = (state == WRITE_DATA_REQ || state == WRITE_REQ) && !exception_flush;
     assign m_axi_wlast = (state == WRITE_DATA_REQ || state == WRITE_REQ);
 
@@ -2252,21 +2071,12 @@ module ysyx_26040125_LSU(
 
 
 
-    ysyx_26040125_ext8 u_ext8(
-        .data_i 	( data8  ),
-        .sign   	( mem_signext    ),
-        .data_o 	( rdata_ext8  )
-    );
+    assign rdata_ext8  = mem_signext ? {{24{data8[7]}}, data8}   : {24'b0, data8};
+    assign rdata_ext16 = mem_signext ? {{16{data16[15]}}, data16} : {16'b0, data16};
 
-    ysyx_26040125_ext16 u_ext16(
-        .data_i 	( data16  ),
-        .sign   	( mem_signext    ),
-        .data_o 	( rdata_ext16  )
-    );
-    
-    assign rdata_ext = (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_BYTE) ? rdata_ext8 :
-                       (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_HALF) ? rdata_ext16 :
-                       (ysyx_26040125_OP_WIDTH == `ysyx_26040125_OP_WIDTH_WORD) ? rdata_reg :
+    assign rdata_ext = (op_width == `ysyx_26040125_OP_WIDTH_BYTE) ? rdata_ext8 :
+                       (op_width == `ysyx_26040125_OP_WIDTH_HALF) ? rdata_ext16 :
+                       (op_width == `ysyx_26040125_OP_WIDTH_WORD) ? rdata_reg :
                        32'b0;
 
     assign m_rdata = rdata_ext;
@@ -2274,27 +2084,6 @@ module ysyx_26040125_LSU(
     /*logic to recv write response*/
     assign m_axi_bready = (state == WRITE_WAIT);
 
-endmodule
-
-
-module ysyx_26040125_ext8(
-    input [7:0] data_i,
-    input sign,
-    output [31:0] data_o
-);
-
-   assign data_o = sign ? {{24{data_i[7]}}, data_i} : {24'b0, data_i};
-    
-endmodule
-
-module ysyx_26040125_ext16(
-    input [15:0] data_i,
-    input sign,
-    output [31:0] data_o
-);
-
-   assign data_o = sign ? {{16{data_i[15]}}, data_i} : {16'b0, data_i};
-    
 endmodule
 
 
@@ -2310,17 +2099,8 @@ module ysyx_26040125_PCR(
     input pc_en,
     input flush,
     input exception,
-    output reg [31:0] PC,
-    output [1:0] meta_data_BTB_o,
-    output hit_BTB_o,
-
-    /*port for BTB*/
-    input [31:0] target_BTB,
-    input [1:0] meta_data_BTB,
-    input hit_BTB
+    output reg [31:0] PC
 );
-    assign meta_data_BTB_o = meta_data_BTB;
-    assign hit_BTB_o = hit_BTB;
 
     reg [31:0] PC_next;
     always @(*) begin
@@ -2339,15 +2119,9 @@ module ysyx_26040125_PCR(
             PC_next = mtvec;
         end
 
-        else if(hit_BTB) begin
-            PC_next = target_BTB;
-        end
-
         else begin
             PC_next = PC + 32'd4;
         end
-        
-        
     end
 
     always @(posedge clk or posedge reset) begin
@@ -2515,7 +2289,7 @@ module ysyx_26040125_WBU(
     reg valid_reg;
     reg [4:0] rd;
     reg wb_en;
-    reg [2:0] ysyx_26040125_WB_SEL;
+    reg [2:0] wb_sel;
     reg [11:0] csr_addr;
     reg [31:0] csr_data;
     reg csr_wr_sel;
@@ -2569,7 +2343,7 @@ module ysyx_26040125_WBU(
         if(s_valid && s_ready) begin
             rd <= s_rd;
             wb_en <= s_wb_en;
-            ysyx_26040125_WB_SEL <= s_wb_sel;
+            wb_sel <= s_wb_sel;
             csr_addr <= s_csr_addr;
             csr_data <= s_csr_data;
             csr_wr_sel <= s_csr_wr_sel;
@@ -2588,7 +2362,7 @@ module ysyx_26040125_WBU(
     assign wen = wb_en & valid_reg & !has_exception_reg;
     assign waddr = rd;
     always @(*) begin
-        case(ysyx_26040125_WB_SEL)
+        case(wb_sel)
             `ysyx_26040125_WB_SEL_IMM: wdata = imm;
             `ysyx_26040125_WB_SEL_ALU: wdata = result;
             `ysyx_26040125_WB_SEL_MEM: wdata = rdata;
@@ -2630,7 +2404,7 @@ module ysyx_26040125_CLINT(
     output        s_axi_arready,
 
     output [3:0] s_axi_rid,
-    output reg [31:0] s_axi_rdata,
+    output [31:0] s_axi_rdata,
     output [1:0]  s_axi_rresp,
     output        s_axi_rlast,
     output        s_axi_rvalid,
@@ -2657,11 +2431,9 @@ module ysyx_26040125_CLINT(
     /* verilator lint_on UNUSED */
 );
 
-
-    localparam IDLE = 2'd0, RESP = 2'd1;
-    reg [1:0] state, next_state;
     reg [63:0] mtime;
-    reg [31:0] r_addr;
+    reg state;  // 0 = IDLE, 1 = RESP
+    reg ar_addr_bit;  // only bit 3 to distinguish 0x0200_0008 (hi) vs 0x0200_0004 (lo)
 
     always @(posedge clk or posedge reset) begin
         if(reset) begin
@@ -2678,71 +2450,38 @@ module ysyx_26040125_CLINT(
     assign s_axi_bresp   = 2'b00;
     assign s_axi_bvalid  = 1'b0;
 
-    always @(*) begin
-        case(state)
-            IDLE: begin
-                if (s_axi_arvalid && s_axi_arready) begin
-                    next_state = RESP;
-                end
-                else begin
-                    next_state = IDLE;
-                end
-            end
-            RESP: begin
-                if (s_axi_rready && s_axi_rvalid) begin
-                    next_state = IDLE;
-                end
-                else begin
-                    next_state = RESP;
-                end
-            end
-            default: begin
-                next_state = IDLE;
-            end
-        endcase
-    end
-
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            state <= IDLE;
+            state <= 1'b0;
+            ar_addr_bit <= 1'b0;
         end
         else begin
-            state <= next_state;
+            if (state == 1'b0) begin
+                if (s_axi_arvalid) begin
+                    ar_addr_bit <= s_axi_araddr[3];
+                    state <= 1'b1;
+                end
+            end
+            else begin
+                if (s_axi_rready)
+                    state <= 1'b0;
+            end
         end
     end
 
-    always @(posedge clk) begin
-        if (s_axi_arvalid && s_axi_arready) begin
-            r_addr <= s_axi_araddr;
-        end
-    end
-
-    always @(*) begin
-        case(r_addr)
-            32'h0200_0004: begin
-`ifdef VERILATOR
-                s_axi_rdata = mtime_read(r_addr);
-`else
-                s_axi_rdata = mtime[31:0];
-`endif
-            end 
-            32'h0200_0008: begin
-`ifdef VERILATOR                
-                s_axi_rdata = mtime_read(r_addr);
-`else
-                s_axi_rdata = mtime[63:32];
-`endif
-            end 
-            default: s_axi_rdata = 32'b0;
-        endcase
-    end
-
-    assign s_axi_arready = (state == IDLE);
-    assign s_axi_rvalid  = (state == RESP);
+    assign s_axi_arready = (state == 1'b0);
+    assign s_axi_rvalid  = (state == 1'b1);
     assign s_axi_rresp   = 2'b00;
     assign s_axi_rlast   = 1'b1;
     assign s_axi_rid     = 4'b0;
     assign s_axi_bid     = 4'b0;
+    assign s_axi_rdata   = ar_addr_bit ?
+`ifdef VERILATOR
+        mtime_read(ar_addr_bit ? 32'h0200_0008 : 32'h0200_0004) :
+`else
+        mtime[63:32] :
+`endif
+        mtime[31:0];
 endmodule
 
 module ysyx_26040125_XBAR(
@@ -2855,192 +2594,72 @@ module ysyx_26040125_XBAR(
     output        m_axi_bready_B
 );
 
-    // 0x0200_0000 ~ 0x0200_ffff -> port A (0), else -> port B (1)
-    function addr_sel;
-        input [31:0] addr;
-        begin
-            addr_sel = (addr >= 32'h0200_0000 && addr <= 32'h0200_ffff) ? 1'b0 : 1'b1;
-        end
-    endfunction
+    // Pure combinational crossbar: route to port A (CLINT 0x0200_0000~ffff) or port B (external)
+    wire sel_clint = (s_axi_araddr >= 32'h0200_0000 && s_axi_araddr <= 32'h0200_ffff);
+    wire sel_wclint = (s_axi_awaddr >= 32'h0200_0000 && s_axi_awaddr <= 32'h0200_ffff);
 
-    /*Read Channel*/
-    localparam READ_IDLE = 2'b00, READ_REQ = 2'b01, READ_WAIT = 2'b10;
-    reg [1:0] r_state, r_next_state;
-    reg r_sel;
-    reg [3:0] r_id;
-    reg [31:0] raddr;
-    reg [7:0]  rlen;
-    reg [2:0]  rsize;
-    reg [1:0]  rburst;
+    // ---- Read address channel ----
+    assign m_axi_arid_A    = s_axi_arid;
+    assign m_axi_araddr_A  = s_axi_araddr;
+    assign m_axi_arlen_A   = s_axi_arlen;
+    assign m_axi_arsize_A  = s_axi_arsize;
+    assign m_axi_arburst_A = s_axi_arburst;
+    assign m_axi_arvalid_A = s_axi_arvalid && sel_clint;
 
-    /*Write Channel*/
-    localparam WRITE_IDLE      = 3'b000,
-               WRITE_WAIT_ADDR = 3'b001,
-               WRITE_WAIT_DATA = 3'b010,
-               WRITE_REQ       = 3'b011,
-               WRITE_REQ_ADDR  = 3'b100,
-               WRITE_REQ_DATA  = 3'b101,
-               WRITE_RESP      = 3'b110;
-    reg [2:0] w_state, w_next_state;
-    reg w_sel;
-    reg [3:0] w_id;
-    reg [31:0] waddr;
-    reg [7:0]  wlen;
-    reg [2:0]  wsize;
-    reg [1:0]  wburst;
-    reg [31:0] wdata;
-    reg [3:0]  wstrb;
-    reg        wlast;
+    assign m_axi_arid_B    = s_axi_arid;
+    assign m_axi_araddr_B  = s_axi_araddr;
+    assign m_axi_arlen_B   = s_axi_arlen;
+    assign m_axi_arsize_B  = s_axi_arsize;
+    assign m_axi_arburst_B = s_axi_arburst;
+    assign m_axi_arvalid_B = s_axi_arvalid && !sel_clint;
 
+    assign s_axi_arready = sel_clint ? m_axi_arready_A : m_axi_arready_B;
 
-    always @(*) begin
-        case (r_state)
-            READ_IDLE: r_next_state = (s_axi_arvalid && s_axi_arready) ? READ_REQ  : READ_IDLE;
-            READ_REQ:  r_next_state = (r_sel == 1'b0 ? m_axi_arready_A : m_axi_arready_B) ? READ_WAIT : READ_REQ;
-            READ_WAIT: r_next_state = (s_axi_rvalid && s_axi_rready && s_axi_rlast) ? READ_IDLE : READ_WAIT;
-            default:   r_next_state = READ_IDLE;
-        endcase
-    end
+    // ---- Read data channel ----
+    assign s_axi_rid    = sel_clint ? m_axi_rid_A    : m_axi_rid_B;
+    assign s_axi_rdata  = sel_clint ? m_axi_rdata_A  : m_axi_rdata_B;
+    assign s_axi_rresp  = sel_clint ? m_axi_rresp_A  : m_axi_rresp_B;
+    assign s_axi_rlast  = sel_clint ? m_axi_rlast_A  : m_axi_rlast_B;
+    assign s_axi_rvalid = sel_clint ? m_axi_rvalid_A : m_axi_rvalid_B;
+    assign m_axi_rready_A = s_axi_rready && sel_clint;
+    assign m_axi_rready_B = s_axi_rready && !sel_clint;
 
-    always @(posedge clk or posedge reset) begin
-        if (reset) r_state <= READ_IDLE;
-        else        r_state <= r_next_state;
-    end
+    // ---- Write address channel ----
+    assign m_axi_awid_A    = s_axi_awid;
+    assign m_axi_awaddr_A  = s_axi_awaddr;
+    assign m_axi_awlen_A   = s_axi_awlen;
+    assign m_axi_awsize_A  = s_axi_awsize;
+    assign m_axi_awburst_A = s_axi_awburst;
+    assign m_axi_awvalid_A = s_axi_awvalid && sel_wclint;
 
-    assign s_axi_arready = (r_state == READ_IDLE);
+    assign m_axi_awid_B    = s_axi_awid;
+    assign m_axi_awaddr_B  = s_axi_awaddr;
+    assign m_axi_awlen_B   = s_axi_awlen;
+    assign m_axi_awsize_B  = s_axi_awsize;
+    assign m_axi_awburst_B = s_axi_awburst;
+    assign m_axi_awvalid_B = s_axi_awvalid && !sel_wclint;
 
-    always @(posedge clk) begin
-        if (s_axi_arvalid && s_axi_arready) begin
-            r_id   <= s_axi_arid;
-            raddr  <= s_axi_araddr;
-            rlen   <= s_axi_arlen;
-            rsize  <= s_axi_arsize;
-            rburst <= s_axi_arburst;
-            r_sel  <= addr_sel(s_axi_araddr);
-        end
-    end
+    assign s_axi_awready = sel_wclint ? m_axi_awready_A : m_axi_awready_B;
 
-    assign m_axi_arid_A    = r_id;
-    assign m_axi_araddr_A  = raddr;
-    assign m_axi_arlen_A   = rlen;
-    assign m_axi_arsize_A  = rsize;
-    assign m_axi_arburst_A = rburst;
-    assign m_axi_arvalid_A = (r_state == READ_REQ) && (r_sel == 1'b0);
+    // ---- Write data channel ----
+    assign m_axi_wdata_A  = s_axi_wdata;
+    assign m_axi_wstrb_A  = s_axi_wstrb;
+    assign m_axi_wlast_A  = s_axi_wlast;
+    assign m_axi_wvalid_A = s_axi_wvalid && sel_wclint;
 
-    assign m_axi_arid_B    = r_id;
-    assign m_axi_araddr_B  = raddr;
-    assign m_axi_arlen_B   = rlen;
-    assign m_axi_arsize_B  = rsize;
-    assign m_axi_arburst_B = rburst;
-    assign m_axi_arvalid_B = (r_state == READ_REQ) && (r_sel == 1'b1);
+    assign m_axi_wdata_B  = s_axi_wdata;
+    assign m_axi_wstrb_B  = s_axi_wstrb;
+    assign m_axi_wlast_B  = s_axi_wlast;
+    assign m_axi_wvalid_B = s_axi_wvalid && !sel_wclint;
 
-    assign m_axi_rready_A  = (r_state == READ_WAIT) && (r_sel == 1'b0) && s_axi_rready;
-    assign m_axi_rready_B  = (r_state == READ_WAIT) && (r_sel == 1'b1) && s_axi_rready;
+    assign s_axi_wready = sel_wclint ? m_axi_wready_A : m_axi_wready_B;
 
-    assign s_axi_rid    = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rid_A    : m_axi_rid_B)    : 4'b0;
-    assign s_axi_rdata  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rdata_A  : m_axi_rdata_B)  : 32'b0;
-    assign s_axi_rresp  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rresp_A  : m_axi_rresp_B)  : 2'b0;
-    assign s_axi_rlast  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rlast_A  : m_axi_rlast_B)  : 1'b0;
-    assign s_axi_rvalid = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rvalid_A : m_axi_rvalid_B) : 1'b0;
-
-    always @(*) begin
-        case (w_state)
-            WRITE_IDLE: begin
-                if (s_axi_awvalid && s_axi_awready && s_axi_wvalid && s_axi_wready)
-                    w_next_state = WRITE_REQ;
-                else if (s_axi_awvalid && s_axi_awready)
-                    w_next_state = WRITE_WAIT_DATA;
-                else if (s_axi_wvalid && s_axi_wready)
-                    w_next_state = WRITE_WAIT_ADDR;
-                else
-                    w_next_state = WRITE_IDLE;
-            end
-            WRITE_WAIT_DATA: w_next_state = (s_axi_wvalid  && s_axi_wready)  ? WRITE_REQ : WRITE_WAIT_DATA;
-            WRITE_WAIT_ADDR: w_next_state = (s_axi_awvalid && s_axi_awready) ? WRITE_REQ : WRITE_WAIT_ADDR;
-            WRITE_REQ      : begin
-                if (w_sel == 1'b0) begin
-                    if (m_axi_awready_A && m_axi_wready_A && m_axi_awvalid_A && m_axi_wvalid_A)
-                        w_next_state = WRITE_RESP;
-                    else if (m_axi_awready_A && m_axi_awvalid_A)
-                        w_next_state = WRITE_REQ_DATA;
-                    else if (m_axi_wready_A && m_axi_wvalid_A)
-                        w_next_state = WRITE_REQ_ADDR;
-                    else
-                        w_next_state = WRITE_REQ;
-                end
-                else begin
-                    if (m_axi_awready_B && m_axi_wready_B && m_axi_awvalid_B && m_axi_wvalid_B)
-                        w_next_state = WRITE_RESP;
-                    else if (m_axi_awready_B && m_axi_awvalid_B)
-                        w_next_state = WRITE_REQ_DATA;
-                    else if (m_axi_wready_B && m_axi_wvalid_B)
-                        w_next_state = WRITE_REQ_ADDR;
-                    else
-                        w_next_state = WRITE_REQ;
-                end
-            end
-            WRITE_REQ_ADDR:  w_next_state = (w_sel == 1'b0 ? m_axi_awready_A : m_axi_awready_B) ? WRITE_REQ_DATA : WRITE_REQ_ADDR;
-            WRITE_REQ_DATA:  w_next_state = (w_sel == 1'b0 ? m_axi_wready_A  : m_axi_wready_B)  ? WRITE_RESP     : WRITE_REQ_DATA;
-            WRITE_RESP:      w_next_state = (s_axi_bvalid  && s_axi_bready)  ? WRITE_IDLE       : WRITE_RESP;
-            default:         w_next_state = WRITE_IDLE;
-        endcase
-    end
-
-    always @(posedge clk or posedge reset) begin
-        if (reset) w_state <= WRITE_IDLE;
-        else        w_state <= w_next_state;
-    end
-
-    assign s_axi_awready = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_ADDR);
-    assign s_axi_wready  = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_DATA);
-
-
-    always @(posedge clk) begin
-        if (s_axi_awvalid && s_axi_awready) begin
-            w_id   <= s_axi_awid;
-            waddr  <= s_axi_awaddr;
-            wlen   <= s_axi_awlen;
-            wsize  <= s_axi_awsize;
-            wburst <= s_axi_awburst;
-            w_sel  <= addr_sel(s_axi_awaddr);
-        end
-    end
-
-    always @(posedge clk) begin
-        if (s_axi_wvalid && s_axi_wready) begin
-            wdata <= s_axi_wdata;
-            wstrb <= s_axi_wstrb;
-            wlast <= s_axi_wlast;
-        end
-    end
-
-    assign m_axi_awid_A    = w_id;
-    assign m_axi_awaddr_A  = waddr;
-    assign m_axi_awlen_A   = wlen;
-    assign m_axi_awsize_A  = wsize;
-    assign m_axi_awburst_A = wburst;
-    assign m_axi_awvalid_A = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b0);
-    assign m_axi_wdata_A   = wdata;
-    assign m_axi_wstrb_A   = wstrb;
-    assign m_axi_wlast_A   = wlast;
-    assign m_axi_wvalid_A  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b0);
-    assign m_axi_bready_A  = (w_state == WRITE_RESP)     && (w_sel == 1'b0) && s_axi_bready;
-
-    assign m_axi_awid_B    = w_id;
-    assign m_axi_awaddr_B  = waddr;
-    assign m_axi_awlen_B   = wlen;
-    assign m_axi_awsize_B  = wsize;
-    assign m_axi_awburst_B = wburst;
-    assign m_axi_awvalid_B = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b1);
-    assign m_axi_wdata_B   = wdata;
-    assign m_axi_wstrb_B   = wstrb;
-    assign m_axi_wlast_B   = wlast;
-    assign m_axi_wvalid_B  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b1);
-    assign m_axi_bready_B  = (w_state == WRITE_RESP)     && (w_sel == 1'b1) && s_axi_bready;
-
-    assign s_axi_bid    = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bid_A    : m_axi_bid_B)    : 4'b0;
-    assign s_axi_bresp  = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bresp_A  : m_axi_bresp_B)  : 2'b0;
-    assign s_axi_bvalid = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bvalid_A : m_axi_bvalid_B) : 1'b0;
+    // ---- Write response channel ----
+    assign s_axi_bid    = sel_wclint ? m_axi_bid_A    : m_axi_bid_B;
+    assign s_axi_bresp  = sel_wclint ? m_axi_bresp_A  : m_axi_bresp_B;
+    assign s_axi_bvalid = sel_wclint ? m_axi_bvalid_A : m_axi_bvalid_B;
+    assign m_axi_bready_A = s_axi_bready && sel_wclint;
+    assign m_axi_bready_B = s_axi_bready && !sel_wclint;
 
 endmodule
 
@@ -3133,8 +2752,6 @@ module ysyx_26040125(
 
     // PCR outputs
     wire [31:0] PCR_PC;
-    wire [1:0]  PCR_meta_data_BTB_o;
-    wire        PCR_hit_BTB_o;
 
     // IFU outputs
     wire [31:0] IFU_m_Inst;
@@ -3161,8 +2778,6 @@ module ysyx_26040125(
     wire        IFU_pc_en;
     wire        IFU_m_has_exception;
     wire [3:0]  IFU_m_exception_code;
-    wire [1:0]  IFU_m_meta_data_BTB;
-    wire        IFU_m_hit_BTB;
 
     // GPR outputs
     wire [31:0] GPR_rdata1;
@@ -3194,8 +2809,6 @@ module ysyx_26040125(
     wire        IDU_m_fencei;
     wire        IDU_m_has_exception;
     wire [3:0]  IDU_m_exception_code;
-    wire [1:0]  IDU_m_meta_data_BTB;
-    wire        IDU_m_hit_BTB;
 
     /*verilator lint_off UNUSED */
     wire [4:0]  IDU_rs1;
@@ -3237,10 +2850,6 @@ module ysyx_26040125(
     wire        EXU_forward_ready_exu;
     wire [31:0] EXU_csr_forward_data_exu;
     wire        EXU_csr_forward_ready_exu;
-    wire [31:0] EXU_PC_w;
-    wire [31:0] EXU_target;
-    wire [1:0]  EXU_meta_data;
-    wire        EXU_write_en;
 
 
     // LSU outputs
@@ -3426,9 +3035,6 @@ module ysyx_26040125(
     wire        CLINT_s_axi_bvalid;
 
     // BTB outputs
-    wire [31:0] BTB_target_BTB;
-    wire [1:0]  BTB_meta_data_BTB;
-    wire        BTB_hit_BTB;
 
     // Connect io_master to XBAR master B
     assign io_master_arvalid  = XBAR_m_axi_arvalid_B;
@@ -3463,12 +3069,7 @@ module ysyx_26040125(
             .PC              (PCR_PC),
             .pc_now          (EXU_pcr_pc_now),
             .flush           (EXU_flush),
-            .exception       (WBU_exception_flush),
-            .meta_data_BTB_o (PCR_meta_data_BTB_o),
-            .hit_BTB_o       (PCR_hit_BTB_o),
-            .target_BTB      (BTB_target_BTB),
-            .meta_data_BTB   (BTB_meta_data_BTB),
-            .hit_BTB         (BTB_hit_BTB)
+            .exception       (WBU_exception_flush)
         );
 
     ysyx_26040125_IFU ysyx_26040125_IFU(
@@ -3476,15 +3077,11 @@ module ysyx_26040125(
             .reset          (reset),
             .m_Inst            (IFU_m_Inst),
             .m_PC              (IFU_m_PC),
-            .m_meta_data_BTB   (IFU_m_meta_data_BTB),
-            .m_hit_BTB         (IFU_m_hit_BTB),
             .m_has_exception   (IFU_m_has_exception),
             .m_exception_code  (IFU_m_exception_code),
             .m_valid           (IFU_m_valid),
             .m_ready           (IDU_s_ready),
             .PC                (PCR_PC),
-            .meta_data_BTB     (PCR_meta_data_BTB_o),
-            .hit_BTB           (PCR_hit_BTB_o),
             .cache_flush       (EXU_cache_flush),
             .exception_flush   (WBU_exception_flush),
             .m_axi_araddr   (IFU_m_axi_araddr),
@@ -3536,14 +3133,10 @@ module ysyx_26040125(
             .reset          (reset),
             .s_Inst              (IFU_m_Inst),
             .s_PC                (IFU_m_PC),
-            .s_meta_data_BTB     (IFU_m_meta_data_BTB),
-            .s_hit_BTB           (IFU_m_hit_BTB),
             .s_has_exception     (IFU_m_has_exception),
             .s_exception_code    (IFU_m_exception_code),
             .s_valid             (IFU_m_valid),
             .s_ready             (IDU_s_ready),
-            .m_meta_data_BTB     (IDU_m_meta_data_BTB),
-            .m_hit_BTB           (IDU_m_hit_BTB),
             .m_rd                (IDU_m_rd),
             .m_srcR1        (IDU_m_srcR1),
             .m_srcR2        (IDU_m_srcR2),
@@ -3628,14 +3221,11 @@ module ysyx_26040125(
             .s_fencei       (IDU_m_fencei),
             .s_has_exception(IDU_m_has_exception),
             .s_exception_code(IDU_m_exception_code),
-            .s_meta_data_BTB (IDU_m_meta_data_BTB),
-            .s_hit_BTB       (IDU_m_hit_BTB),
             .s_valid        (IDU_m_valid),
             .s_ready        (EXU_s_ready),
             .m_rd           (EXU_m_rd),
             .m_wb_en        (EXU_m_wb_en),
             .m_mem_en       (EXU_m_mem_en),
-            .m_mem_write_en (EXU_m_mem_write_en),
             .m_op_width     (EXU_m_op_width),
             .m_wb_sel       (EXU_m_wb_sel),
             .m_mem_signext  (EXU_m_mem_signext),
@@ -3666,11 +3256,7 @@ module ysyx_26040125(
             .forward_data_exu (EXU_forward_data_exu),
             .forward_ready_exu (EXU_forward_ready_exu),
             .csr_forward_data_exu (EXU_csr_forward_data_exu),
-            .csr_forward_ready_exu (EXU_csr_forward_ready_exu),
-            .PC_w            (EXU_PC_w),
-            .target          (EXU_target),
-            .meta_data       (EXU_meta_data),
-            .write_en        (EXU_write_en)
+            .csr_forward_ready_exu (EXU_csr_forward_ready_exu)
         );
 
     ysyx_26040125_LSU ysyx_26040125_LSU(
@@ -3679,7 +3265,6 @@ module ysyx_26040125(
             .s_rd           (EXU_m_rd),
             .s_wb_en        (EXU_m_wb_en),
             .s_mem_en       (EXU_m_mem_en),
-            .s_mem_write_en (EXU_m_mem_write_en),
             .s_op_width     (EXU_m_op_width),
             .s_wb_sel       (EXU_m_wb_sel),
             .s_mem_signext  (EXU_m_mem_signext),
@@ -4033,21 +3618,6 @@ module ysyx_26040125(
             .m_axi_bvalid      ( XBAR_s_axi_bvalid    ),
             .m_axi_bid         ( XBAR_s_axi_bid       ),
             .m_axi_bready      ( ARB_m_axi_bready     )
-        );
-
-    ysyx_26040125_BTB#(
-        .ENTRY_NUM(8)
-    )ysyx_26040125_BTB(
-            .clk         (clock),
-            .reset       (reset),
-            .PC_r        (PCR_PC),
-            .PC_w        (EXU_PC_w),
-            .target      (EXU_target),
-            .meta_data   (EXU_meta_data),
-            .write_en    (EXU_write_en),
-            .target_BTB    (BTB_target_BTB),
-            .meta_data_BTB (BTB_meta_data_BTB),
-            .hit_BTB       (BTB_hit_BTB)
         );
 
 endmodule
