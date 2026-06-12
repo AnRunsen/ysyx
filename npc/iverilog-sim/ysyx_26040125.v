@@ -44,8 +44,6 @@
     import "DPI-C" function void itrace(input int inst, input int pc);
     import "DPI-C" function void ftrace(input int pc, input int npc);
     import "DPI-C" function void perf_cnt_update(input byte target);
-    import "DPI-C" function void flush_num();
-    import "DPI-C" function void branch_num();
     import "DPI-C" function void enter_userapp(input int npc);
     import "DPI-C" function void ihit_num();
     import "DPI-C" function void ifetch_num();
@@ -526,12 +524,6 @@ module ysyx_26040125_EXU(
     always @(posedge clk) begin
         if(m_valid & m_ready) begin
             perf_cnt_update(2);
-            if(flush) begin
-                flush_num();
-            end
-            if(brju != `ysyx_26040125_PC_NORMAL) begin
-                branch_num();
-            end
         end
     end
 `endif
@@ -1567,8 +1559,8 @@ module ysyx_26040125_IFU(
     wire s_valid = 1'b1;
 
     ysyx_26040125_ICACHE #(
-        .LINE_NUM  	( 2  ),
-        .LINE_SIZE 	( 8  ))
+        .LINE_NUM  	( 4  ),
+        .LINE_SIZE 	( 16  ))
     u_ICACHE(
         .clk            	( clk             ),
         .reset          	( reset           ),
@@ -1759,6 +1751,8 @@ module ysyx_26040125_LSU(
     reg [31:0] rdata_reg;
     reg [7:0] data8;
     reg [15:0] data16;
+    wire [31:0] rdata_ext8;
+    wire [31:0] rdata_ext16;
     wire [31:0] rdata_ext;
     wire [31:0] wdata_;
 
@@ -3226,6 +3220,7 @@ module ysyx_26040125(
             .m_rd           (EXU_m_rd),
             .m_wb_en        (EXU_m_wb_en),
             .m_mem_en       (EXU_m_mem_en),
+            .m_mem_write_en (EXU_m_mem_write_en),
             .m_op_width     (EXU_m_op_width),
             .m_wb_sel       (EXU_m_wb_sel),
             .m_mem_signext  (EXU_m_mem_signext),
@@ -3265,6 +3260,7 @@ module ysyx_26040125(
             .s_rd           (EXU_m_rd),
             .s_wb_en        (EXU_m_wb_en),
             .s_mem_en       (EXU_m_mem_en),
+            .s_mem_write_en (EXU_m_mem_write_en),
             .s_op_width     (EXU_m_op_width),
             .s_wb_sel       (EXU_m_wb_sel),
             .s_mem_signext  (EXU_m_mem_signext),

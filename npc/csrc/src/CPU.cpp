@@ -19,8 +19,6 @@ uint64_t cycle_cnt = 0;
 uint64_t instr_cnt = 0;
 uint64_t ihit_cnt = 0;
 uint64_t ifetch_cnt = 0;
-uint64_t flush_cnt = 0;
-uint64_t branch_cnt = 0;
 bool bootloader_stage = true;
 
 bool exit_flag = false;
