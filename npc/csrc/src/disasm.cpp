@@ -12,6 +12,8 @@
 *
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
+#include "config.hpp"
+
 #ifdef ITRACE
 
 #include <dlfcn.h>

@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <time.h>
 #include <assert.h>
+#include "VysyxSoCFull.h"
+#include "VysyxSoCFull___024root.h"
 
 #include "config.hpp"
 #include "ftrace.hpp"
@@ -172,6 +174,17 @@ extern "C" int mtime_read(int raddr)
 
 extern "C" void sim_exit()
 {
+    extern VysyxSoCFull* cpu;
+    uint32_t code = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[10];
+    if (code == 0)
+    {
+        printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);
+    }
+    else if (code == 1)
+    {
+        printf("Code:%d \033[31;1mHit Bad Trap\033[0m\n", code);
+    }
+
     printf("\033[34mTotal Cycles: \t\t%lu\n", cycle_cnt);
     printf("Total Instructions: \t%lu\n", instr_cnt);
     printf("IPC: \t\t\t%f\n", (double)instr_cnt / (double)cycle_cnt);

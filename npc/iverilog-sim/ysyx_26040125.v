@@ -2511,6 +2511,14 @@ module ysyx_26040125_WBU(
 //     end
 // `endif
 
+`ifdef VERILATOR
+    always @(posedge clk) begin
+        if(s_valid && s_ready && s_has_exception && s_exception_code == 4'd3) begin
+            sim_exit();
+        end
+    end
+`endif
+
     reg valid_reg;
     reg [4:0] rd;
     reg wb_en;
