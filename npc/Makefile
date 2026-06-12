@@ -8,9 +8,9 @@ VSRCS = $(shell find $(abspath ../ysyxSoC/perip) $(abspath ../ysyxSoC/build) -na
 CSRCS = $(shell find $(abspath ./csrc/src) -name "*.cpp")
 CONFIG_H = $(abspath ./csrc/include/config.hpp)
 
-#LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
-CFLAGS = -I$(abspath ./csrc/include) #-I$(abspath ./csrc/capstone/repo/include)
-LDFLAGS = -lreadline #-lcapstone -L$(abspath ./csrc/capstone/repo)
+LIBCAPSTONE = ./csrc/capstone/repo/libcapstone.so.5
+CFLAGS = -I$(abspath ./csrc/include) -I$(abspath ./csrc/capstone/repo/include)
+LDFLAGS = -lreadline -lcapstone -L$(abspath ./csrc/capstone/repo)
 
 #=============NVBOARD=============
 BIND_FILE = $(abspath ./board/auto_bind.cpp)
@@ -34,10 +34,10 @@ $(addprefix -CFLAGS ,$(CFLAGS)) $(addprefix -LDFLAGS ,$(LDFLAGS))
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS) $(BIND_FILE)
 
-# ./csrc/src/disasm.cpp: $(LIBCAPSTONE)
+./csrc/src/disasm.cpp: $(LIBCAPSTONE)
 
-# $(LIBCAPSTONE):
-# 	$(MAKE) -C ./csrc/capstone
+$(LIBCAPSTONE):
+	$(MAKE) -C ./csrc/capstone
 
 run: ./$(BUILD_DIR)/V$(TOP)
 	$^ $(IMG) $(ELF)

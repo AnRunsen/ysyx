@@ -103,10 +103,6 @@ extern "C" void ftrace(int pc, int npc)
 
 extern "C" void itrace(int inst, int pc)
 {
-    if(!bootloader_stage)
-    {
-        instr_cnt ++;
-    
 #ifdef ITRACE
     printf("PC: 0x%08x, Instruction: 0x%08x\n", pc, inst);
 
@@ -128,6 +124,10 @@ extern "C" void itrace(int inst, int pc)
 
     printf("Inst to be exe:%s\n\n", buf);
 #endif
+    if(!bootloader_stage)
+    {
+        instr_cnt ++;
+    
     }   
 }
 

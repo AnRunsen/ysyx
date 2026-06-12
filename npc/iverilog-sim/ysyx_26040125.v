@@ -2588,75 +2588,194 @@ module ysyx_26040125_XBAR(
     output        m_axi_bready_B
 );
 
-    // Pure combinational crossbar: route to port A (CLINT 0x0200_0000~ffff) or port B (external)
-    wire sel_clint = (s_axi_araddr >= 32'h0200_0000 && s_axi_araddr <= 32'h0200_ffff);
-    wire sel_wclint = (s_axi_awaddr >= 32'h0200_0000 && s_axi_awaddr <= 32'h0200_ffff);
+    // 0x0200_0000 ~ 0x0200_ffff -> port A (0), else -> port B (1)
+    function addr_sel;
+        input [31:0] addr;
+        begin
+            addr_sel = (addr >= 32'h0200_0000 && addr <= 32'h0200_ffff) ? 1'b0 : 1'b1;
+        end
+    endfunction
 
-    // ---- Read address channel ----
-    assign m_axi_arid_A    = s_axi_arid;
-    assign m_axi_araddr_A  = s_axi_araddr;
-    assign m_axi_arlen_A   = s_axi_arlen;
-    assign m_axi_arsize_A  = s_axi_arsize;
-    assign m_axi_arburst_A = s_axi_arburst;
-    assign m_axi_arvalid_A = s_axi_arvalid && sel_clint;
+    /*Read Channel*/
+    localparam READ_IDLE = 2'b00, READ_REQ = 2'b01, READ_WAIT = 2'b10;
+    reg [1:0] r_state, r_next_state;
+    reg r_sel;
+    reg [3:0] r_id;
+    reg [31:0] raddr;
+    reg [7:0]  rlen;
+    reg [2:0]  rsize;
+    reg [1:0]  rburst;
 
-    assign m_axi_arid_B    = s_axi_arid;
-    assign m_axi_araddr_B  = s_axi_araddr;
-    assign m_axi_arlen_B   = s_axi_arlen;
-    assign m_axi_arsize_B  = s_axi_arsize;
-    assign m_axi_arburst_B = s_axi_arburst;
-    assign m_axi_arvalid_B = s_axi_arvalid && !sel_clint;
+    /*Write Channel*/
+    localparam WRITE_IDLE      = 3'b000,
+               WRITE_WAIT_ADDR = 3'b001,
+               WRITE_WAIT_DATA = 3'b010,
+               WRITE_REQ       = 3'b011,
+               WRITE_REQ_ADDR  = 3'b100,
+               WRITE_REQ_DATA  = 3'b101,
+               WRITE_RESP      = 3'b110;
+    reg [2:0] w_state, w_next_state;
+    reg w_sel;
+    reg [3:0] w_id;
+    reg [31:0] waddr;
+    reg [7:0]  wlen;
+    reg [2:0]  wsize;
+    reg [1:0]  wburst;
+    reg [31:0] wdata;
+    reg [3:0]  wstrb;
+    reg        wlast;
 
-    assign s_axi_arready = sel_clint ? m_axi_arready_A : m_axi_arready_B;
 
-    // ---- Read data channel ----
-    assign s_axi_rid    = sel_clint ? m_axi_rid_A    : m_axi_rid_B;
-    assign s_axi_rdata  = sel_clint ? m_axi_rdata_A  : m_axi_rdata_B;
-    assign s_axi_rresp  = sel_clint ? m_axi_rresp_A  : m_axi_rresp_B;
-    assign s_axi_rlast  = sel_clint ? m_axi_rlast_A  : m_axi_rlast_B;
-    assign s_axi_rvalid = sel_clint ? m_axi_rvalid_A : m_axi_rvalid_B;
-    assign m_axi_rready_A = s_axi_rready && sel_clint;
-    assign m_axi_rready_B = s_axi_rready && !sel_clint;
+    always @(*) begin
+        case (r_state)
+            READ_IDLE: r_next_state = (s_axi_arvalid && s_axi_arready) ? READ_REQ  : READ_IDLE;
+            READ_REQ:  r_next_state = (r_sel == 1'b0 ? m_axi_arready_A : m_axi_arready_B) ? READ_WAIT : READ_REQ;
+            READ_WAIT: r_next_state = (s_axi_rvalid && s_axi_rready && s_axi_rlast) ? READ_IDLE : READ_WAIT;
+            default:   r_next_state = READ_IDLE;
+        endcase
+    end
 
-    // ---- Write address channel ----
-    assign m_axi_awid_A    = s_axi_awid;
-    assign m_axi_awaddr_A  = s_axi_awaddr;
-    assign m_axi_awlen_A   = s_axi_awlen;
-    assign m_axi_awsize_A  = s_axi_awsize;
-    assign m_axi_awburst_A = s_axi_awburst;
-    assign m_axi_awvalid_A = s_axi_awvalid && sel_wclint;
+    always @(posedge clk or posedge reset) begin
+        if (reset) r_state <= READ_IDLE;
+        else        r_state <= r_next_state;
+    end
 
-    assign m_axi_awid_B    = s_axi_awid;
-    assign m_axi_awaddr_B  = s_axi_awaddr;
-    assign m_axi_awlen_B   = s_axi_awlen;
-    assign m_axi_awsize_B  = s_axi_awsize;
-    assign m_axi_awburst_B = s_axi_awburst;
-    assign m_axi_awvalid_B = s_axi_awvalid && !sel_wclint;
+    assign s_axi_arready = (r_state == READ_IDLE);
 
-    assign s_axi_awready = sel_wclint ? m_axi_awready_A : m_axi_awready_B;
+    always @(posedge clk) begin
+        if (s_axi_arvalid && s_axi_arready) begin
+            r_id   <= s_axi_arid;
+            raddr  <= s_axi_araddr;
+            rlen   <= s_axi_arlen;
+            rsize  <= s_axi_arsize;
+            rburst <= s_axi_arburst;
+            r_sel  <= addr_sel(s_axi_araddr);
+        end
+    end
 
-    // ---- Write data channel ----
-    assign m_axi_wdata_A  = s_axi_wdata;
-    assign m_axi_wstrb_A  = s_axi_wstrb;
-    assign m_axi_wlast_A  = s_axi_wlast;
-    assign m_axi_wvalid_A = s_axi_wvalid && sel_wclint;
+    assign m_axi_arid_A    = r_id;
+    assign m_axi_araddr_A  = raddr;
+    assign m_axi_arlen_A   = rlen;
+    assign m_axi_arsize_A  = rsize;
+    assign m_axi_arburst_A = rburst;
+    assign m_axi_arvalid_A = (r_state == READ_REQ) && (r_sel == 1'b0);
 
-    assign m_axi_wdata_B  = s_axi_wdata;
-    assign m_axi_wstrb_B  = s_axi_wstrb;
-    assign m_axi_wlast_B  = s_axi_wlast;
-    assign m_axi_wvalid_B = s_axi_wvalid && !sel_wclint;
+    assign m_axi_arid_B    = r_id;
+    assign m_axi_araddr_B  = raddr;
+    assign m_axi_arlen_B   = rlen;
+    assign m_axi_arsize_B  = rsize;
+    assign m_axi_arburst_B = rburst;
+    assign m_axi_arvalid_B = (r_state == READ_REQ) && (r_sel == 1'b1);
 
-    assign s_axi_wready = sel_wclint ? m_axi_wready_A : m_axi_wready_B;
+    assign m_axi_rready_A  = (r_state == READ_WAIT) && (r_sel == 1'b0) && s_axi_rready;
+    assign m_axi_rready_B  = (r_state == READ_WAIT) && (r_sel == 1'b1) && s_axi_rready;
 
-    // ---- Write response channel ----
-    assign s_axi_bid    = sel_wclint ? m_axi_bid_A    : m_axi_bid_B;
-    assign s_axi_bresp  = sel_wclint ? m_axi_bresp_A  : m_axi_bresp_B;
-    assign s_axi_bvalid = sel_wclint ? m_axi_bvalid_A : m_axi_bvalid_B;
-    assign m_axi_bready_A = s_axi_bready && sel_wclint;
-    assign m_axi_bready_B = s_axi_bready && !sel_wclint;
+    assign s_axi_rid    = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rid_A    : m_axi_rid_B)    : 4'b0;
+    assign s_axi_rdata  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rdata_A  : m_axi_rdata_B)  : 32'b0;
+    assign s_axi_rresp  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rresp_A  : m_axi_rresp_B)  : 2'b0;
+    assign s_axi_rlast  = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rlast_A  : m_axi_rlast_B)  : 1'b0;
+    assign s_axi_rvalid = (r_state == READ_WAIT) ? (r_sel == 1'b0 ? m_axi_rvalid_A : m_axi_rvalid_B) : 1'b0;
+
+    always @(*) begin
+        case (w_state)
+            WRITE_IDLE: begin
+                if (s_axi_awvalid && s_axi_awready && s_axi_wvalid && s_axi_wready)
+                    w_next_state = WRITE_REQ;
+                else if (s_axi_awvalid && s_axi_awready)
+                    w_next_state = WRITE_WAIT_DATA;
+                else if (s_axi_wvalid && s_axi_wready)
+                    w_next_state = WRITE_WAIT_ADDR;
+                else
+                    w_next_state = WRITE_IDLE;
+            end
+            WRITE_WAIT_DATA: w_next_state = (s_axi_wvalid  && s_axi_wready)  ? WRITE_REQ : WRITE_WAIT_DATA;
+            WRITE_WAIT_ADDR: w_next_state = (s_axi_awvalid && s_axi_awready) ? WRITE_REQ : WRITE_WAIT_ADDR;
+            WRITE_REQ      : begin
+                if (w_sel == 1'b0) begin
+                    if (m_axi_awready_A && m_axi_wready_A && m_axi_awvalid_A && m_axi_wvalid_A)
+                        w_next_state = WRITE_RESP;
+                    else if (m_axi_awready_A && m_axi_awvalid_A)
+                        w_next_state = WRITE_REQ_DATA;
+                    else if (m_axi_wready_A && m_axi_wvalid_A)
+                        w_next_state = WRITE_REQ_ADDR;
+                    else
+                        w_next_state = WRITE_REQ;
+                end
+                else begin
+                    if (m_axi_awready_B && m_axi_wready_B && m_axi_awvalid_B && m_axi_wvalid_B)
+                        w_next_state = WRITE_RESP;
+                    else if (m_axi_awready_B && m_axi_awvalid_B)
+                        w_next_state = WRITE_REQ_DATA;
+                    else if (m_axi_wready_B && m_axi_wvalid_B)
+                        w_next_state = WRITE_REQ_ADDR;
+                    else
+                        w_next_state = WRITE_REQ;
+                end
+            end
+            WRITE_REQ_ADDR:  w_next_state = (w_sel == 1'b0 ? m_axi_awready_A : m_axi_awready_B) ? WRITE_REQ_DATA : WRITE_REQ_ADDR;
+            WRITE_REQ_DATA:  w_next_state = (w_sel == 1'b0 ? m_axi_wready_A  : m_axi_wready_B)  ? WRITE_RESP     : WRITE_REQ_DATA;
+            WRITE_RESP:      w_next_state = (s_axi_bvalid  && s_axi_bready)  ? WRITE_IDLE       : WRITE_RESP;
+            default:         w_next_state = WRITE_IDLE;
+        endcase
+    end
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) w_state <= WRITE_IDLE;
+        else        w_state <= w_next_state;
+    end
+
+    assign s_axi_awready = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_ADDR);
+    assign s_axi_wready  = (w_state == WRITE_IDLE || w_state == WRITE_WAIT_DATA);
+
+
+    always @(posedge clk) begin
+        if (s_axi_awvalid && s_axi_awready) begin
+            w_id   <= s_axi_awid;
+            waddr  <= s_axi_awaddr;
+            wlen   <= s_axi_awlen;
+            wsize  <= s_axi_awsize;
+            wburst <= s_axi_awburst;
+            w_sel  <= addr_sel(s_axi_awaddr);
+        end
+    end
+
+    always @(posedge clk) begin
+        if (s_axi_wvalid && s_axi_wready) begin
+            wdata <= s_axi_wdata;
+            wstrb <= s_axi_wstrb;
+            wlast <= s_axi_wlast;
+        end
+    end
+
+    assign m_axi_awid_A    = w_id;
+    assign m_axi_awaddr_A  = waddr;
+    assign m_axi_awlen_A   = wlen;
+    assign m_axi_awsize_A  = wsize;
+    assign m_axi_awburst_A = wburst;
+    assign m_axi_awvalid_A = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b0);
+    assign m_axi_wdata_A   = wdata;
+    assign m_axi_wstrb_A   = wstrb;
+    assign m_axi_wlast_A   = wlast;
+    assign m_axi_wvalid_A  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b0);
+    assign m_axi_bready_A  = (w_state == WRITE_RESP)     && (w_sel == 1'b0) && s_axi_bready;
+
+    assign m_axi_awid_B    = w_id;
+    assign m_axi_awaddr_B  = waddr;
+    assign m_axi_awlen_B   = wlen;
+    assign m_axi_awsize_B  = wsize;
+    assign m_axi_awburst_B = wburst;
+    assign m_axi_awvalid_B = (w_state == WRITE_REQ_ADDR || w_state == WRITE_REQ) && (w_sel == 1'b1);
+    assign m_axi_wdata_B   = wdata;
+    assign m_axi_wstrb_B   = wstrb;
+    assign m_axi_wlast_B   = wlast;
+    assign m_axi_wvalid_B  = (w_state == WRITE_REQ_DATA || w_state == WRITE_REQ) && (w_sel == 1'b1);
+    assign m_axi_bready_B  = (w_state == WRITE_RESP)     && (w_sel == 1'b1) && s_axi_bready;
+
+    assign s_axi_bid    = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bid_A    : m_axi_bid_B)    : 4'b0;
+    assign s_axi_bresp  = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bresp_A  : m_axi_bresp_B)  : 2'b0;
+    assign s_axi_bvalid = (w_state == WRITE_RESP) ? (w_sel == 1'b0 ? m_axi_bvalid_A : m_axi_bvalid_B) : 1'b0;
 
 endmodule
-
 
 module ysyx_26040125(
         input  clock,
