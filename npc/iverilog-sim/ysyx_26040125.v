@@ -870,8 +870,8 @@ endmodule
 
 
 module ysyx_26040125_ICACHE#(
-    parameter LINE_NUM = 2,
-    parameter LINE_SIZE = 8
+    parameter LINE_NUM = 4,
+    parameter LINE_SIZE = 16
 )(
     input clk,
     input reset,
@@ -4036,7 +4036,7 @@ module ysyx_26040125(
         );
 
     ysyx_26040125_BTB#(
-        .ENTRY_NUM(4)
+        .ENTRY_NUM(8)
     )ysyx_26040125_BTB(
             .clk         (clock),
             .reset       (reset),
