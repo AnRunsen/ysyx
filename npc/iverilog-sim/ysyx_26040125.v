@@ -714,8 +714,8 @@ endmodule
 
 
 module ysyx_26040125_ICACHE#(
-    parameter LINE_NUM = 4,
-    parameter LINE_SIZE = 16
+    parameter LINE_NUM = 2,
+    parameter LINE_SIZE = 8
 )(
     input clk,
     input reset,
@@ -1559,8 +1559,8 @@ module ysyx_26040125_IFU(
     wire s_valid = 1'b1;
 
     ysyx_26040125_ICACHE #(
-        .LINE_NUM  	( 4  ),
-        .LINE_SIZE 	( 16  ))
+        .LINE_NUM  	( 2  ),
+        .LINE_SIZE 	( 8  ))
     u_ICACHE(
         .clk            	( clk             ),
         .reset          	( reset           ),
