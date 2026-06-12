@@ -65,12 +65,12 @@ module ysyx_26040125_ALU(
     wire [31:0] and_res;
     wire [31:0] or_res;
     wire [31:0] xor_res;
-    wire [31:0] lt_res;
-    wire [31:0] ge_res;
-    wire [31:0] ltu_res;
-    wire [31:0] geu_res;
-    wire [31:0] eq_res;
-    wire [31:0] ne_res;
+    wire lt_res;
+    wire ge_res;
+    wire ltu_res;
+    wire geu_res;
+    wire eq_res;
+    wire ne_res;
     wire [31:0] sll_res;
     wire [31:0] srl_res;
     wire [31:0] sra_res;
@@ -80,15 +80,15 @@ module ysyx_26040125_ALU(
     assign and_res = A & B;
     assign or_res = A | B;
     assign xor_res = A ^ B;
-    assign lt_res = (A < B) ? 32'h0000_0001 : 32'h0000_0000;
-    assign ge_res = (A >= B) ? 32'h0000_0001 : 32'h0000_0000;
-    assign eq_res = (A == B) ? 32'h0000_0001 : 32'h0000_0000;
-    assign ne_res = (A != B) ? 32'h0000_0001 : 32'h0000_0000;
+    assign lt_res = (A < B) ? 1'b1 : 1'b0;
+    assign ge_res = (A >= B) ? 1'b1 : 1'b0;
+    assign eq_res = (A == B) ? 1'b1 : 1'b0;
+    assign ne_res = (A != B) ? 1'b1 : 1'b0;
     assign sll_res = A << B[4:0];
     assign srl_res = A >> B[4:0];
     assign sra_res = A >>> B[4:0];
-    assign ltu_res = ($unsigned(A) < $unsigned(B)) ? 32'h0000_0001 : 32'h0000_0000;
-    assign geu_res = ($unsigned(A) >= $unsigned(B)) ? 32'h0000_0001 : 32'h0000_0000;
+    assign ltu_res = ($unsigned(A) < $unsigned(B)) ? 1'b1 : 1'b0;
+    assign geu_res = ($unsigned(A) >= $unsigned(B)) ? 1'b1 : 1'b0;
 
     always @(*) begin
         case (Opcode)
@@ -103,15 +103,15 @@ module ysyx_26040125_ALU(
             `ysyx_26040125_ALU_OP_XOR:
                 Result = xor_res;
             `ysyx_26040125_ALU_OP_LT:
-                Result = lt_res;
+                Result = {31'b0, lt_res};
             `ysyx_26040125_ALU_OP_LTU:
-                Result = ltu_res;
+                Result = {31'b0, ltu_res};
             `ysyx_26040125_ALU_OP_GE:
-                Result = ge_res;
+                Result = {31'b0, ge_res};
             `ysyx_26040125_ALU_OP_GEU:
-                Result = geu_res;
+                Result = {31'b0, geu_res};
             `ysyx_26040125_ALU_OP_EQ:
-                Result = eq_res;
+                Result = {31'b0, eq_res};
             `ysyx_26040125_ALU_OP_SLL:
                 Result = sll_res;
             `ysyx_26040125_ALU_OP_SRL:
@@ -119,7 +119,7 @@ module ysyx_26040125_ALU(
             `ysyx_26040125_ALU_OP_SRA:
                 Result = sra_res;
             `ysyx_26040125_ALU_OP_NE:
-                Result = ne_res;
+                Result = {31'b0, ne_res};
             default:
                 Result = 32'h0000_0000;
         endcase
@@ -396,7 +396,7 @@ endmodule
     
 module ysyx_26040125_BTB
 #(
-    parameter ENTRY_NUM = 8
+    parameter ENTRY_NUM = 4
 )(
     input clk,
     input reset,
@@ -476,8 +476,8 @@ module ysyx_26040125_CSR(
 
     reg [31:0] mcycle;
     reg [31:0] mcycleh;
-    reg [31:0] mvendorid;
-    reg [31:0] marchid;
+    wire [31:0] mvendorid;
+    wire [31:0] marchid;
     reg [31:0] mtvec;
     reg [31:0] mepc;
     reg [31:0] mcause;
@@ -521,15 +521,8 @@ module ysyx_26040125_CSR(
         else if(mcycle == 32'hffff_ffff) mcycleh <= mcycleh + 1;
     end
 
-    always @(posedge clk or posedge reset) begin
-        if(reset) mvendorid <= 32'b0;
-        else mvendorid <= 32'h79737978;
-    end
-
-    always @(posedge clk or posedge reset) begin
-        if(reset) marchid <= 32'b0;
-        else marchid <= 32'h018D573D;
-    end
+    assign mvendorid = 32'h79737978;
+    assign marchid = 32'h018D573D;
 
     assign mtvec_out = mtvec;
     assign mepc_out = mepc;
@@ -877,8 +870,8 @@ endmodule
 
 
 module ysyx_26040125_ICACHE#(
-    parameter LINE_NUM = 4,
-    parameter LINE_SIZE = 16
+    parameter LINE_NUM = 2,
+    parameter LINE_SIZE = 8
 )(
     input clk,
     input reset,
@@ -979,7 +972,7 @@ module ysyx_26040125_ICACHE#(
     wire [TAG_SIZE-1:0] tag_reg = addr_reg[31:$clog2(LINE_SIZE)+$clog2(LINE_NUM)];
     wire [WORDS_SEL_SIZE-1:0] word_sel = addr_reg[$clog2(LINE_SIZE)-1:2];
 
-    reg [3:0] recv_counter;
+    reg [$clog2(WORDS_PER_LINE)-1:0] recv_counter;
 
 
     /*unused axi signal(write channel)*/
@@ -1136,11 +1129,11 @@ module ysyx_26040125_ICACHE#(
 
     always @(posedge clk or posedge reset) begin
         if(reset) begin
-            recv_counter <= 4'b0;
+            recv_counter <= {$clog2(WORDS_PER_LINE){1'b0}};
         end
         else if(m_axi_rvalid && m_axi_rready) begin
             if(m_axi_rlast) begin
-                recv_counter <= 4'b0;
+                recv_counter <= {$clog2(WORDS_PER_LINE){1'b0}};
             end
             else begin
                 recv_counter <= recv_counter + 1;
@@ -1163,7 +1156,7 @@ module ysyx_26040125_ICACHE#(
     assign m_meta_data_BTB = meta_data_BTB_reg;
     assign m_hit_BTB = hit_BTB_reg;
 
-    assign m_axi_araddr = {addr_reg[31:4], 4'b0};
+    assign m_axi_araddr = {addr_reg[31:$clog2(LINE_SIZE)], {$clog2(LINE_SIZE){1'b0}}};
     assign m_axi_arvalid = (state == REQ) && !flush && !exception_flush;
     assign m_axi_arid = 4'b0;
     assign m_axi_arlen = WORDS_PER_LINE-1;
@@ -1749,8 +1742,8 @@ module ysyx_26040125_IFU(
     wire s_valid = 1'b1;
 
     ysyx_26040125_ICACHE #(
-        .LINE_NUM  	( 4  ),
-        .LINE_SIZE 	( 16  ))
+        .LINE_NUM  	( 2  ),
+        .LINE_SIZE 	( 8  ))
     u_ICACHE(
         .clk            	( clk             ),
         .reset          	( reset           ),
@@ -4043,7 +4036,7 @@ module ysyx_26040125(
         );
 
     ysyx_26040125_BTB#(
-        .ENTRY_NUM(8)
+        .ENTRY_NUM(4)
     )ysyx_26040125_BTB(
             .clk         (clock),
             .reset       (reset),
