@@ -447,8 +447,8 @@ module ysyx_26040125_EXU(
     reg [31:0] srcR2;
     reg [31:0] imm;
     reg [3:0] alu_op;
-    reg [1:0] ysyx_26040125_ALU_SEL0; //sel the ALU A port is srcR1(0) or PC(1)
-    reg [1:0] ysyx_26040125_ALU_SEL1; //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
+    reg [1:0] alu_sel0; //sel the ALU A port is srcR1(0) or PC(1)
+    reg [1:0] alu_sel1; //sel the ALU B port is srcR2(0) or imm(1) or csr(2)
     reg wb_en;
     reg mem_en;
     reg mem_write_en;
@@ -523,8 +523,8 @@ module ysyx_26040125_EXU(
             imm <= s_imm;
 
             alu_op <= s_alu_op;
-            ysyx_26040125_ALU_SEL0 <= s_alu_sel0;
-            ysyx_26040125_ALU_SEL1 <= s_alu_sel1;
+            alu_sel0 <= s_alu_sel0;
+            alu_sel1 <= s_alu_sel1;
 
             wb_en <= s_wb_en;
             mem_en <= s_mem_en;
@@ -588,11 +588,11 @@ module ysyx_26040125_EXU(
     end
 
 
-    assign alu_src1 = (ysyx_26040125_ALU_SEL0 == `ysyx_26040125_ALU_SEL_RS1) ? srcR1 :
-                      (ysyx_26040125_ALU_SEL0 == `ysyx_26040125_ALU_SEL_PC) ? PC_reg : 32'b0;
-    assign alu_src2 = (ysyx_26040125_ALU_SEL1 == `ysyx_26040125_ALU_SEL_RS2) ? srcR2 :
-                      (ysyx_26040125_ALU_SEL1 == `ysyx_26040125_ALU_SEL_IMM) ? imm :
-                      (ysyx_26040125_ALU_SEL1 == `ysyx_26040125_ALU_SEL_CSR) ? csr_data : 32'b0;
+    assign alu_src1 = (alu_sel0 == `ysyx_26040125_ALU_SEL_RS1) ? srcR1 :
+                      (alu_sel0 == `ysyx_26040125_ALU_SEL_PC) ? PC_reg : 32'b0;
+    assign alu_src2 = (alu_sel1 == `ysyx_26040125_ALU_SEL_RS2) ? srcR2 :
+                      (alu_sel1 == `ysyx_26040125_ALU_SEL_IMM) ? imm :
+                      (alu_sel1 == `ysyx_26040125_ALU_SEL_CSR) ? csr_data : 32'b0;
 
     ysyx_26040125_ALU alu(
         .A(alu_src1),
