@@ -113,7 +113,7 @@ module ysyx_26040125_ARB(
     input s_axi_rready_A,
     output [3:0] s_axi_rid_A,
     output s_axi_rlast_A,
-    
+
     /* verilator lint_off UNUSEDSIGNAL */
     input [31:0] s_axi_awaddr_A,
     input s_axi_awvalid_A,
@@ -311,9 +311,6 @@ module ysyx_26040125_CSR(
     output [31:0] mtvec_out,
     output [31:0] mepc_out
 );
-
-    reg [31:0] mcycle;
-    reg [31:0] mcycleh;
     wire [31:0] mvendorid;
     wire [31:0] marchid;
     reg [31:0] mtvec;
@@ -322,9 +319,7 @@ module ysyx_26040125_CSR(
 
     //a combinational logic to read CSR, only take the mycle(h) into account
     always @(*) begin
-        if(raddr == 12'hc00) rdata = mcycle; //mcycle
-        else if(raddr == 12'hc80) rdata = mcycleh; //mcycleh
-        else if(raddr == 12'hf11) rdata = mvendorid; //mvendorid
+        if(raddr == 12'hf11) rdata = mvendorid; //mvendorid
         else if(raddr == 12'hf12) rdata = marchid; //marchid
         else if(raddr == 12'h305) rdata = mtvec; //mtvec
         else if(raddr == 12'h341) rdata = mepc; //mepc
@@ -347,16 +342,6 @@ module ysyx_26040125_CSR(
         if(reset) mcause <= 32'b0;
         else if(exception) mcause <= w_cause; //write mcause with the current cause when exception happens
         else if(wen && waddr == 12'h342) mcause <= (wr_sel) ? alu_res : srcR1; //mcause
-    end
-
-    always @(posedge clk or posedge reset) begin
-        if(reset) mcycle <= 32'b0;
-        else mcycle <= mcycle + 1;
-    end
-    
-    always @(posedge clk or posedge reset) begin
-        if(reset) mcycleh <= 32'b0;
-        else if(mcycle == 32'hffff_ffff) mcycleh <= mcycleh + 1;
     end
 
     assign mvendorid = 32'h79737978;
@@ -2400,11 +2385,16 @@ module ysyx_26040125_CLINT(
     assign s_axi_bid     = 4'b0;
     assign s_axi_rdata   = ar_addr_bit ?
 `ifdef VERILATOR
-        mtime_read(ar_addr_bit ? 32'h0200_0008 : 32'h0200_0004) :
+        mtime_read(32'h0200_0008) :
 `else
         mtime[63:32] :
 `endif
+
+`ifdef VERILATOR
+        mtime_read(32'h0200_0004);
+`else
         mtime[31:0];
+`endif
 endmodule
 
 module ysyx_26040125_XBAR(
