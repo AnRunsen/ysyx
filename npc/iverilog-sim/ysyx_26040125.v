@@ -113,7 +113,8 @@ module ysyx_26040125_ARB(
     input s_axi_rready_A,
     output [3:0] s_axi_rid_A,
     output s_axi_rlast_A,
-
+    
+    /* verilator lint_off UNUSEDSIGNAL */
     input [31:0] s_axi_awaddr_A,
     input s_axi_awvalid_A,
     output s_axi_awready_A,
@@ -132,6 +133,7 @@ module ysyx_26040125_ARB(
     output s_axi_bvalid_A,
     input s_axi_bready_A,
     output [3:0] s_axi_bid_A,
+    /* verilator lint_on UNUSEDSIGNAL */
 
     /*axi lite port B*/
     input [31:0] s_axi_araddr_B,
@@ -206,160 +208,87 @@ module ysyx_26040125_ARB(
     output m_axi_bready
 );
 
+    // === Read channel arbitration (unchanged) ===
     localparam R_POLLINGA = 2'b00, R_POLLINGB = 2'b01, R_WORKINGA = 2'b10, R_WORKINGB = 2'b11;
     reg [1:0] r_state, r_next_state;
-    localparam W_POLLINGA = 2'b00, W_POLLINGB = 2'b01, W_WORKINGA = 2'b10, W_WORKINGB = 2'b11;
-    reg [1:0] w_state, w_next_state;
 
     always @(*) begin
         case(r_state)
             R_POLLINGA: begin
-                if(s_axi_arvalid_A && s_axi_arready_A) begin
-                    r_next_state = R_WORKINGA;
-                end
-                else begin
-                    r_next_state = R_POLLINGB;
-                end
+                if(s_axi_arvalid_A && s_axi_arready_A) r_next_state = R_WORKINGA;
+                else r_next_state = R_POLLINGB;
             end
-
             R_POLLINGB: begin
-                if(s_axi_arvalid_B && s_axi_arready_B) begin
-                    r_next_state = R_WORKINGB;
-                end
-                else begin
-                    r_next_state = R_POLLINGA;
-                end
+                if(s_axi_arvalid_B && s_axi_arready_B) r_next_state = R_WORKINGB;
+                else r_next_state = R_POLLINGA;
             end
-
             R_WORKINGA: begin
-                if(s_axi_rvalid_A && s_axi_rready_A && s_axi_rlast_A) begin
-                    r_next_state = R_POLLINGB;
-                end
-                else begin
-                    r_next_state = r_state;
-                end
+                if(s_axi_rvalid_A && s_axi_rready_A && s_axi_rlast_A) r_next_state = R_POLLINGB;
+                else r_next_state = r_state;
             end
-
             R_WORKINGB: begin
-                if(s_axi_rvalid_B && s_axi_rready_B && s_axi_rlast_B) begin
-                    r_next_state = R_POLLINGA;
-                end
-                else begin
-                    r_next_state = r_state;
-                end
+                if(s_axi_rvalid_B && s_axi_rready_B && s_axi_rlast_B) r_next_state = R_POLLINGA;
+                else r_next_state = r_state;
             end
-
             default: r_next_state = R_POLLINGA;
         endcase
     end
 
     always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            r_state <= R_POLLINGA;
-        end
-        else begin
-            r_state <= r_next_state;
-        end
+        if(reset) r_state <= R_POLLINGA;
+        else       r_state <= r_next_state;
     end
-
 
     /*read addr channel*/
     assign s_axi_arready_A = (r_state == R_POLLINGA || r_state == R_WORKINGA) && m_axi_arready;
     assign s_axi_arready_B = (r_state == R_POLLINGB || r_state == R_WORKINGB) && m_axi_arready;
-    assign m_axi_araddr = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_araddr_A : s_axi_araddr_B;
+    assign m_axi_araddr  = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_araddr_A  : s_axi_araddr_B;
     assign m_axi_arvalid = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arvalid_A : s_axi_arvalid_B;
-    assign m_axi_arid = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arid_A : s_axi_arid_B;
-    assign m_axi_arlen = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arlen_A : s_axi_arlen_B;
-    assign m_axi_arsize = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arsize_A : s_axi_arsize_B;
+    assign m_axi_arid    = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arid_A    : s_axi_arid_B;
+    assign m_axi_arlen   = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arlen_A   : s_axi_arlen_B;
+    assign m_axi_arsize  = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arsize_A  : s_axi_arsize_B;
     assign m_axi_arburst = (r_state == R_POLLINGA || r_state == R_WORKINGA) ? s_axi_arburst_A : s_axi_arburst_B;
 
     /*read data channel*/
-    assign s_axi_rdata_A = m_axi_rdata;
-    assign s_axi_rresp_A = m_axi_rresp;
+    assign s_axi_rdata_A  = m_axi_rdata;
+    assign s_axi_rresp_A  = m_axi_rresp;
     assign s_axi_rvalid_A = (r_state == R_WORKINGA) && m_axi_rvalid;
-    assign s_axi_rid_A = m_axi_rid;
-    assign s_axi_rlast_A = m_axi_rlast;
-    assign s_axi_rdata_B = m_axi_rdata;
-    assign s_axi_rresp_B = m_axi_rresp;
+    assign s_axi_rid_A    = m_axi_rid;
+    assign s_axi_rlast_A  = m_axi_rlast;
+    assign s_axi_rdata_B  = m_axi_rdata;
+    assign s_axi_rresp_B  = m_axi_rresp;
     assign s_axi_rvalid_B = (r_state == R_WORKINGB) && m_axi_rvalid;
-    assign s_axi_rid_B = m_axi_rid;
-    assign s_axi_rlast_B = m_axi_rlast;
-    assign m_axi_rready = (r_state == R_WORKINGA) ? s_axi_rready_A : s_axi_rready_B;
+    assign s_axi_rid_B    = m_axi_rid;
+    assign s_axi_rlast_B  = m_axi_rlast;
+    assign m_axi_rready   = (r_state == R_WORKINGA) ? s_axi_rready_A : s_axi_rready_B;
 
+    // === Write channel: direct passthrough from port B (IFU never writes) ===
+    // Port A write responses — always inactive
+    assign s_axi_awready_A = 1'b0;
+    assign s_axi_wready_A  = 1'b0;
+    assign s_axi_bresp_A   = 2'b00;
+    assign s_axi_bvalid_A  = 1'b0;
+    assign s_axi_bid_A     = 4'b0;
 
-    always @(*) begin
-        case(w_state)
-            W_POLLINGA: begin
-                if((s_axi_awvalid_A && s_axi_awready_A)||(s_axi_wvalid_A && s_axi_wready_A)) begin
-                    w_next_state = W_WORKINGA;
-                end
-                else begin
-                    w_next_state = W_POLLINGB;
-                end
-            end
-            W_POLLINGB: begin
-                if((s_axi_awvalid_B && s_axi_awready_B)||(s_axi_wvalid_B && s_axi_wready_B)) begin
-                    w_next_state = W_WORKINGB;
-                end
-                else begin
-                    w_next_state = W_POLLINGA;
-                end
-            end
-            W_WORKINGA: begin
-                if(s_axi_bvalid_A && s_axi_bready_A) begin
-                    w_next_state = W_POLLINGB;
-                end
-                else begin
-                    w_next_state = w_state;
-                end
-            end
-            W_WORKINGB: begin
-                if(s_axi_bvalid_B && s_axi_bready_B) begin
-                    w_next_state = W_POLLINGA;
-                end
-                else begin
-                    w_next_state = w_state;
-                end
-            end
-            default: w_next_state = W_POLLINGA;
-        endcase
-    end
+    // Port B → output, direct wire passthrough
+    assign s_axi_awready_B = m_axi_awready;
+    assign s_axi_wready_B  = m_axi_wready;
+    assign s_axi_bresp_B   = m_axi_bresp;
+    assign s_axi_bvalid_B  = m_axi_bvalid;
+    assign s_axi_bid_B     = m_axi_bid;
 
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin
-            w_state <= W_POLLINGA;
-        end
-        else begin
-            w_state <= w_next_state;
-        end
-    end
+    assign m_axi_awaddr  = s_axi_awaddr_B;
+    assign m_axi_awvalid = s_axi_awvalid_B;
+    assign m_axi_awid    = s_axi_awid_B;
+    assign m_axi_awlen   = s_axi_awlen_B;
+    assign m_axi_awsize  = s_axi_awsize_B;
+    assign m_axi_awburst = s_axi_awburst_B;
+    assign m_axi_wdata   = s_axi_wdata_B;
+    assign m_axi_wstrb   = s_axi_wstrb_B;
+    assign m_axi_wvalid  = s_axi_wvalid_B;
+    assign m_axi_wlast   = s_axi_wlast_B;
+    assign m_axi_bready  = s_axi_bready_B;
 
-    /*write addr channel*/
-    assign s_axi_awready_A = (w_state == W_POLLINGA || w_state == W_WORKINGA) && m_axi_awready;
-    assign s_axi_awready_B = (w_state == W_POLLINGB || w_state == W_WORKINGB) && m_axi_awready;
-    assign m_axi_awaddr = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_awaddr_A : s_axi_awaddr_B;
-    assign m_axi_awvalid = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_awvalid_A : s_axi_awvalid_B;
-    assign m_axi_awid = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_awid_A : s_axi_awid_B;
-    assign m_axi_awlen = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_awlen_A : s_axi_awlen_B;
-    assign m_axi_awsize = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_awsize_A : s_axi_awsize_B;
-    assign m_axi_awburst = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_awburst_A : s_axi_awburst_B;
-
-    /*write data channel*/
-    assign s_axi_wready_A = (w_state == W_POLLINGA || w_state == W_WORKINGA) && m_axi_wready;
-    assign s_axi_wready_B = (w_state == W_POLLINGB || w_state == W_WORKINGB) && m_axi_wready;
-    assign m_axi_wdata = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_wdata_A : s_axi_wdata_B;
-    assign m_axi_wstrb = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_wstrb_A : s_axi_wstrb_B;
-    assign m_axi_wvalid = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_wvalid_A : s_axi_wvalid_B;
-    assign m_axi_wlast = (w_state == W_POLLINGA || w_state == W_WORKINGA) ? s_axi_wlast_A : s_axi_wlast_B;
-    
-    /*write response channel*/
-    assign s_axi_bresp_A = m_axi_bresp;
-    assign s_axi_bresp_B = m_axi_bresp;
-    assign s_axi_bvalid_A = (w_state == W_WORKINGA) && m_axi_bvalid;
-    assign s_axi_bvalid_B = (w_state == W_WORKINGB) && m_axi_bvalid;
-    assign s_axi_bid_A = m_axi_bid;
-    assign s_axi_bid_B = m_axi_bid;
-    assign m_axi_bready = (w_state == W_WORKINGA) ? s_axi_bready_A : s_axi_bready_B;
 endmodule
     
 
@@ -702,10 +631,10 @@ module ysyx_26040125_GPR #(
     input [ADDR_WIDTH-1:0] raddr2,
     output [DATA_WIDTH-1:0]rdata2
 );
-    reg [DATA_WIDTH-1:0] gpr [2**ADDR_WIDTH-1:0];
+    reg [DATA_WIDTH-1:0] gpr [2**ADDR_WIDTH-1:1];
 
     always @(posedge clk) begin
-        if(wen) gpr[waddr] <= (waddr == 4'b0) ? {DATA_WIDTH{1'b0}} : wdata;
+        if(wen && waddr != 4'b0) gpr[waddr] <= wdata;
     end
 
     assign rdata1 = (raddr1 == 4'b0) ? {DATA_WIDTH{1'b0}} : gpr[raddr1];
