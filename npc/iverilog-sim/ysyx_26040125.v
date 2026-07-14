@@ -294,7 +294,6 @@ endmodule
 
 module ysyx_26040125_CSR(
     input clk,
-    input reset,
     input [11:0] waddr, //write addr
     input [11:0] raddr, //read addr
     input [31:0] srcR1,
@@ -327,20 +326,17 @@ module ysyx_26040125_CSR(
         else rdata = 32'b0;
     end
 
-    always @(posedge clk or posedge reset) begin
-        if(reset) mtvec <= 32'b0;
-        else if(wen && waddr == 12'h305) mtvec <= (wr_sel) ? alu_res : srcR1; //mtvec
+    always @(posedge clk) begin
+        if(wen && waddr == 12'h305) mtvec <= (wr_sel) ? alu_res : srcR1; //mtvec
     end
 
-    always @(posedge clk or posedge reset) begin
-        if(reset) mepc <= 32'b0;
-        else if(exception) mepc <= w_epc; //write mepc with the current PC when exception happens
+    always @(posedge clk) begin
+        if(exception) mepc <= w_epc; //write mepc with the current PC when exception happens
         else if(wen && waddr == 12'h341) mepc <= (wr_sel) ? alu_res : srcR1; //mepc
     end
 
-    always @(posedge clk or posedge reset) begin
-        if(reset) mcause <= 32'b0;
-        else if(exception) mcause <= w_cause; //write mcause with the current cause when exception happens
+    always @(posedge clk) begin
+        if(exception) mcause <= w_cause; //write mcause with the current cause when exception happens
         else if(wen && waddr == 12'h342) mcause <= (wr_sel) ? alu_res : srcR1; //mcause
     end
 
@@ -2187,8 +2183,8 @@ module ysyx_26040125_WBU(
 // `endif
 
 `ifdef VERILATOR
-    always @(posedge clk) begin
-        if(s_valid && s_ready && s_has_exception && s_exception_code == 4'd3) begin
+    always @(*) begin
+        if(has_exception_reg && exception_code_reg == 4'd3) begin
             sim_exit();
         end
     end
@@ -3325,7 +3321,6 @@ module ysyx_26040125(
 
     ysyx_26040125_CSR ysyx_26040125_CSR(
             .clk     (clock),
-            .reset   (reset),
             .waddr    (WBU_csr_addr_),
             .raddr    (IDU_csr_addr),
             .srcR1   (WBU_csr_srcR1_),

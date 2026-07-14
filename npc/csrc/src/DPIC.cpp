@@ -158,14 +158,17 @@ extern "C" int mtime_read(int raddr)
 extern "C" void sim_exit()
 {
     extern VysyxSoCFull* cpu;
-    uint32_t code = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[10];
+    volatile uint32_t code = cpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26040125_GPR__DOT__gpr[9];
+    
+    printf("Code:%d ", code);
+
     if (code == 0)
     {
-        printf("Code:%d \033[32;1mHit Good Trap\033[0m\n", code);
+        printf("\033[32;1mHit Good Trap\033[0m\n");
     }
     else if (code == 1)
     {
-        printf("Code:%d \033[31;1mHit Bad Trap\033[0m\n", code);
+        printf("\033[31;1mHit Bad Trap\033[0m\n");
     }
 
     printf("\033[34mTotal Cycles: \t\t%lu\n", cycle_cnt);
@@ -178,7 +181,7 @@ extern "C" void sim_exit()
     printf("  EXU: \t%lu\n", perf_cnt.exu);
     printf("  LSU: \t%lu\n", perf_cnt.lsu);
     printf("============================\n");
-    printf("Num of ifetch: %lu\tNum of iCache hit: %lu\t%f%%\n", ifetch_cnt, ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
+    printf("Num of ifetch: %lu\tNum of iCache hit: %lu\t%f%%\033[0m\n", ifetch_cnt, ihit_cnt, (double)ihit_cnt / (double)ifetch_cnt * 100);
 
     exit_flag = true;
 }
