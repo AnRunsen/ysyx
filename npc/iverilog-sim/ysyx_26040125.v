@@ -417,8 +417,6 @@ module ysyx_26040125_EXU(
 
     output reg [31:0] forward_data_exu,
     output forward_ready_exu,
-    output reg [31:0] csr_forward_data_exu,
-    output csr_forward_ready_exu,
 
     /*To PCR*/
     output [31:0] pcr_exu_result,
@@ -498,17 +496,8 @@ module ysyx_26040125_EXU(
         endcase
     end
 
-    always @(*) begin
-        case(csr_wr_sel)
-            `ysyx_26040125_CSR_SEL_RS1: csr_forward_data_exu = srcR1;
-            `ysyx_26040125_CSR_SEL_ALU: csr_forward_data_exu = m_result;
-            default: csr_forward_data_exu = 32'b0;
-        endcase
-    end
     assign forward_ready_exu = m_valid && (wb_sel != `ysyx_26040125_WB_SEL_MEM); //load instruction need to wait for MEM stage
-    assign csr_forward_ready_exu = m_valid;
 
-    
     /*logic to recv data*/
     assign s_ready = !m_valid || (m_valid & m_ready);
     always @(posedge clk) begin
@@ -942,7 +931,7 @@ module ysyx_26040125_IDU(
     output reg m_mem_signext,
 
     output reg [11:0] m_csr_addr,
-    output reg [31:0] m_csr_data,
+    output [31:0] m_csr_data,
     output reg m_csr_wr_sel, //0: write m_srcR1, 1: write alu_res
     output reg m_csr_wen,
 
@@ -980,16 +969,10 @@ module ysyx_26040125_IDU(
     /*for load-use*/
     input [31:0] forward_data_exu,
     input forward_ready_exu,
-    input [31:0] csr_forward_data_exu,
-    input csr_forward_ready_exu,
     input [31:0] forward_data_lsu,
     input forward_ready_lsu,
-    input [31:0] csr_forward_data_lsu,
-    input csr_forward_ready_lsu,
     input [31:0] forward_data_wbu,
-    input forward_ready_wbu,
-    input [31:0] csr_forward_data_wbu,
-    input csr_forward_ready_wbu
+    input forward_ready_wbu
 );
 `ifdef VERILATOR
     always @(posedge clk) begin
@@ -1033,19 +1016,16 @@ module ysyx_26040125_IDU(
         .forward_ready_exu     	( forward_ready_exu      ),
         .csr_exu               	( csr_exu                ),
         .csr_valid_exu         	( csr_valid_exu          ),
-        .csr_forward_ready_exu 	( csr_forward_ready_exu  ),
         .rd_lsu                	( rd_lsu                 ),
         .rd_valid_lsu          	( rd_valid_lsu           ),
         .forward_ready_lsu     	( forward_ready_lsu      ),
         .csr_lsu               	( csr_lsu                ),
         .csr_valid_lsu         	( csr_valid_lsu          ),
-        .csr_forward_ready_lsu 	( csr_forward_ready_lsu  ),
         .rd_wbu                	( rd_wbu                 ),
         .rd_valid_wbu          	( rd_valid_wbu           ),
         .forward_ready_wbu     	( forward_ready_wbu      ),
         .csr_wbu               	( csr_wbu                ),
         .csr_valid_wbu         	( csr_valid_wbu          ),
-        .csr_forward_ready_wbu 	( csr_forward_ready_wbu  ),
         .stall                 	( stall                  )
     );
 
@@ -1097,20 +1077,7 @@ module ysyx_26040125_IDU(
 
     assign csr_addr = m_csr_addr;
 
-    always @(*) begin
-        if(csr_addr == csr_exu && csr_valid_exu && csr_forward_ready_exu) begin
-            m_csr_data = csr_forward_data_exu;
-        end
-        else if(csr_addr == csr_lsu && csr_valid_lsu && csr_forward_ready_lsu) begin
-            m_csr_data = csr_forward_data_lsu;
-        end
-        else if(csr_addr == csr_wbu && csr_valid_wbu && csr_forward_ready_wbu) begin
-            m_csr_data = csr_forward_data_wbu;
-        end
-        else begin
-            m_csr_data = csr_data;
-        end
-    end
+    assign m_csr_data = csr_data;
 
 
     always @(*) begin
@@ -1619,11 +1586,8 @@ module ysyx_26040125_LSU(
     output [11:0] csr_lsu,
     output csr_valid_lsu,
 
-    /*For the load-use*/
     output reg [31:0] forward_data_lsu,
     output forward_ready_lsu,
-    output reg [31:0] csr_forward_data_lsu,
-    output csr_forward_ready_lsu,
 
     input exception_flush
 );
@@ -1716,16 +1680,7 @@ module ysyx_26040125_LSU(
         endcase
     end
 
-    always @(*) begin
-        case(csr_wr_sel)
-            `ysyx_26040125_CSR_SEL_RS1: csr_forward_data_lsu = srcR1;
-            `ysyx_26040125_CSR_SEL_ALU: csr_forward_data_lsu = m_result;
-            default: csr_forward_data_lsu = 32'b0;
-        endcase
-    end
-
     assign forward_ready_lsu = m_valid;
-    assign csr_forward_ready_lsu = m_valid;
 
     always @(*) begin
         case(state)
@@ -2058,21 +2013,18 @@ module ysyx_26040125_RAW(
     input forward_ready_exu,
     input [11:0] csr_exu,
     input csr_valid_exu,
-    input csr_forward_ready_exu,
     
     input [4:0] rd_lsu,
     input rd_valid_lsu,
     input forward_ready_lsu,
     input [11:0] csr_lsu,
     input csr_valid_lsu,
-    input csr_forward_ready_lsu,
 
     input [4:0] rd_wbu,
     input rd_valid_wbu,
     input forward_ready_wbu,
     input [11:0] csr_wbu,
     input csr_valid_wbu,
-    input csr_forward_ready_wbu,
     
     output reg stall
 );
@@ -2086,10 +2038,8 @@ module ysyx_26040125_RAW(
             end
         end
 
-        if(csr_valid_exu && !csr_forward_ready_exu) begin
-            if(csr_exu == csr_addr) begin
-                stall = 1'b1;
-            end
+        if(csr_valid_exu && csr_exu == csr_addr) begin
+            stall = 1'b1;
         end
 
         if(rd_valid_lsu && !forward_ready_lsu) begin
@@ -2098,10 +2048,8 @@ module ysyx_26040125_RAW(
             end
         end
 
-        if(csr_valid_lsu && !csr_forward_ready_lsu) begin
-            if(csr_lsu == csr_addr) begin
-                stall = 1'b1;
-            end
+        if(csr_valid_lsu && csr_lsu == csr_addr) begin
+            stall = 1'b1;
         end
 
         if(rd_valid_wbu && !forward_ready_wbu) begin
@@ -2110,10 +2058,8 @@ module ysyx_26040125_RAW(
             end
         end
 
-        if(csr_valid_wbu && !csr_forward_ready_wbu) begin
-            if(csr_wbu == csr_addr) begin
-                stall = 1'b1;
-            end
+        if(csr_valid_wbu && csr_wbu == csr_addr) begin
+            stall = 1'b1;
         end
     end
 
@@ -2168,8 +2114,6 @@ module ysyx_26040125_WBU(
     /*For the load-use*/
     output [31:0] forward_data_wbu,
     output forward_ready_wbu,
-    output reg [31:0] csr_forward_data_wbu,
-    output csr_forward_ready_wbu,
 
     output exception_flush
 );
@@ -2229,17 +2173,7 @@ module ysyx_26040125_WBU(
     assign csr_valid_wbu = valid_reg && csr_wen;
 
     assign forward_data_wbu = wdata;
-
-    always @(*) begin
-        case(csr_wr_sel)
-            `ysyx_26040125_CSR_SEL_RS1: csr_forward_data_wbu = srcR1;
-            `ysyx_26040125_CSR_SEL_ALU: csr_forward_data_wbu = result;
-            default: csr_forward_data_wbu = 32'b0;
-        endcase
-    end
-
     assign forward_ready_wbu = valid_reg;
-    assign csr_forward_ready_wbu = valid_reg;
 
     /*logic to recv data*/
     assign s_ready = 1'b1;
@@ -2787,9 +2721,6 @@ module ysyx_26040125(
     wire [31:0] EXU_pcr_pc_now;
     wire [31:0] EXU_forward_data_exu;
     wire        EXU_forward_ready_exu;
-    wire [31:0] EXU_csr_forward_data_exu;
-    wire        EXU_csr_forward_ready_exu;
-
 
     // LSU outputs
     wire        LSU_s_ready;
@@ -2832,9 +2763,6 @@ module ysyx_26040125(
     wire [3:0]  LSU_m_exception_code;
     wire [31:0] LSU_forward_data_lsu;
     wire        LSU_forward_ready_lsu;
-    wire [31:0] LSU_csr_forward_data_lsu;
-    wire        LSU_csr_forward_ready_lsu;
-    
 
     // WBU outputs
     wire        WBU_s_ready;
@@ -2858,8 +2786,6 @@ module ysyx_26040125(
     wire        WBU_exception_flush;
     wire [31:0] WBU_forward_data_wbu;
     wire        WBU_forward_ready_wbu;
-    wire [31:0] WBU_csr_forward_data_wbu;
-    wire        WBU_csr_forward_ready_wbu;
 
     // CSR outputs
     wire [31:0] CSR_rdata;
@@ -3123,16 +3049,10 @@ module ysyx_26040125(
 
             .forward_data_exu (EXU_forward_data_exu),
             .forward_ready_exu (EXU_forward_ready_exu),
-            .csr_forward_data_exu (EXU_csr_forward_data_exu),
-            .csr_forward_ready_exu (EXU_csr_forward_ready_exu),
             .forward_data_lsu (LSU_forward_data_lsu),
             .forward_ready_lsu (LSU_forward_ready_lsu),
-            .csr_forward_data_lsu (LSU_csr_forward_data_lsu),
-            .csr_forward_ready_lsu (LSU_csr_forward_ready_lsu),
             .forward_data_wbu (WBU_forward_data_wbu),
-            .forward_ready_wbu (WBU_forward_ready_wbu),
-            .csr_forward_data_wbu (WBU_csr_forward_data_wbu),
-            .csr_forward_ready_wbu (WBU_csr_forward_ready_wbu)
+            .forward_ready_wbu (WBU_forward_ready_wbu)
         );
 
     ysyx_26040125_EXU ysyx_26040125_EXU(
@@ -3194,9 +3114,7 @@ module ysyx_26040125(
             .cache_flush      (EXU_cache_flush   ),
             .exception_flush  (WBU_exception_flush),
             .forward_data_exu (EXU_forward_data_exu),
-            .forward_ready_exu (EXU_forward_ready_exu),
-            .csr_forward_data_exu (EXU_csr_forward_data_exu),
-            .csr_forward_ready_exu (EXU_csr_forward_ready_exu)
+            .forward_ready_exu (EXU_forward_ready_exu)
         );
 
     ysyx_26040125_LSU ysyx_26040125_LSU(
@@ -3273,9 +3191,7 @@ module ysyx_26040125(
             .csr_valid_lsu  (LSU_csr_valid_lsu),
             .exception_flush  (WBU_exception_flush),
             .forward_data_lsu (LSU_forward_data_lsu),
-            .forward_ready_lsu (LSU_forward_ready_lsu),
-            .csr_forward_data_lsu (LSU_csr_forward_data_lsu),
-            .csr_forward_ready_lsu (LSU_csr_forward_ready_lsu)
+            .forward_ready_lsu (LSU_forward_ready_lsu)
         );
 
     ysyx_26040125_WBU ysyx_26040125_WBU(
@@ -3314,9 +3230,7 @@ module ysyx_26040125(
             .csr_valid_wbu  (WBU_csr_valid_wbu),
             .exception_flush  (WBU_exception_flush),
             .forward_data_wbu (WBU_forward_data_wbu),
-            .forward_ready_wbu (WBU_forward_ready_wbu),
-            .csr_forward_data_wbu (WBU_csr_forward_data_wbu),
-            .csr_forward_ready_wbu (WBU_csr_forward_ready_wbu)
+            .forward_ready_wbu (WBU_forward_ready_wbu)
         );
 
     ysyx_26040125_CSR ysyx_26040125_CSR(
