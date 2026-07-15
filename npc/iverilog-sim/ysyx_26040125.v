@@ -294,8 +294,8 @@ endmodule
 
 module ysyx_26040125_CSR(
     input clk,
-    input [11:0] waddr, //write addr
-    input [11:0] raddr, //read addr
+    input [7:0] waddr, //write addr
+    input [7:0] raddr, //read addr
     input [31:0] srcR1,
     input [31:0] alu_res,
     input wr_sel, //0: write srcR1, 1: write alu_res
@@ -318,26 +318,26 @@ module ysyx_26040125_CSR(
 
     //a combinational logic to read CSR, only take the mycle(h) into account
     always @(*) begin
-        if(raddr == 12'hf11) rdata = mvendorid; //mvendorid
-        else if(raddr == 12'hf12) rdata = marchid; //marchid
-        else if(raddr == 12'h305) rdata = mtvec; //mtvec
-        else if(raddr == 12'h341) rdata = mepc; //mepc
-        else if(raddr == 12'h342) rdata = mcause; //mcause
+        if(raddr == 8'h11) rdata = mvendorid; //mvendorid
+        else if(raddr == 8'h12) rdata = marchid; //marchid
+        else if(raddr == 8'h05) rdata = mtvec; //mtvec
+        else if(raddr == 8'h41) rdata = mepc; //mepc
+        else if(raddr == 8'h42) rdata = mcause; //mcause
         else rdata = 32'b0;
     end
 
     always @(posedge clk) begin
-        if(wen && waddr == 12'h305) mtvec <= (wr_sel) ? alu_res : srcR1; //mtvec
+        if(wen && waddr == 8'h05) mtvec <= (wr_sel) ? alu_res : srcR1; //mtvec
     end
 
     always @(posedge clk) begin
         if(exception) mepc <= w_epc; //write mepc with the current PC when exception happens
-        else if(wen && waddr == 12'h341) mepc <= (wr_sel) ? alu_res : srcR1; //mepc
+        else if(wen && waddr == 8'h41) mepc <= (wr_sel) ? alu_res : srcR1; //mepc
     end
 
     always @(posedge clk) begin
         if(exception) mcause <= w_cause; //write mcause with the current cause when exception happens
-        else if(wen && waddr == 12'h342) mcause <= (wr_sel) ? alu_res : srcR1; //mcause
+        else if(wen && waddr == 8'h42) mcause <= (wr_sel) ? alu_res : srcR1; //mcause
     end
 
     assign mvendorid = 32'h79737978;
@@ -371,7 +371,7 @@ module ysyx_26040125_EXU(
     input [2:0] s_brju,
     input s_mem_signext,
 
-    input [11:0] s_csr_addr,
+    input [7:0] s_csr_addr,
     input [31:0] s_csr_data,
     input s_csr_wr_sel, //0: write srcR1, 1: write alu_res
     input s_csr_wen,
@@ -394,7 +394,7 @@ module ysyx_26040125_EXU(
     output [1:0] m_op_width,
     output [2:0] m_wb_sel,
     output m_mem_signext,
-    output [11:0] m_csr_addr,
+    output [7:0] m_csr_addr,
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
@@ -412,7 +412,7 @@ module ysyx_26040125_EXU(
 
     output [4:0] rd_exu,
     output rd_valid_exu,
-    output [11:0] csr_exu,
+    output [7:0] csr_exu,
     output csr_valid_exu,
 
     output reg [31:0] forward_data_exu,
@@ -450,7 +450,7 @@ module ysyx_26040125_EXU(
     reg [2:0] wb_sel; //imm; alu; mem; PC+4
     reg [2:0] brju;
     reg mem_signext;
-    reg [11:0] csr_addr;
+    reg [7:0] csr_addr;
     reg [31:0] csr_data;
     reg csr_wr_sel; //0: write srcR1; 1: write alu_res
     reg csr_wen;
@@ -930,7 +930,7 @@ module ysyx_26040125_IDU(
     output reg [2:0] m_brju,
     output reg m_mem_signext,
 
-    output reg [11:0] m_csr_addr,
+    output reg [7:0] m_csr_addr,
     output [31:0] m_csr_data,
     output reg m_csr_wr_sel, //0: write m_srcR1, 1: write alu_res
     output reg m_csr_wen,
@@ -947,22 +947,22 @@ module ysyx_26040125_IDU(
     /*implict ports for read GPRs and CSRs*/
     output [4:0] rs1,
     output [4:0] rs2,
-    output [11:0] csr_addr,
+    output [7:0] csr_addr,
     input [31:0] srcR1_in,
     input [31:0] srcR2_in,
     input [31:0] csr_data,
 
     /*handle the RAW*/
     input [4:0] rd_exu,
-    input [11:0] csr_exu,
+    input [7:0] csr_exu,
     input rd_valid_exu,
     input csr_valid_exu,
     input [4:0] rd_lsu,
-    input [11:0] csr_lsu,
+    input [7:0] csr_lsu,
     input rd_valid_lsu,
     input csr_valid_lsu,
     input [4:0] rd_wbu,
-    input [11:0] csr_wbu,
+    input [7:0] csr_wbu,
     input rd_valid_wbu,
     input csr_valid_wbu,
 
@@ -1321,7 +1321,7 @@ module ysyx_26040125_IDU(
                         m_wb_sel     = `ysyx_26040125_WB_SEL_CSR;
                         m_csr_wr_sel = `ysyx_26040125_CSR_SEL_RS1;
                         m_csr_wen    = 1;
-                        m_csr_addr = inst_reg[31:20];
+                        m_csr_addr = inst_reg[27:20];
                     end
 
                     3'b010: begin //csrrs
@@ -1332,7 +1332,7 @@ module ysyx_26040125_IDU(
                         m_alu_sel1   = `ysyx_26040125_ALU_SEL_CSR;
                         m_csr_wr_sel = `ysyx_26040125_CSR_SEL_ALU;
                         m_csr_wen    = 1;
-                        m_csr_addr = inst_reg[31:20];
+                        m_csr_addr = inst_reg[27:20];
                     end
                     default: begin
                         has_exception = 1;
@@ -1505,7 +1505,7 @@ module ysyx_26040125_LSU(
     input [1:0] s_op_width,
     input [2:0] s_wb_sel,
     input s_mem_signext,
-    input [11:0] s_csr_addr,
+    input [7:0] s_csr_addr,
     input [31:0] s_csr_data,
     input s_csr_wr_sel,
     input s_csr_wen,
@@ -1525,7 +1525,7 @@ module ysyx_26040125_LSU(
     output [4:0] m_rd,
     output m_wb_en,
     output [2:0] m_wb_sel,
-    output [11:0] m_csr_addr,
+    output [7:0] m_csr_addr,
     output [31:0] m_csr_data,
     output m_csr_wr_sel,
     output m_csr_wen,
@@ -1583,7 +1583,7 @@ module ysyx_26040125_LSU(
     /*To the RAW module*/
     output [4:0] rd_lsu,
     output rd_valid_lsu,
-    output [11:0] csr_lsu,
+    output [7:0] csr_lsu,
     output csr_valid_lsu,
 
     output reg [31:0] forward_data_lsu,
@@ -1611,7 +1611,7 @@ module ysyx_26040125_LSU(
     reg [1:0] op_width;
     reg [2:0] wb_sel;
     reg mem_signext;
-    reg [11:0] csr_addr;
+    reg [7:0] csr_addr;
     reg [31:0] csr_data;
     reg csr_wr_sel;
     reg csr_wen;
@@ -2006,24 +2006,24 @@ module ysyx_26040125_RAW(
     input [4:0] rs1,
     input [4:0] rs2,
     input need_rs2,
-    input [11:0] csr_addr,
+    input [7:0] csr_addr,
 
     input [4:0] rd_exu,
     input rd_valid_exu,
     input forward_ready_exu,
-    input [11:0] csr_exu,
+    input [7:0] csr_exu,
     input csr_valid_exu,
     
     input [4:0] rd_lsu,
     input rd_valid_lsu,
     input forward_ready_lsu,
-    input [11:0] csr_lsu,
+    input [7:0] csr_lsu,
     input csr_valid_lsu,
 
     input [4:0] rd_wbu,
     input rd_valid_wbu,
     input forward_ready_wbu,
-    input [11:0] csr_wbu,
+    input [7:0] csr_wbu,
     input csr_valid_wbu,
     
     output reg stall
@@ -2074,7 +2074,7 @@ module ysyx_26040125_WBU(
     input [4:0] s_rd,
     input s_wb_en,
     input [2:0] s_wb_sel,
-    input [11:0] s_csr_addr,
+    input [7:0] s_csr_addr,
     input [31:0] s_csr_data,
     input s_csr_wr_sel,
     input s_csr_wen,
@@ -2096,7 +2096,7 @@ module ysyx_26040125_WBU(
     output [4:0] waddr,
 
     /*To CSR*/
-    output [11:0] csr_addr_,
+    output [7:0] csr_addr_,
     output [31:0] csr_srcR1_,
     output [31:0] csr_alu_res_,
     output csr_wr_sel_,
@@ -2108,7 +2108,7 @@ module ysyx_26040125_WBU(
     /*To the RAW module*/
     output [4:0] rd_wbu,
     output rd_valid_wbu,
-    output [11:0] csr_wbu,
+    output [7:0] csr_wbu,
     output csr_valid_wbu,
 
     /*For the load-use*/
@@ -2138,7 +2138,7 @@ module ysyx_26040125_WBU(
     reg [4:0] rd;
     reg wb_en;
     reg [2:0] wb_sel;
-    reg [11:0] csr_addr;
+    reg [7:0] csr_addr;
     reg [31:0] csr_data;
     reg csr_wr_sel;
     reg csr_wen;
@@ -2672,8 +2672,8 @@ module ysyx_26040125(
     wire [2:0]  IDU_m_wb_sel;
     wire [2:0]  IDU_m_brju;
     wire        IDU_m_mem_signext;
-    wire [11:0] IDU_m_csr_addr;
-    wire [11:0] IDU_csr_addr;
+    wire [7:0]  IDU_m_csr_addr;
+    wire [7:0]  IDU_csr_addr;
     wire [31:0] IDU_m_csr_data;
     wire        IDU_m_csr_wr_sel;
     wire        IDU_m_csr_wen;
@@ -2697,7 +2697,7 @@ module ysyx_26040125(
     wire [1:0]  EXU_m_op_width;
     wire [2:0]  EXU_m_wb_sel;
     wire        EXU_m_mem_signext;
-    wire [11:0] EXU_m_csr_addr;
+    wire [7:0]  EXU_m_csr_addr;
     wire [31:0] EXU_m_csr_data;
     wire        EXU_m_csr_wr_sel;
     wire        EXU_m_csr_wen;
@@ -2711,7 +2711,7 @@ module ysyx_26040125(
     wire        EXU_m_has_exception;
     wire [3:0]  EXU_m_exception_code;
     wire [4:0]  EXU_rd_exu;
-    wire [11:0] EXU_csr_exu;
+    wire [7:0]  EXU_csr_exu;
     wire        EXU_rd_valid_exu;
     wire        EXU_csr_valid_exu;
     wire [31:0] EXU_pcr_exu_result;
@@ -2727,7 +2727,7 @@ module ysyx_26040125(
     wire [4:0]  LSU_m_rd;
     wire        LSU_m_wb_en;
     wire [2:0]  LSU_m_wb_sel;
-    wire [11:0] LSU_m_csr_addr;
+    wire [7:0] LSU_m_csr_addr;
     wire [31:0] LSU_m_csr_data;
     wire        LSU_m_csr_wr_sel;
     wire        LSU_m_csr_wen;
@@ -2756,7 +2756,7 @@ module ysyx_26040125(
     wire        LSU_m_axi_wlast;
     wire        LSU_m_axi_bready;
     wire [4:0]  LSU_rd_lsu;
-    wire [11:0] LSU_csr_lsu;
+    wire [7:0]  LSU_csr_lsu;
     wire        LSU_rd_valid_lsu;
     wire        LSU_csr_valid_lsu;
     wire        LSU_m_has_exception;
@@ -2771,7 +2771,7 @@ module ysyx_26040125(
     /*verilator lint_off UNUSED */
     wire [4:0]  WBU_waddr;
     /*verilator lint_on UNUSED */
-    wire [11:0] WBU_csr_addr_;
+    wire [7:0]  WBU_csr_addr_;
     wire [31:0] WBU_csr_srcR1_;
     wire [31:0] WBU_csr_alu_res_;
     wire        WBU_csr_wr_sel_;
@@ -2779,7 +2779,7 @@ module ysyx_26040125(
     wire [31:0] WBU_csr_epc_;
     wire [31:0] WBU_csr_cause_;
     wire [4:0]  WBU_rd_wbu;
-    wire [11:0] WBU_csr_wbu;
+    wire [7:0]  WBU_csr_wbu;
     wire        WBU_rd_valid_wbu;
     wire        WBU_csr_valid_wbu;
     wire        WBU_csr_exception;
